@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Your own server",
+            "server": "http://localhost:8080/BC220",
+            "serverInstance": "BC220",
+            "authentication": "Windows",
+            "tenant": "default",
+            "startupObjectId": 21,
+            "startupObjectType": "Page",
+            "environmentType": "OnPrem",
+            "schemaUpdateMode": "Synchronize",
+            "breakOnError": true,
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+            "port": 49049,
+            "debugServer": 49049
+        }
+    ]
+}
