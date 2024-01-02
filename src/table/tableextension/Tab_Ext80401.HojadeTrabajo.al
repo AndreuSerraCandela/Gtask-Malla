@@ -39,7 +39,7 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
             var
                 Dir: Record 222;
             begin
-                If "Cód. Dirección Envio" <> '' then begin
+                if "Cód. Dirección Envio" <> '' then begin
                     Dir.Get(Cliente, "Cód. Dirección Envio");
                     "Dirección Envio" := Dir.Address;
                 end else
@@ -77,7 +77,7 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
             var
                 ProductoServicio: Record "Resource";
             begin
-                if ProductoServicio.Get("Producto Servicio") then
+                ifProductoServicio.Get("Producto Servicio") then
                     "Descripción producto" := ProductoServicio.Name;
             end;
         }

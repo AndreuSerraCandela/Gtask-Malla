@@ -8,21 +8,21 @@ tableextension 92103 Tareasusuarios extends "User Task"
         field(50000; Id_Tarea; Text[250])
         {
             Caption = 'Id_tarea';
-            DataClassification = ToBeClassified;
+            DataClassication = ToBeClassied;
         }
         field(50001; Supervisor; guid)
         {
             Caption = 'Supervisor';
-            DataClassification = ToBeClassified;
+            DataClassication = ToBeClassied;
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
 
 
         }
-        modify("Assigned To")
+        mody("Assigned To")
         {
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
         }
-        modify("User Task Group Assigned To")
+        mody("User Task Group Assigned To")
         {
             Caption = 'Categoría';
         }
@@ -35,12 +35,12 @@ tableextension 90109 Tareascomercial extends "To-do"
         field(50000; Id_Tarea; Text[250])
         {
             Caption = 'Id_tarea';
-            DataClassification = ToBeClassified;
+            DataClassication = ToBeClassied;
         }
         field(50001; Responsable; guid)
         {
             Caption = 'Responsable';
-            DataClassification = ToBeClassified;
+            DataClassication = ToBeClassied;
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
 
 
@@ -48,24 +48,24 @@ tableextension 90109 Tareascomercial extends "To-do"
         field(50002; Categoria; Code[20])
         {
             Caption = 'Categoría';
-            DataClassification = ToBeClassified;
+            DataClassication = ToBeClassied;
             TableRelation = "User Task Group"."Code";
         }
         field(50003; Departamento; Code[20])
         {
             Caption = 'Departamento';
-            DataClassification = ToBeClassified;
+            DataClassication = ToBeClassied;
             TableRelation = "Responsibility Center"."Code";
         }
 
 
 
     }
-    trigger OnAfterModify()
+    trigger OnAfterMody()
     var
         Gtastk: Codeunit GTask;
     begin
-        if ("Start Time" <> 0T) and (Id_Tarea = '') then
+        ("Start Time" <> 0T) and (Id_Tarea = '') then
             Gtastk.CrearTareaTodo(Rec);
     end;
 

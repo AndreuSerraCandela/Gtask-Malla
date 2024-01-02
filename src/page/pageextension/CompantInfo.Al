@@ -44,7 +44,7 @@ pageextension 92205 CompantInfoTask extends "Company Information"
     begin
         EmpPer := false;
         Application.SetRange("Company Name", CompanyName);
-        If Application.FindFirst() Then EmpPer := Application.BasicHR;
+        ifApplication.FindFirst() Then EmpPer := Application.BasicHR;
         rMem.SetRange("User Security ID", UserSecurityId());
         rMem.SetRange("Role ID", 'ESP');
         Permisos := rMem.FindFirst();
