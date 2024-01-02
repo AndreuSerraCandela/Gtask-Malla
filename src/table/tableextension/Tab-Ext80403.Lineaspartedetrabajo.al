@@ -12,32 +12,32 @@ tableextension 92403 "Lineas parte de trabajo" extends "Time Sheet Line"
         {
             OptionMembers = " ",Producto,Recurso;
             Caption = 'Tipo';
-            DataClassication = ToBeClassied;
+            DataClassification = ToBeClassified;
         }
         field(80004; No; Code[20])
         {
             Caption = 'No';
-            DataClassication = ToBeClassied;
-            TableRelation = (Tipo = CONST(" ")) "Standard Text"
+            DataClassification = ToBeClassified;
+            TableRelation = IF (Tipo = CONST(" ")) "Standard Text"
             ELSE
-            (Tipo = CONST(Producto)) Item WHERE(Blocked = CONST(false))
+            IF (Tipo = CONST(Producto)) Item WHERE(Blocked = CONST(false))
             ELSE
-            (Tipo = const(Recurso)) Resource;
+            if (Tipo = const(Recurso)) Resource;
         }
         field(80005; Descripcion; Text[80])
         {
             Caption = 'Descripcion';
-            DataClassication = ToBeClassied;
+            DataClassification = ToBeClassified;
         }
         field(80006; Unidad; Code[20])
         {
             Caption = 'Unidad';
-            DataClassication = ToBeClassied;
+            DataClassification = ToBeClassified;
         }
         field(80007; Cantidad; Decimal)
         {
             Caption = 'Cantidad';
-            DataClassication = ToBeClassied;
+            DataClassification = ToBeClassified;
         }
     }
 
