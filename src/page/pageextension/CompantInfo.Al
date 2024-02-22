@@ -1,7 +1,7 @@
 /// <summary>
 /// PageExtension CompantInfo (ID 80205) extends Record Company Information.
 /// </summary>
-pageextension 92205 CompantInfoTask extends "Company Information"
+pageextension 92151 CompantInfoTask extends "Company Information"
 {
     layout
     {
