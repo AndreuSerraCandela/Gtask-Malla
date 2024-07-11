@@ -9,6 +9,206 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
+    /// CrearTarea.
+    /// </summary>
+    /// <param name="Emplazamiento">VAR Record Resource.</param>
+    /// <param name="Tarea">Record "User Task".</param>
+
+    procedure CrearTareaMedios(var OrdenFijacion: Record "Cab Orden fijación"; Tarea: Record "User Task")
+    var
+        JsoonFormater: Codeunit "Json Text Reader/Writer";
+        RestApi: Codeunit Restapi;
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Pregunta: Text;
+        JSONMgt: Codeunit "JSON Management";
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        jSon: Text;
+        departament: Text;
+        service: Text;
+        category: Text;
+        usuario: Text;
+        GlSetup: Record "Company Information";
+        User: Record User;
+        Name: Text;
+        Value1: Text;
+        Id: Text;
+        a: Integer;
+        i: Integer;
+        Desde: Date;
+        Hasta: Date;
+        Dias: Integer;
+        Url: Text;
+        link: Text;
+        TipoIncidencia: Record "User Task Group";
+        wRecordRef: RecordRef;
+        Recurso: Record Resource;
+        resource: text;
+        responsable: Text;
+        Supervisor: Text;
+        Categoria: Text;
+        DetOrdenFijacion: Record "Orden fijación";
+        DocumentAttachment: Record "Document Attachment";
+        Bs64: Codeunit "Base64 Convert";
+        Base64Data: Text;
+        int: InStream;
+        DocumentStream: Outstream;
+        TempBlob: Codeunit "Temp Blob";
+    begin
+        departament := 'Taller';
+        service := 'Medios';
+        CrearDepartamnetoyServicio(departament, service);
+        DetOrdenFijacion.SetRange("Nº Orden", OrdenFijacion."Nº Orden");
+        If DetOrdenFijacion.FindFirst() then
+            repeat
+                If Recurso.Get(DetOrdenFijacion."Nº Recurso") then begin
+                    wRecordRef.Close();
+                    wRecordRef.Open(Database::Resource, false, CompanyName);
+                    wRecordRef.Get(Recurso.RecordId);
+                    resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+                    if resource = 'Error' then begin
+                        CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
+                        resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+                    end;
+                end;
+            until DetOrdenFijacion.Next() = 0;
+        Categoria := Tarea."User Task Group Assigned To";
+        if not TipoIncidencia.Get(Categoria) then begin
+            TipoIncidencia.Init();
+            TipoIncidencia."Code" := Categoria;
+            TipoIncidencia."Description" := Categoria;
+            TipoIncidencia.Insert();
+            Commit();
+        end;
+        wRecordRef.Close();
+        wRecordRef.Open(Database::"User Task Group", false, CompanyName);
+        wRecordRef.Get(TipoIncidencia.RecordId);
+        category := GetMaestro('category', Categoria, 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
+        if category = 'Error' then begin
+            CreaCategoria(Categoria, TipoIncidencia.RecordId, Database::"User Task Group", 'Malla Publicidad');
+            category := GetMaestro('category', 'Intervencion', 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
+        end;
+        wRecordRef.Close();
+        Tarea.CalcFields("Assigned To User Name");
+        User.Get(Tarea."Assigned To");
+
+        wRecordRef.Open(Database::User);
+        wRecordRef.Get(User.RecordId);
+        //juangarau y villena
+        responsable := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::User, '');
+        if usuario = 'Error' then Error('Usuario no existe');
+        User.Get(Tarea.Supervisor);
+        wRecordRef.Get(GlSetup.RecordId);
+        supervisor := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::"User", '');
+        wRecordRef.Close();
+        //     {
+        // "department": "604767e49fea4e001874b283",
+        // "expirationDate": {
+        //     "date": "2021-10-26T10:42:02",
+        //     "rule": null,
+        //     "custom": false
+        // },
+        JsonFormater.WriteStartObject('');
+        JsonFormater.WriteStringProperty('department', departament);
+        JsonFormater.WriteStartObject('expirationDate');
+        JsonFormater.WriteStringProperty('date', Format(Tarea."Due DateTime", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
+        JsonFormater.WriteNullProperty('rule');
+        JsonFormater.WriteBooleanProperty('custom', false);
+        JsonFormater.WriteEndObject();
+        Desde := Variant2Date(Tarea."Start DateTime");
+        Hasta := Variant2Date(Tarea."Due DateTime");
+        Dias := Hasta - Desde;
+        JsonFormater.WriteStringProperty('daysToPerform', Dias + 1);
+        JsonFormater.WriteStringProperty('description', Tarea.Title);
+        JsonFormater.WriteStringProperty('observation', Tarea.GetDescription);
+        JsonFormater.WriteStringProperty('service', service);
+        JsonFormater.WriteStringProperty('category', category);
+        JsonFormater.WriteStringProperty('user', responsable);
+        JsonFormater.WriteStringProperty('supervisor', supervisor);
+        JsonFormater.WriteStringProperty('priority', 'HIGH');
+        Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
+        JsonFormater.WriteStringProperty('link', Url);
+        JsonFormater.WriteEndObject();
+        Json := JsonFormater.GetJSonAsText();
+        Json := RestApi.RestApiToken('/task', RequestType::post, jSon);
+        IF Json <> '' THEN BEGIN
+            JSONMgt.InitializeCollection(Json);
+            a := JSONMgt.GetCollectionCount;
+            WHILE i < a DO BEGIN
+                JSONMgt.GetObjectFromCollectionByIndex(Json, i);
+                JSONMgt.InitializeObject(Json);
+                JSONMgt.ReadProperties();
+                WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
+                    CASE Name OF
+                        '_id':
+                            Id := Value1;
+                        'link':
+                            link := Value1;
+                    end;
+                end;
+                i += 1;
+                if link = Url then i := a;
+            end;
+        end;
+        if Id <> '' then begin
+            Tarea.Id_Tarea := Id;
+            Tarea.Modify();
+        end;
+        DocumentAttachment.SetRange("Table ID", Database::"User Task");
+        DocumentAttachment.SetRange("No.", Format(Tarea.ID));
+        Clear(JsonFormater);
+        //https://gtasks-api.deploy.malla.es/task/document/:id
+        //Id es el _id de la tarea.
+        //Tienes que pasar esta información:
+        //{
+        //establishment: "Id del establecimiento de malla"
+        //document: "base64"
+        //name: "nombre del documento"
+
+        If DocumentAttachment.FindFirst() then
+            repeat
+                Clear(JsonFormater);
+                JsonFormater.WriteStartObject('');
+                Base64Data := '';
+                JsonFormater.WriteStringProperty('establishment', '"6581485f67b6630011d83caf');
+                If DocumentAttachment."Document Reference ID".HasValue then begin
+                    DocumentAttachment."Document Reference ID".ExportStream(DocumentStream);
+                    TempBlob.CreateInStream(Int);
+                    Base64Data := Bs64.ToBase64(Int);
+                end else begin
+                    if DocumentAttachment."Url" <> '' then begin
+                        Base64Data := DocumentAttachment.ToBase64StringOcr(Url);
+
+                    end;
+                end;
+                JsonFormater.WriteStringProperty('document', Base64Data);
+                JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name");
+                JsonFormater.WriteEndObject();
+                Clear(RestApi);
+                Json := JsonFormater.GetJSonAsText();
+                Json := RestApi.RestApiToken('/task/document/' + Id, RequestType::post, jSon);
+            until DocumentAttachment.Next() = 0;
+
+
+        // "daysToPerform": 1,
+        // "description": "Tarea prueba",
+        // "observation": "Observaciones",
+        // "service": "60589ab346c40b00195cc993",
+        // "category": "6047b4ad8163a70018d3a2dd",
+        // "project": "604bf21602913a001899c173",
+        // "user": "60d31d7d0c6fff00183fe616",
+        // "supervisor": "60d348afd3c595001917760a",
+        // "priority": "HIGH",
+        // "commandOrder": [
+        //     "60d34a51d3c5950019177675",
+        //     "60d3485fd3c5950019177601",
+        //     "60d34a0dd3c5950019177665"
+        // ],
+        // "mentions": ["60d31d7d0c6fff00183fe616"]
+    end;
+
+
+    /// <summary>
     /// GetMaestro.
     /// </summary>
     /// <param name="Maestro">Text.</param>
@@ -178,7 +378,7 @@ codeunit 7001148 GTask
     /// <param name="Emplazamiento">VAR Record Resource.</param>
     /// <param name="Tarea">Record "User Task".</param>
 
-    procedure CrearTareaTecnico(var Emplazamiento: Record Resource; Tarea: Record "User Task")
+    procedure CrearTareaTecnico(var Recurso: Record Resource; Tarea: Record "User Task")
     var
         JsoonFormater: Codeunit "Json Text Reader/Writer";
         RestApi: Codeunit Restapi;
@@ -206,14 +406,13 @@ codeunit 7001148 GTask
         link: Text;
         TipoIncidencia: Record "User Task Group";
         wRecordRef: RecordRef;
-        Recurso: Record Resource;
         resource: text;
         responsable: Text;
         Supervisor: Text;
         Categoria: Text;
     begin
         departament := 'Taller';
-        service := 'Tecnico';
+        service := 'Técnico';
         CrearDepartamnetoyServicio(departament, service);
         wRecordRef.Close();
         wRecordRef.Open(Database::Resource, false, CompanyName);
@@ -526,7 +725,7 @@ codeunit 7001148 GTask
 
     begin
         GlSetup.Get();
-        if GlSetup."Url Task"='' Then Exit;
+        if GlSetup."Url Task" = '' Then Exit;
         Company.Get;
         departament := tarea.Departamento;
         service := 'Comercial';

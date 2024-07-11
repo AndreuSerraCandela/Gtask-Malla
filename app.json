@@ -3,6 +3,7 @@
   "name": "Task Malla",
   "publisher": "Andreu By Malla",
   "version": "1.0.0.0",
+  "target": "OnPrem",
   "brief": "",
   "description": "",
   "privacyStatement": "",
@@ -16,6 +17,12 @@
       "name": "Malla Wave 2.0",
       "publisher": "Grupo Malla by Andreu",
       "version": "2.1.5.7"
+    },
+    {
+      "id": "7a7d3479-e693-4f3d-8336-aac424523186",
+      "name": "Ocr Malla",
+      "publisher": "Andreu Serra",
+      "version": "2.1.2.7"
     }
   ],
   "screenshots": [],

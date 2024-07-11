@@ -15,12 +15,23 @@ tableextension 92103 Tareasusuarios extends "User Task"
             Caption = 'Supervisor';
             DataClassification = ToBeClassified;
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
-
+            ValidateTableRelation = false;
 
         }
+        field(50002; "No."; Code[20])
+        {
+
+        }
+        field(50003; "Line No."; Integer)
+        {
+
+        }
+
+
         modify("Assigned To")
         {
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
+
         }
         modify("User Task Group Assigned To")
         {
