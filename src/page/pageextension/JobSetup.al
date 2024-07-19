@@ -9,10 +9,11 @@ pageextension 92150 JobSetupTask extends "Jobs Setup"
         {
             group(Task)
             {
-                field("Responsable Taller"; Rec."Responsable Taller")
+                field("Crear Subtareas"; Rec."Crear subtareas")
                 {
                     ApplicationArea = All;
                 }
+
             }
         }
     }

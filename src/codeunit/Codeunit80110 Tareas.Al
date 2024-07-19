@@ -3,29 +3,113 @@
 /// </summary>
 codeunit 7001148 GTask
 {
+    var
+        Qwark: Option Ocr,Qwark;
+        LToken: Text;
+
     trigger OnRun()
     begin
 
     end;
 
+    procedure Token(): Text;
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Pregunta: Text;
+        JSONMgt: Codeunit "JSON Management";
+        JsonObjt: Codeunit "Json Text Reader/Writer";
+        Name: Text;
+        Value1: Text;
+        i: Integer;
+        a: Integer;
+        Json: Text;
+        Id: Text;
+        Link: Record "Data Migration Error";
+        IdLink: Integer;
+    begin
+        CompanyInfo.Get();
+        If LToken = '' Then
+            RestApi.RecuperarToken(CompanyInfo."Url Task", CompanyInfo."Usuario Task", CompanyInfo."PassWord Task", Ltoken, Qwark::Ocr);
+        exit(LToken);
+    end;
+    // procedure insertadocumento(Id_Task: Text; DocumentAttachment: Record "Document Attachment";UserTaskNo: Text)
+    // var
+    //     JsonFormater: Codeunit "Json Text Reader/Writer";
+    //     RestApi: Codeunit "Control Ocr";
+    //     CompanyInfo: Record "Company Information";
+    //     RequestType: Option Get,patch,put,post,delete;
+    //     Pregunta: Text;
+    //     JSONMgt: Codeunit "JSON Management";
+    //     JsonObjt: Codeunit "Json Text Reader/Writer";
+    //     Name: Text;
+    //     Value1: Text;
+    //     i: Integer;
+    //     a: Integer;
+    //     Json: Text;
+    //     Id: Text;
+    //     Link: Record "Data Migration Error";
+    //     IdLink: Integer;
+    //     Bs64: Codeunit "Base64 Convert";
+    //     Base64Data: Text;
+    //     int: InStream;
+    //     DocumentStream: Outstream;
+    //     TempBlob: Codeunit "Temp Blob";
+
+    // begin
+    //     DocumentAttachment.SetRange("Table ID", Database::"User Task");
+    //     DocumentAttachment.SetRange("No.", UserTaskNo);
+
+    //     //https://gtasks-api.deploy.malla.es/task/document/:id
+    //     //Id es el _id de la tarea.
+    //     //Tienes que pasar esta información:
+    //     //{
+    //     //establishment: "Id del establecimiento de malla"
+    //     //document: "base64"
+    //     //name: "nombre del documento"
+
+    //     If DocumentAttachment.FindFirst() then
+    //         repeat
+    //             Clear(JsonFormater);
+    //             JsonFormater.WriteStartObject('');
+    //             Base64Data := '';
+    //             JsonFormater.WriteStringProperty('establishment', '"6581485f67b6630011d83caf');
+    //             If DocumentAttachment."Document Reference ID".HasValue then begin
+    //                 DocumentAttachment."Document Reference ID".ExportStream(DocumentStream);
+    //                 TempBlob.CreateInStream(Int);
+    //                 Base64Data := Bs64.ToBase64(Int);
+    //             end else begin
+    //                 if DocumentAttachment."Url" <> '' then begin
+    //                     Base64Data := DocumentAttachment.ToBase64StringOcr(DocumentAttachment.Url);
+
+    //                 end;
+    //             end;
+    //             JsonFormater.WriteStringProperty('document', Base64Data);
+    //             JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name");
+    //             JsonFormater.WriteEndObject();
+    //             Clear(RestApi);
+    //             Json := JsonFormater.GetJSonAsText();
+    //             CompanyInfo.Get();
+    //             Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/document/' + Id, Token(), RequestType::post, jSon);
+    //         until DocumentAttachment.Next() = 0;
+    // end;    
     /// <summary>
     /// CrearTarea.
     /// </summary>
     /// <param name="Emplazamiento">VAR Record Resource.</param>
     /// <param name="Tarea">Record "User Task".</param>
 
-    procedure CrearTareaMedios(var OrdenFijacion: Record "Cab Orden fijación"; Tarea: Record "User Task")
+    procedure CrearTareaFijacion(var OrdenFijacion: Record "Cab Orden fijación"; Tarea: Record "User Task")
     var
         JsoonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
         Pregunta: Text;
         JSONMgt: Codeunit "JSON Management";
         JsonFormater: Codeunit "Json Text Reader/Writer";
         jSon: Text;
-        departament: Text;
-        service: Text;
         category: Text;
         usuario: Text;
         GlSetup: Record "Company Information";
@@ -54,9 +138,15 @@ codeunit 7001148 GTask
         int: InStream;
         DocumentStream: Outstream;
         TempBlob: Codeunit "Temp Blob";
+        departament: Text;
+        service: Text;
+        Job: Record Job;
+        JobNo: Text;
+
+        JobsSetup: Record "Jobs Setup";
     begin
-        departament := 'Taller';
-        service := 'Medios';
+        departament := Tarea.Departamento;
+        service := Tarea.Servicio;
         CrearDepartamnetoyServicio(departament, service);
         DetOrdenFijacion.SetRange("Nº Orden", OrdenFijacion."Nº Orden");
         If DetOrdenFijacion.FindFirst() then
@@ -95,12 +185,26 @@ codeunit 7001148 GTask
         wRecordRef.Open(Database::User);
         wRecordRef.Get(User.RecordId);
         //juangarau y villena
-        responsable := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::User, '');
-        if usuario = 'Error' then Error('Usuario no existe');
+        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
+        if responsable = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
         User.Get(Tarea.Supervisor);
-        wRecordRef.Get(GlSetup.RecordId);
-        supervisor := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::"User", '');
+        wRecordRef.Get(User.RecordId);
+        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
+        if Supervisor = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
+        //owner
+        User.Get(UserSecurityId());
+        wRecordRef.Get(User.RecordId);
+        usuario := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
+        if usuario = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
         wRecordRef.Close();
+        Job.Get(Tarea."Job No.");
+        wRecordRef.Open(Database::Job);
+        wRecordRef.Get(Job.RecordId);
+        JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+        if JobNo = 'Error' then begin
+            CreaProyecto(Job, Job.RecordId, Database::Job);
+            JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+        end;
         //     {
         // "department": "604767e49fea4e001874b283",
         // "expirationDate": {
@@ -111,26 +215,39 @@ codeunit 7001148 GTask
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('department', departament);
         JsonFormater.WriteStartObject('expirationDate');
-        JsonFormater.WriteStringProperty('date', Format(Tarea."Due DateTime", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
+        JsonFormater.WriteStringProperty('date', Hora(Tarea."Start DateTime"));
         JsonFormater.WriteNullProperty('rule');
         JsonFormater.WriteBooleanProperty('custom', false);
         JsonFormater.WriteEndObject();
         Desde := Variant2Date(Tarea."Start DateTime");
+        if Desde = 0D then begin
+            Tarea."Start DateTime" := CurrentDateTime;
+            Desde := Variant2Date(Tarea."Start DateTime");
+        end;
         Hasta := Variant2Date(Tarea."Due DateTime");
+        //LO MISMO PARA HASTA
+        if Hasta = 0D then begin
+            Tarea."Due DateTime" := CurrentDateTime;
+            Hasta := Variant2Date(Tarea."Due DateTime");
+        end;
         Dias := Hasta - Desde;
         JsonFormater.WriteStringProperty('daysToPerform', Dias + 1);
         JsonFormater.WriteStringProperty('description', Tarea.Title);
         JsonFormater.WriteStringProperty('observation', Tarea.GetDescription);
         JsonFormater.WriteStringProperty('service', service);
         JsonFormater.WriteStringProperty('category', category);
+        JsonFormater.WriteStringProperty('project', JobNo);
         JsonFormater.WriteStringProperty('user', responsable);
         JsonFormater.WriteStringProperty('supervisor', supervisor);
+        //owner
+        JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
         JsonFormater.WriteStringProperty('link', Url);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/task', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url task" + 'task', Token(), RequestType::post, jSon);
         IF Json <> '' THEN BEGIN
             JSONMgt.InitializeCollection(Json);
             a := JSONMgt.GetCollectionCount;
@@ -155,7 +272,7 @@ codeunit 7001148 GTask
             Tarea.Modify();
         end;
         DocumentAttachment.SetRange("Table ID", Database::"User Task");
-        DocumentAttachment.SetRange("No.", Format(Tarea.ID));
+        DocumentAttachment.SetRange("No.", Tarea."No.");
         Clear(JsonFormater);
         //https://gtasks-api.deploy.malla.es/task/document/:id
         //Id es el _id de la tarea.
@@ -170,25 +287,271 @@ codeunit 7001148 GTask
                 Clear(JsonFormater);
                 JsonFormater.WriteStartObject('');
                 Base64Data := '';
-                JsonFormater.WriteStringProperty('establishment', '"6581485f67b6630011d83caf');
+                JsonFormater.WriteStringProperty('establishment', '6581485f67b6630011d83caf');
                 If DocumentAttachment."Document Reference ID".HasValue then begin
                     DocumentAttachment."Document Reference ID".ExportStream(DocumentStream);
                     TempBlob.CreateInStream(Int);
                     Base64Data := Bs64.ToBase64(Int);
                 end else begin
                     if DocumentAttachment."Url" <> '' then begin
-                        Base64Data := DocumentAttachment.ToBase64StringOcr(Url);
+                        Base64Data := DocumentAttachment.ToBase64StringOcr(DocumentAttachment.Url);
 
                     end;
                 end;
                 JsonFormater.WriteStringProperty('document', Base64Data);
-                JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name");
+                JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name" + '.' + DocumentAttachment."File Extension");
                 JsonFormater.WriteEndObject();
                 Clear(RestApi);
                 Json := JsonFormater.GetJSonAsText();
-                Json := RestApi.RestApiToken('/task/document/' + Id, RequestType::post, jSon);
+                CompanyInfo.Get();
+                Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/document/' + Id, Token(), RequestType::put, jSon);
             until DocumentAttachment.Next() = 0;
+        JobsSetup.Get();
+        If JobsSetup."Crear subtareas" then
+            CrearSubTareaFijacion(OrdenFijacion, Tarea)
+        else
+            CreateParte(Tarea);
 
+
+        // "daysToPerform": 1,
+        // "description": "Tarea prueba",
+        // "observation": "Observaciones",
+        // "service": "60589ab346c40b00195cc993",
+        // "category": "6047b4ad8163a70018d3a2dd",
+        // "project": "604bf21602913a001899c173",
+        // "user": "60d31d7d0c6fff00183fe616",
+        // "supervisor": "60d348afd3c595001917760a",
+        // "priority": "HIGH",
+        // "commandOrder": [
+        //     "60d34a51d3c5950019177675",
+        //     "60d3485fd3c5950019177601",
+        //     "60d34a0dd3c5950019177665"
+        // ],
+        // "mentions": ["60d31d7d0c6fff00183fe616"]
+    end;
+
+    procedure CrearSubTareaFijacion(var OrdenFijacion: Record "Cab Orden fijación"; MTarea: Record "User Task")
+    var
+        Tarea: Record "User Task";
+        JsoonFormater: Codeunit "Json Text Reader/Writer";
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Pregunta: Text;
+        JSONMgt: Codeunit "JSON Management";
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        jSon: Text;
+        category: Text;
+        usuario: Text;
+        GlSetup: Record "Company Information";
+        User: Record User;
+        Name: Text;
+        Value1: Text;
+        Id: Text;
+        a: Integer;
+        i: Integer;
+        Desde: Date;
+        Hasta: Date;
+        Dias: Integer;
+        Url: Text;
+        link: Text;
+        TipoIncidencia: Record "User Task Group";
+        wRecordRef: RecordRef;
+        Recurso: Record Resource;
+        resource: text;
+        responsable: Text;
+        Supervisor: Text;
+        Categoria: Text;
+        DetOrdenFijacion: Record "Orden fijación";
+        DocumentAttachment: Record "Document Attachment";
+        Bs64: Codeunit "Base64 Convert";
+        Base64Data: Text;
+        int: InStream;
+        DocumentStream: Outstream;
+        TempBlob: Codeunit "Temp Blob";
+        departament: Text;
+        service: Text;
+        UsuaariosxTarea: Record "User Task Group Member";
+        Job: Record Job;
+        JobNo: Text;
+
+    begin
+        if Tarea.FindLast() Then a := Tarea."Id" + 1;
+        Tarea := MTarea;
+        Tarea."Id" := a;
+        Tarea."Parent Id" := MTarea."Id";
+        Tarea.Supervisor := MTarea."Assigned To";
+        UsuaariosxTarea.SetRange("User Task Group Code", MTarea."User Task Group Assigned To");
+        UsuaariosxTarea.SetRange(Responsable, false);
+        UsuaariosxTarea.SetRange(Supervisor, false);
+        UsuaariosxTarea.FindFirst();
+        Tarea."Assigned To" := UsuaariosxTarea."User Security ID";
+        Tarea.Insert();
+        departament := Tarea.Departamento;
+        service := Tarea.Servicio;
+        CrearDepartamnetoyServicio(departament, service);
+        DetOrdenFijacion.SetRange("Nº Orden", OrdenFijacion."Nº Orden");
+        If DetOrdenFijacion.FindFirst() then
+            repeat
+                If Recurso.Get(DetOrdenFijacion."Nº Recurso") then begin
+                    wRecordRef.Close();
+                    wRecordRef.Open(Database::Resource, false, CompanyName);
+                    wRecordRef.Get(Recurso.RecordId);
+                    resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+                    if resource = 'Error' then begin
+                        CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
+                        resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+                    end;
+                end;
+            until DetOrdenFijacion.Next() = 0;
+        Categoria := Tarea."User Task Group Assigned To";
+        if not TipoIncidencia.Get(Categoria) then begin
+            TipoIncidencia.Init();
+            TipoIncidencia."Code" := Categoria;
+            TipoIncidencia."Description" := Categoria;
+            TipoIncidencia.Insert();
+            Commit();
+        end;
+        wRecordRef.Close();
+        wRecordRef.Open(Database::"User Task Group", false, CompanyName);
+        wRecordRef.Get(TipoIncidencia.RecordId);
+        category := GetMaestro('category', Categoria, 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
+        if category = 'Error' then begin
+            CreaCategoria(Categoria, TipoIncidencia.RecordId, Database::"User Task Group", 'Malla Publicidad');
+            category := GetMaestro('category', 'Intervencion', 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
+        end;
+        wRecordRef.Close();
+        Tarea.CalcFields("Assigned To User Name");
+        User.Get(Tarea."Assigned To");
+
+        wRecordRef.Open(Database::User);
+        wRecordRef.Get(User.RecordId);
+        //juangarau y villena
+        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
+        if responsable = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
+        User.Get(Tarea.Supervisor);
+        wRecordRef.Get(User.RecordId);
+        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
+        if Supervisor = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
+        //owner
+        User.Get(MTarea.Supervisor);
+        wRecordRef.Get(User.RecordId);
+        usuario := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
+        if usuario = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
+        wRecordRef.Close();
+        wRecordRef.Close();
+        Job.Get(Tarea."Job No.");
+        wRecordRef.Open(Database::Job);
+        wRecordRef.Get(Job.RecordId);
+        JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+        if JobNo = 'Error' then begin
+            CreaProyecto(Job, Job.RecordId, Database::Job);
+            JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+        end;
+        //     {
+        // "department": "604767e49fea4e001874b283",
+        // "expirationDate": {
+        //     "date": "2021-10-26T10:42:02",
+        //     "rule": null,
+        //     "custom": false
+        // },
+        JsonFormater.WriteStartObject('');
+        JsonFormater.WriteStringProperty('department', departament);
+        JsonFormater.WriteStartObject('expirationDate');
+        JsonFormater.WriteStringProperty('date', Hora(Tarea."Start DateTime"));
+        JsonFormater.WriteNullProperty('rule');
+        JsonFormater.WriteBooleanProperty('custom', false);
+        JsonFormater.WriteEndObject();
+        Desde := Variant2Date(Tarea."Start DateTime");
+        if Desde = 0D then begin
+            Tarea."Start DateTime" := CurrentDateTime;
+            Desde := Variant2Date(Tarea."Start DateTime");
+        end;
+        Hasta := Variant2Date(Tarea."Due DateTime");
+        //LO MISMO PARA HASTA
+        if Hasta = 0D then begin
+            Tarea."Due DateTime" := CurrentDateTime;
+            Hasta := Variant2Date(Tarea."Due DateTime");
+        end;
+        Dias := Hasta - Desde;
+        JsonFormater.WriteStringProperty('taskMother', MTarea."Id_tarea");
+        JsonFormater.WriteStringProperty('daysToPerform', Dias + 1);
+        JsonFormater.WriteStringProperty('description', Tarea.Title);
+        JsonFormater.WriteStringProperty('observation', Tarea.GetDescription);
+        JsonFormater.WriteStringProperty('service', service);
+        JsonFormater.WriteStringProperty('category', category);
+        JsonFormater.WriteStringProperty('user', responsable);
+        JsonFormater.WriteStringProperty('supervisor', supervisor);
+        //owner
+        JsonFormater.WriteStringProperty('owner', usuario);
+        JsonFormater.WriteStringProperty('project', JobNo);
+        JsonFormater.WriteStringProperty('priority', 'HIGH');
+        Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
+        JsonFormater.WriteStringProperty('link', Url);
+        JsonFormater.WriteEndObject();
+        Json := JsonFormater.GetJSonAsText();
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url task" + 'task', Token(), RequestType::post, jSon);
+        IF Json <> '' THEN BEGIN
+            JSONMgt.InitializeCollection(Json);
+            a := JSONMgt.GetCollectionCount;
+            WHILE i < a DO BEGIN
+                JSONMgt.GetObjectFromCollectionByIndex(Json, i);
+                JSONMgt.InitializeObject(Json);
+                JSONMgt.ReadProperties();
+                WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
+                    CASE Name OF
+                        '_id':
+                            Id := Value1;
+                        'link':
+                            link := Value1;
+                    end;
+                end;
+                i += 1;
+                if link = Url then i := a;
+            end;
+        end;
+        if Id <> '' then begin
+            Tarea.Id_Tarea := Id;
+            Tarea.Modify();
+        end;
+
+        DocumentAttachment.SetRange("Table ID", Database::"User Task");
+        DocumentAttachment.SetRange("No.", MTarea."No.");
+        Clear(JsonFormater);
+        //https://gtasks-api.deploy.malla.es/task/document/:id
+        //Id es el _id de la tarea.
+        //Tienes que pasar esta información:
+        //{
+        //establishment: "Id del establecimiento de malla"
+        //document: "base64"
+        //name: "nombre del documento"
+
+        If DocumentAttachment.FindFirst() then
+            repeat
+                Clear(JsonFormater);
+                JsonFormater.WriteStartObject('');
+                Base64Data := '';
+                JsonFormater.WriteStringProperty('establishment', '6581485f67b6630011d83caf');
+                If DocumentAttachment."Document Reference ID".HasValue then begin
+                    DocumentAttachment."Document Reference ID".ExportStream(DocumentStream);
+                    TempBlob.CreateInStream(Int);
+                    Base64Data := Bs64.ToBase64(Int);
+                end else begin
+                    if DocumentAttachment."Url" <> '' then begin
+                        Base64Data := DocumentAttachment.ToBase64StringOcr(DocumentAttachment.Url);
+
+                    end;
+                end;
+                JsonFormater.WriteStringProperty('document', Base64Data);
+                JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name" + '.' + DocumentAttachment."File Extension");
+                JsonFormater.WriteEndObject();
+                Clear(RestApi);
+                Json := JsonFormater.GetJSonAsText();
+                CompanyInfo.Get();
+                Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/document/' + Id, Token(), RequestType::put, jSon);
+            until DocumentAttachment.Next() = 0;
+        CreateParte(Tarea);
 
         // "daysToPerform": 1,
         // "description": "Tarea prueba",
@@ -220,8 +583,7 @@ codeunit 7001148 GTask
     /// <returns>Return value of type Text.</returns>
     procedure GetMaestro(Maestro: Text; Descripcion: Text; Campo: Text; var wRecordRef: RecordRef; Tabla: Integer; Company: Text): Text
     var
-        RestApi: Codeunit Restapi;
-        Token: Text;
+        RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
         Pregunta: Text;
@@ -241,11 +603,15 @@ codeunit 7001148 GTask
         end;
         Link.SetRange("Source Staging Table Record ID", wRecordRef.RecordId);
         Link.SetRange("Destination Table ID", Tabla);
-        if Link.FindFirst() Then exit(Link."Migration Type");
+        if Link.FindFirst() Then begin
+            if UpperCase(Link."Migration Type") <> 'ERROR' then
+                exit(Link."Migration Type");
+            link.Delete();
+        end;
         CompanyInfo.Get();
-        RestApi.RecuperarToken(CompanyInfo."Url Task", CompanyInfo."Usuario Task", CompanyInfo."PassWord Task", CompanyInfo."Token Task");
-        Token := CompanyInfo."Token Task";
-        Json := RestApi.RestApiToken('/' + Maestro, RequestType::Get, '');
+
+
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + Maestro, Token(), RequestType::Get, '');
         JSONMgt.InitializeCollection(Json);
         a := JSONMgt.GetCollectionCount;
         If a = 0 Then exit('Error');
@@ -267,6 +633,13 @@ codeunit 7001148 GTask
                                 end;
                             end;
                         'username':
+                            begin
+                                if Value1 = Descripcion then begin
+                                    if InsertLink(wRecordRef.RecordId, Tabla, Id, Company) then
+                                        exit(Id)
+                                end;
+                            end;
+                        'email':
                             begin
                                 if Value1 = Descripcion then begin
                                     if InsertLink(wRecordRef.RecordId, Tabla, Id, Company) then
@@ -295,7 +668,7 @@ codeunit 7001148 GTask
     procedure GetNombreMaestro(Maestro: Text; Id: Text; Campo: Text; Tabla: Integer; NCampo: Integer; var tRecorId: RecordId; Company: Text): Boolean
     var
         Link: Record "Data Migration Error";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         Token: Text;
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
@@ -320,9 +693,7 @@ codeunit 7001148 GTask
         end;
         b := -1;
         CompanyInfo.Get();
-        RestApi.RecuperarToken(CompanyInfo."Url Task", CompanyInfo."Usuario Task", CompanyInfo."PassWord Task", CompanyInfo."Token Task");
-        Token := CompanyInfo."Token Task";
-        Json := RestApi.RestApiToken('/' + Maestro, RequestType::Get, '');
+        Json := RestApi.RestApiToken(CompanyInfo."Url task" + Maestro, Token(), RequestType::Get, '');
         JSONMgt.InitializeCollection(Json);
         a := JSONMgt.GetCollectionCount;
 
@@ -381,7 +752,7 @@ codeunit 7001148 GTask
     procedure CrearTareaTecnico(var Recurso: Record Resource; Tarea: Record "User Task")
     var
         JsoonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
         Pregunta: Text;
@@ -444,11 +815,11 @@ codeunit 7001148 GTask
 
         wRecordRef.Open(Database::User);
         wRecordRef.Get(User.RecordId);
-        responsable := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::User, '');
+        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
         if usuario = 'Error' then Error('Usuario no existe');
         User.Get(Tarea.Supervisor);
         wRecordRef.Get(GlSetup.RecordId);
-        supervisor := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::"User", '');
+        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
         wRecordRef.Close();
         //     {
         // "department": "604767e49fea4e001874b283",
@@ -460,7 +831,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('department', departament);
         JsonFormater.WriteStartObject('expirationDate');
-        JsonFormater.WriteStringProperty('date', Format(Tarea."Due DateTime", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
+        JsonFormater.WriteStringProperty('date', Hora(Tarea."Due DateTime"));
         JsonFormater.WriteNullProperty('rule');
         JsonFormater.WriteBooleanProperty('custom', false);
         JsonFormater.WriteEndObject();
@@ -479,7 +850,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('link', Url);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/task', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task', Token(), RequestType::post, jSon);
         IF Json <> '' THEN BEGIN
             JSONMgt.InitializeCollection(Json);
             a := JSONMgt.GetCollectionCount;
@@ -527,7 +899,7 @@ codeunit 7001148 GTask
     // procedure CrearTareaServiceItem(var ProductoServicio: Record "Service Item"; Tarea: Record "Service Header")
     // var
     //     JsoonFormater: Codeunit "Json Text Reader/Writer";
-    //     RestApi: Codeunit Restapi;
+    //     RestApi: Codeunit "Control Ocr";
     //     CompanyInfo: Record "Company Information";
     //     RequestType: Option Get,patch,put,post,delete;
     //     Pregunta: Text;
@@ -642,7 +1014,7 @@ codeunit 7001148 GTask
     //     JsonFormater.WriteStringProperty('link', Url);
     //     JsonFormater.WriteEndObject();
     //     Json := JsonFormater.GetJSonAsText();
-    //     Json := RestApi.RestApiToken('/task', RequestType::post, jSon);
+    //     Json := RestApi.RestApiToken(CompanyInfo."Url Gtask"+'task', RequestType::post, jSon,Qwark::Ocr);
     //     IF Json <> '' THEN BEGIN
     //         JSONMgt.InitializeCollection(Json);
     //         a := JSONMgt.GetCollectionCount;
@@ -690,7 +1062,7 @@ codeunit 7001148 GTask
     procedure CrearTareaTodo(var Tarea: Record "To-do")
     var
         JsoonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
         Pregunta: Text;
@@ -746,11 +1118,10 @@ codeunit 7001148 GTask
             Client := GetMaestro('client', Tarea."Contact No.", 'name', wRecordRef, Database::Contact, '');
         end;
         wRecordRef.Close();
-        ;
-        if not TipoIncidencia.Get(Format(Tarea.Type)) then begin
+        if not TipoIncidencia.Get(Tarea.Categoria) then begin
             TipoIncidencia.Init();
-            TipoIncidencia."Code" := Format(Tarea.Type);
-            TipoIncidencia."Description" := Format(Tarea.Type);
+            TipoIncidencia."Code" := Tarea.Categoria;
+            TipoIncidencia."Description" := Tarea.Categoria;
             TipoIncidencia.Insert();
             Commit();
         end;
@@ -781,7 +1152,7 @@ codeunit 7001148 GTask
         // end;
         wRecordRef.Open(Database::User);
         wRecordRef.Get(User.RecordId);
-        supervisor := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::User, '');
+        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
         if supervisor = 'Error' then Error('Usuario no existe');
         wRecordRef.Close();
         User.Get(Tarea.Responsable);
@@ -796,7 +1167,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('department', departament);
         JsonFormater.WriteStartObject('expirationDate');
-        JsonFormater.WriteStringProperty('date', Format(CreateDateTime(Tarea.Date, Tarea."Start Time"), 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'));
+        JsonFormater.WriteStringProperty('date', Hora(CreateDateTime(Tarea.Date, Tarea."Start Time")));
         JsonFormater.WriteNullProperty('rule');
         JsonFormater.WriteBooleanProperty('custom', false);
         JsonFormater.WriteEndObject();
@@ -814,7 +1185,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('link', Url);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/task', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task', Token(), RequestType::post, jSon);
         IF Json <> '' THEN BEGIN
             JSONMgt.InitializeCollection(Json);
             a := JSONMgt.GetCollectionCount;
@@ -863,7 +1235,7 @@ codeunit 7001148 GTask
     procedure CrearTareaJob(var Job: Record job; Tarea: Record "User Task")
     var
         JsoonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
         Pregunta: Text;
@@ -950,10 +1322,10 @@ codeunit 7001148 GTask
         //     CreaServicio(ProductoServicio, ProductoServicio.RecordId, Database::Resource);
         //     service := GetMaestro('service', ProductoServicio.Description, 'name', wRecordRef, Database::Resource);
         // end;
-        Proyect := GetMaestro('proyect', Job.Description, 'name', wRecordRef, Database::Job, '');
+        Proyect := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
         if Proyect = 'Error' then begin
             CreaProyecto(Job, Job.RecordId, Database::Job);
-            Proyect := GetMaestro('proyect', Job.Description, 'name', wRecordRef, Database::Job, '');
+            Proyect := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
         end;
         wRecordRef.Close();
 
@@ -1006,11 +1378,11 @@ codeunit 7001148 GTask
 
         wRecordRef.Open(Database::User);
         wRecordRef.Get(User.RecordId);
-        responsable := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::User, '');
+        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
         if usuario = 'Error' then Error('Usuario no existe');
         User.Get(Tarea.Supervisor);
         wRecordRef.Get(GlSetup.RecordId);
-        supervisor := GetMaestro('users', User."Full Name", 'username', wRecordRef, Database::"User", '');
+        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
         wRecordRef.Close();
         //     {
         // "department": "604767e49fea4e001874b283",
@@ -1022,7 +1394,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('department', departament);
         JsonFormater.WriteStartObject('expirationDate');
-        JsonFormater.WriteStringProperty('date', Format(Tarea."Created DateTime", 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'));
+        JsonFormater.WriteStringProperty('date', Hora(Tarea."Created DateTime"));
         JsonFormater.WriteNullProperty('rule');
         JsonFormater.WriteBooleanProperty('custom', false);
         JsonFormater.WriteEndObject();
@@ -1030,7 +1402,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('daysToPerform', Dias + 1);
         JsonFormater.WriteStringProperty('description', Tarea.Description);
         JsonFormater.WriteStringProperty('observation', '');
-        JsonFormater.WriteStringProperty('proyect', Proyect);
+        JsonFormater.WriteStringProperty('project', Proyect);
         JsonFormater.WriteStringProperty('client', Client);
         JsonFormater.WriteStringProperty('category', category);
         JsonFormater.WriteStringProperty('user', usuario);
@@ -1040,7 +1412,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('link', Url);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/task', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url task" + 'task', Token(), RequestType::post, jSon);
         IF Json <> '' THEN BEGIN
             JSONMgt.InitializeCollection(Json);
             a := JSONMgt.GetCollectionCount;
@@ -1091,19 +1464,21 @@ codeunit 7001148 GTask
     procedure CreaDepartamento(Valor: Text; tRecordId: RecordId; Tabla: Integer; Company: Text)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Valor);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/department', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'department', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1127,20 +1502,22 @@ codeunit 7001148 GTask
     procedure CreaServicio(Valor: Text; tRecordId: RecordId; Tabla: Integer; Company: Text)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Valor);
         JsonFormater.WriteStringProperty('description', Valor);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/service', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'service', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1165,19 +1542,21 @@ codeunit 7001148 GTask
     procedure CreaCategoria(Valor: Text; tRecordId: RecordId; Tabla: Integer; Company: Text)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Valor);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/category', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'category', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1200,13 +1579,14 @@ codeunit 7001148 GTask
     procedure CreaProveedor(Proveedor: Record Vendor; tRecordId: RecordId; Tabla: Integer)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Proveedor.Name);
@@ -1214,7 +1594,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('vatRegisterNO', Proveedor."VAT Registration No.");
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/provider', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'provider', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1236,13 +1617,14 @@ codeunit 7001148 GTask
     procedure CreaCliente(Customer: Record Customer; tRecordId: RecordId; Tabla: Integer)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Customer.Name);
@@ -1250,7 +1632,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('vatRegisterNO', Customer."VAT Registration No.");
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/client', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'client', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1273,13 +1656,14 @@ codeunit 7001148 GTask
     procedure CreaContacto(Customer: Record Contact; tRecordId: RecordId; Tabla: Integer)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Customer.Name);
@@ -1287,7 +1671,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('vatRegisterNO', Customer."VAT Registration No.");
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/client', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'client', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1309,19 +1694,21 @@ codeunit 7001148 GTask
     procedure CreaProducto(Item: Record Item; tRecordId: RecordId; Tabla: Integer)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', item.Description);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/product', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'product', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1343,19 +1730,21 @@ codeunit 7001148 GTask
     procedure CreaRecurso(Recurso: Record Resource; tRecordId: RecordId; Tabla: Integer)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Link: Record "Data Migration Error";
         Name: Text;
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
         JsonFormater.WriteStringProperty('name', Recurso.Name);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/resource', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'resource', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1376,7 +1765,7 @@ codeunit 7001148 GTask
     // procedure CreaProductoServicio(ProductoServicio: Record Resource; tRecordId: RecordId; Tabla: Integer; Company: Text)
     // var
     //     JsonFormater: Codeunit "Json Text Reader/Writer";
-    //     RestApi: Codeunit Restapi;
+    //     RestApi: Codeunit "Control Ocr";
     //     jSon: Text;
     //     RequestType: Option Get,patch,put,post,delete;
     //     Client: Text;
@@ -1450,7 +1839,8 @@ codeunit 7001148 GTask
     //     JsonFormater.WriteStringProperty('startDate', Format(ProductoServicio."Warranty Starting Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
     //     JsonFormater.WriteEndObject();
     //     Json := JsonFormater.GetJSonAsText();
-    //     Json := RestApi.RestApiToken('/service', RequestType::post, jSon);
+    //     CompanyInfo.Get();
+    //     Json := RestApi.RestApiToken(CompanyInfo."Url Task"+'/service', RequestType::post, jSon,Qwark::Ocr);
     //     JSONMgt.InitializeObject(Json);
     //     JSONMgt.ReadProperties();
     //     WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1472,7 +1862,7 @@ codeunit 7001148 GTask
     procedure CreaProyecto(Job: Record Job; tRecordId: RecordId; Tabla: Integer)
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         jSon: Text;
         RequestType: Option Get,patch,put,post,delete;
         Client: Text;
@@ -1486,6 +1876,7 @@ codeunit 7001148 GTask
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
         wRecordRef: RecordRef;
+        CompanyInfo: Record "Company Information";
     begin
         //       "_id": "60589ab346c40b00195cc993",
         //     "establishment": "604754af75efa40018027f62",
@@ -1526,7 +1917,8 @@ codeunit 7001148 GTask
         // JsonFormater.WriteStringProperty('startDate', Format(ProductoServicio."Warranty Starting Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
-        Json := RestApi.RestApiToken('/proyect', RequestType::post, jSon);
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'project', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1542,7 +1934,7 @@ codeunit 7001148 GTask
     // procedure CreaServicioServiceItem(ProductoServicio: Record "Service Item"; tRecordId: RecordId; Tabla: Integer)
     // var
     //     JsonFormater: Codeunit "Json Text Reader/Writer";
-    //     RestApi: Codeunit Restapi;
+    //     RestApi: Codeunit "Control Ocr";
     //     jSon: Text;
     //     RequestType: Option Get,patch,put,post,delete;
     //     Client: Text;
@@ -1616,7 +2008,8 @@ codeunit 7001148 GTask
     //     JsonFormater.WriteStringProperty('startDate', Format(ProductoServicio."Warranty Starting Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
     //     JsonFormater.WriteEndObject();
     //     Json := JsonFormater.GetJSonAsText();
-    //     Json := RestApi.RestApiToken('/service', RequestType::post, jSon);
+    //     CompanyInfo.Get();
+    //     Json := RestApi.RestApiToken(CompanyInfo."Url Task"+'service', RequestType::post, jSon,Qwark::Ocr);
     //     JSONMgt.InitializeObject(Json);
     //     JSONMgt.ReadProperties();
     //     WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
@@ -1634,7 +2027,7 @@ codeunit 7001148 GTask
     /// </summary>
     procedure GetPartes()
     var
-        RestApi: Codeunit Restapi;
+        RestApi: Codeunit "Control Ocr";
         Token: Text;
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
@@ -1667,9 +2060,7 @@ codeunit 7001148 GTask
         wRecordRef: recordref;
     begin
         CompanyInfo.Get();
-        RestApi.RecuperarToken(CompanyInfo."Url Task", CompanyInfo."Usuario Task", CompanyInfo."PassWord Task", CompanyInfo."Token Task");
-        Token := CompanyInfo."Token Task";
-        Json := RestApi.RestApiToken('/workorder', RequestType::Get, '');
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'workorder', Token(), RequestType::Get, '');
         JSONMgt.InitializeCollection(Json);
         a := JSONMgt.GetCollectionCount;
         If a = 0 Then exit;
@@ -1796,6 +2187,121 @@ codeunit 7001148 GTask
 
     end;
 
+    procedure CreateParte(Var Task: Record "User Task")
+    var
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        RestApi: Codeunit "Control Ocr";
+        jSon: Text;
+        RequestType: Option Get,patch,put,post,delete;
+        Link: Record "Data Migration Error";
+        Name: Text;
+        Value1: Text;
+        JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
+        Job: Record Job;
+        Proyecto: Text;
+        wRecordRef: RecordRef;
+        Customer: Record Customer;
+        Cliente: Text;
+        service: Text;
+        workService: Record "Work Center";
+        OrdenFijajon: Record "Orden fijación";
+        NOrden: Integer;
+        Resource: Record Resource;
+        Recursos: Text;
+    begin
+        //      {
+        //     "lines": [
+        //         {
+        //             "resourceOrProduct": "6697a6bcbee4b30014a0007a",
+        //             "unit": "1",
+        //             "quantity": 1,
+        //             "description": "Fijar"
+        //         }
+        //     ],
+        //     "_id": "6698e8eebee4b30014a025ac",
+        //     "client": "6698e8a7bee4b30014a025a5",
+        //     "task": "6698c57dbee4b30014a016c3",
+        //     "service": "65437c1cdbb75c00181787aa",
+        //     "project": "665843febee4b300149dabe9",
+        //     "startDate": "2024-07-18T10:05:10.073Z",
+        //     "endDate": "2024-07-18T10:05:14.474Z",
+        //     "establishment": "6581485f67b6630011d83caf",
+        //     "createdAt": "2024-07-18T10:05:34.616Z",
+        //     "updatedAt": "2024-07-18T10:05:34.616Z",
+        //     "__v": 0
+        // }
+        JsonFormater.WriteStartObject('');
+        If not Job.Get(Task."Job No.") then Job.Init;
+        //crear cliente
+        Customer.Get(Job."Bill-to Customer No.");
+        wRecordRef.Get(Customer.RecordId);
+        Cliente := GetMaestro('client', Customer."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Customer, '');
+        if Cliente = 'Error' then begin
+            CreaCliente(Customer, Customer.RecordId, Database::Customer);
+            Cliente := GetMaestro('client', Customer."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Customer, '');
+        end;
+        JsonFormater.WriteStringProperty('client', Cliente);
+        wRecordRef.Close();
+        Clear(wRecordRef);
+        wRecordRef.Get(Job.RecordId);
+        Proyecto := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+        if Proyecto = 'Error' then begin
+            CreaProyecto(Job, Job.RecordId, Database::Job);
+            Proyecto := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+        end;
+        wRecordRef.Close();
+        JsonFormater.WriteStringProperty('task', Task.Id_Tarea);
+        Clear(wRecordRef);
+        workService.Get(Task.Servicio);
+        wRecordRef.Get(workService.RecordId);
+        service := GetMaestro('service', Task.Servicio, 'name', wRecordRef, Database::"Work Center", 'Malla Publicidad');
+        if service = 'Error' then begin
+            CreaServicio(Task.Servicio, workService.RecordId, Database::"Work Center", 'Malla Publicidad');
+            service := GetMaestro('service', Task.Servicio, 'name', wRecordRef, Database::"Work Center", 'Malla Publicidad');
+        end;
+        JsonFormater.WriteStringProperty('service', service);
+        JsonFormater.WriteStringProperty('project', Proyecto);
+        JsonFormater.WriteStringProperty('startDate', Hora(Task."Start DateTime"));
+        JsonFormater.WriteStringProperty('endDate', Hora(Task."Start DateTime"));
+        JsonFormater.WriteStartArray('lines');
+        Evaluate(NOrden, Task."No.");
+        OrdenFijajon.SetRange("Nº Orden", NOrden);
+        If OrdenFijajon.FindFirst() then
+            repeat
+                JsonFormater.WriteStartObject('');
+                //Crear OrdenFijajon."Nº Recurso"
+                Clear(wRecordRef);
+                Resource.Get(OrdenFijajon."Nº Recurso");
+                wRecordRef.Get(Resource.RecordId);
+                Recursos := GetMaestro('resource', Resource.Name, 'name', wRecordRef, Database::Resource, '');
+                if Recursos = 'Error' then begin
+                    CreaRecurso(Resource, Resource.RecordId, Database::Resource);
+                    Recursos := GetMaestro('resource', Resource.Name, 'name', wRecordRef, Database::Resource, '');
+                end;
+                JsonFormater.WriteStringProperty('resourceOrProduct', Recursos);
+                JsonFormater.WriteStringProperty('unit', '--');
+                JsonFormater.WriteNumberProperty('quantity', 1);
+                JsonFormater.WriteStringProperty('description', 'Fijación');
+                JsonFormater.WriteEndObject();
+            until ordenFijajon.Next() = 0;
+        JsonFormater.WriteEndArray();
+        JsonFormater.WriteEndObject();
+        Json := JsonFormater.GetJSonAsText();
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'workorder', Token(), RequestType::post, jSon);
+        JSONMgt.InitializeObject(Json);
+        JSONMgt.ReadProperties();
+        // WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
+        //     CASE Name OF
+        //         '_id':
+        //             begin
+        //                 InsertLink(Task.RecordId, Database::"User Task", Value1, '');
+        //             end;
+        //     end;
+        // end;
+    end;
+
     /// <summary>
     /// InsertLink.
     /// </summary>
@@ -1822,6 +2328,23 @@ codeunit 7001148 GTask
         Link."Migration Type" := Id;
         If Link.Insert() then;
         exit(true);
+    end;
+
+    internal procedure DeleteTarea(Rec: Record "User Task")
+    var
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        RestApi: Codeunit "Control Ocr";
+        jSon: Text;
+        RequestType: Option Get,patch,put,post,delete;
+        Link: Record "Data Migration Error";
+        Name: Text;
+        Value1: Text;
+        JSONMgt: Codeunit "JSON Management";
+        CompanyInfo: Record "Company Information";
+    begin
+        // Delete /task/id
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Rec.Id_Tarea, Token(), RequestType::delete, '');
     end;
 
     local procedure CrearDepartamnetoyServicio(var departament: Text; var service: Text)
@@ -1852,6 +2375,7 @@ codeunit 7001148 GTask
             Servicios.Insert();
             Commit();
         end;
+        wRecordRef.Close();
         wRecordRef.Open(Database::"Work Center", false, 'Malla Publicidad');
         wRecordRef.Get(Servicios.RecordId);
         service := GetMaestro('service', service, 'name', wRecordRef, Database::"Work Center", 'Malla Publicidad');
@@ -1859,5 +2383,17 @@ codeunit 7001148 GTask
             CreaServicio(Servicios.Name, Servicios.RecordId, Database::"Work Center", 'Malla Publicidad');
             departament := GetMaestro('service', Servicios.Name, 'name', wRecordRef, Database::"Work Center", 'Malla Publicidad');
         end;
+        wRecordRef.Close();
+    end;
+
+    procedure Hora(Datetime: DateTime): Text
+    var
+        Hora: Time;
+    begin
+        Hora := DT2Time(Datetime);
+        if hora < 095959T then
+            exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T0<Hours24>:<Minutes,2>:<Seconds,2>'))
+        else
+            exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'));
     end;
 }

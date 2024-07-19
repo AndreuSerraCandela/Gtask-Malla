@@ -26,6 +26,28 @@ tableextension 92103 Tareasusuarios extends "User Task"
         {
 
         }
+        field(50004; OrdenFijacion; Integer)
+        {
+            Caption = 'Orden Fijación';
+        }
+        field(50005; "Job No."; Code[20])
+        {
+            TableRelation = Job."No.";
+        }
+        //departamento
+        field(50006; Departamento; Text[20])
+        {
+            Caption = 'Departamento';
+            DataClassification = ToBeClassified;
+            TableRelation = "Responsibility Center"."Code";
+        }
+        //servicio
+        field(50007; Servicio; Text[20])
+        {
+            Caption = 'Servicio';
+            DataClassification = ToBeClassified;
+            TableRelation = "Work Center"."No.";
+        }
 
 
         modify("Assigned To")
@@ -38,6 +60,12 @@ tableextension 92103 Tareasusuarios extends "User Task"
             Caption = 'Categoría';
         }
     }
+    trigger OnAfterDelete()
+    var
+        Gtask: Codeunit GTask;
+    begin
+        Gtask.DeleteTarea(Rec);
+    end;
 }
 tableextension 90109 Tareascomercial extends "To-do"
 {

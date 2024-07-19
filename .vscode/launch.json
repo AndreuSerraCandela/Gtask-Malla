@@ -9,8 +9,6 @@
             "serverInstance": "BC220",
             "authentication": "UserPassword",
             "tenant": "default",
-            "startupObjectId": 26,
-            "startupObjectType": "Page",
             "environmentType": "OnPrem",
             "schemaUpdateMode": "ForceSync",
             "breakOnError": true,
