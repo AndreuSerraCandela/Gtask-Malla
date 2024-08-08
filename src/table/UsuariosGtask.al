@@ -37,10 +37,15 @@ table 7001209 "UsuariosGtask"
             DataClassification = ToBeClassified;
         }
         //Departamento
-        field(5; "Departamento"; Code[20])
+        field(5; Departamento; Text[20])
         {
+            Caption = 'Departamento';
             DataClassification = ToBeClassified;
+            TableRelation = "Responsibility Center"."Code";
         }
+        //servicio
+
+
         //Responsable
         field(6; "Responsable"; Boolean)
         {
@@ -48,6 +53,10 @@ table 7001209 "UsuariosGtask"
         }
         //Supervisor    
         field(7; "Supervisor"; Boolean)
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(8; "Id Gtask Providsional"; Text[50])
         {
             DataClassification = ToBeClassified;
         }
@@ -125,9 +134,12 @@ page 7001184 "UsuariosGtask"
                     User: Record User;
                     Gtask: Codeunit Gtask;
                 begin
+                    Gtask.CreateUsers(UsuariosGtask);
+                    Commit();
                     if UsuariosGtask.FindSet() then
                         repeat
-                            if not User.Get(UsuariosGtask."Id Usuario") then begin
+                            User.SetRange("Contact Email", UsuariosGtask."Email");
+                            If (Not User.FindFirst()) And (not User.Get(UsuariosGtask."Id Usuario")) then begin
                                 User.Init();
                                 user.Validate("User Name", UsuariosGtask."Nombre");
                                 User."User Security ID" := CreateGuid();

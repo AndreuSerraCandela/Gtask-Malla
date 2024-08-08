@@ -113,7 +113,7 @@ codeunit 7001148 GTask
         category: Text;
         usuario: Text;
         GlSetup: Record "Company Information";
-        User: Record User;
+        User: Record UsuariosGtask;
         Name: Text;
         Value1: Text;
         Id: Text;
@@ -180,22 +180,18 @@ codeunit 7001148 GTask
         end;
         wRecordRef.Close();
         Tarea.CalcFields("Assigned To User Name");
-        User.Get(Tarea."Assigned To");
-
-        wRecordRef.Open(Database::User);
-        wRecordRef.Get(User.RecordId);
-        //juangarau y villena
-        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if responsable = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
-        User.Get(Tarea.Supervisor);
-        wRecordRef.Get(User.RecordId);
-        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
-        if Supervisor = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
+        User.Setrange("Id Usuario", Tarea."Assigned To");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Assigned To User Name");
+        responsable := user."Id Gtask";
+        Tarea.CalcFields("Supervisor User Name");
+        User.Setrange("Id Usuario", Tarea."Supervisor");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Supervisor User Name");
+        Supervisor := user."Id Gtask";
         //owner
-        User.Get(UserSecurityId());
-        wRecordRef.Get(User.RecordId);
-        usuario := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if usuario = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
+        Tarea.CalcFields("Created By User Name");
+        User.SetRange("Id Usuario", UserSecurityId());
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created By User Name");
+        usuario := user."Id Gtask";
         wRecordRef.Close();
         Job.Get(Tarea."Job No.");
         wRecordRef.Open(Database::Job);
@@ -344,7 +340,7 @@ codeunit 7001148 GTask
         category: Text;
         usuario: Text;
         GlSetup: Record "Company Information";
-        User: Record User;
+        User: Record UsuariosGtask;
         Name: Text;
         Value1: Text;
         Id: Text;
@@ -422,24 +418,16 @@ codeunit 7001148 GTask
         end;
         wRecordRef.Close();
         Tarea.CalcFields("Assigned To User Name");
-        User.Get(Tarea."Assigned To");
-
-        wRecordRef.Open(Database::User);
-        wRecordRef.Get(User.RecordId);
-        //juangarau y villena
-        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if responsable = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
-        User.Get(Tarea.Supervisor);
-        wRecordRef.Get(User.RecordId);
-        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
-        if Supervisor = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
-        //owner
-        User.Get(MTarea.Supervisor);
-        wRecordRef.Get(User.RecordId);
-        usuario := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if usuario = 'Error' then Error('Usuario ' + User."Full Name" + ' no existe en Gtask');
-        wRecordRef.Close();
-        wRecordRef.Close();
+        User.SetRange("Id Usuario", Tarea."Assigned To");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Assigned To User Name");
+        responsable := User."Id Gtask";
+        User.SetRange("Id Usuario", Tarea.Supervisor);
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Supervisor User Name");
+        supervisor := User."Id Gtask";
+        User.SetRange("Id Usuario", MTarea.Supervisor);
+        MTarea.CalcFields("Supervisor User Name");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', MTarea."Supervisor User Name");
+        usuario := User."Id Gtask";
         Job.Get(Tarea."Job No.");
         wRecordRef.Open(Database::Job);
         wRecordRef.Get(Job.RecordId);
@@ -743,14 +731,89 @@ codeunit 7001148 GTask
         Exit(false);
     end;
 
+
+    /// GetMaestro.
+    /// <param name="Maestro">Text.</param>
+    /// <param name="Descripcion">Text.</param>
+    /// <param name="Campo">Text.</param>
+    /// <param name="wRecordRef">VAR RecordRef.</param>
+    /// <param name="Tabla">Integer.</param>
+    /// <param name="Company">Text.</param>
+    /// <returns>Return value of type Text.</returns>
+    procedure CrearCategorias(Company: Text): Text
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Pregunta: Text;
+        JSONMgt: Codeunit "JSON Management";
+        JsonObjt: Codeunit "Json Text Reader/Writer";
+        Name: Text;
+        Value1: Text;
+        i: Integer;
+        a: Integer;
+        Json: Text;
+        Id: Text;
+        Categorias: Record "User Task Group";
+        Link: Record "Data Migration Error";
+        IdLink: Integer;
+    begin
+        If Company <> '' then begin
+            link.ChangeCompany(Company);
+        end;
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'category', Token(), RequestType::Get, '');
+        JSONMgt.InitializeCollection(Json);
+        a := JSONMgt.GetCollectionCount;
+        If a = 0 Then exit('Error');
+        WHILE i < a DO BEGIN
+            JSONMgt.GetObjectFromCollectionByIndex(Json, i);
+            JSONMgt.InitializeObject(Json);
+            IF Json <> '' THEN BEGIN
+                JSONMgt.InitializeObject(Json);
+                JSONMgt.ReadProperties();
+                WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
+                    CASE Name OF
+                        '_id':
+                            Id := Value1;
+                        'name':
+                            begin
+                                Categorias.SetRange(Description, Value1);
+                                If Categorias.FindFirst() then begin
+                                    Link.SetRange("Source Staging Table Record ID", Categorias.RecordId);
+                                    Link.SetRange("Destination Table ID", Database::"User Task Group");
+                                    If Not Link.FindSet() Then
+                                        InsertLink(Categorias.RecordId, Database::"User Task Group", Id, Company);
+
+                                end else begin
+                                    Categorias.Init();
+                                    Categorias."Code" := CopyStr(Value1, 1, MaxStrLen(Categorias."Code"));
+                                    Categorias."Description" := CopyStr(Value1, 1, MaxStrLen(Categorias."Description"));
+                                    If Categorias.Insert() Then
+                                        InsertLink(Categorias.RecordId, Database::"User Task Group", Id, Company);
+                                end;
+                            end;
+
+                    end;
+                end;
+            end;
+            i += 1;
+        end;
+        Exit('');
+    end;
+
     /// <summary>
     /// CrearTarea.
     /// </summary>
     /// <param name="Emplazamiento">VAR Record Resource.</param>
     /// <param name="Tarea">Record "User Task".</param>
 
-    procedure CrearTareaTecnico(var Recurso: Record Resource; Tarea: Record "User Task")
+    procedure CrearTareaTecnico(
+        var Recurso: Record Resource;
+        Tarea: Record "User Task";
+        Departament: Text; Service: Text)
     var
+        Category: Text;
         JsoonFormater: Codeunit "Json Text Reader/Writer";
         RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
@@ -759,12 +822,9 @@ codeunit 7001148 GTask
         JSONMgt: Codeunit "JSON Management";
         JsonFormater: Codeunit "Json Text Reader/Writer";
         jSon: Text;
-        departament: Text;
-        service: Text;
-        category: Text;
         usuario: Text;
         GlSetup: Record "Company Information";
-        User: Record User;
+        User: Record UsuariosGtask;
         Name: Text;
         Value1: Text;
         Id: Text;
@@ -782,16 +842,16 @@ codeunit 7001148 GTask
         Supervisor: Text;
         Categoria: Text;
     begin
-        departament := 'Taller';
-        service := 'Técnico';
         CrearDepartamnetoyServicio(departament, service);
-        wRecordRef.Close();
-        wRecordRef.Open(Database::Resource, false, CompanyName);
-        wRecordRef.Get(Recurso.RecordId);
-        resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
-        if resource = 'Error' then begin
-            CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
+        If Recurso."No." <> '' Then Begin
+            wRecordRef.Close();
+            wRecordRef.Open(Database::Resource, false, CompanyName);
+            wRecordRef.Get(Recurso.RecordId);
             resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+            if resource = 'Error' then begin
+                CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
+                resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+            end;
         end;
         Categoria := Tarea."User Task Group Assigned To";
         if not TipoIncidencia.Get(Categoria) then begin
@@ -811,16 +871,16 @@ codeunit 7001148 GTask
         end;
         wRecordRef.Close();
         Tarea.CalcFields("Assigned To User Name");
-        User.Get(Tarea."Assigned To");
-
-        wRecordRef.Open(Database::User);
-        wRecordRef.Get(User.RecordId);
-        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if usuario = 'Error' then Error('Usuario no existe');
-        User.Get(Tarea.Supervisor);
-        wRecordRef.Get(GlSetup.RecordId);
-        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
-        wRecordRef.Close();
+        User.SetRange("Id Usuario", Tarea."Assigned To");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Assigned To User Name");
+        responsable := User."Id Gtask";
+        User.SetRange("Id Usuario", Tarea.Supervisor);
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Supervisor User Name");
+        supervisor := User."Id Gtask";
+        User.SetRange("Id Usuario", Tarea."Created By");
+        Tarea.CalcFields("Created by User Name");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created by User Name");
+        usuario := User."Id Gtask";
         //     {
         // "department": "604767e49fea4e001874b283",
         // "expirationDate": {
@@ -845,6 +905,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('category', category);
         JsonFormater.WriteStringProperty('user', responsable);
         JsonFormater.WriteStringProperty('supervisor', supervisor);
+        //owner
+        JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
         JsonFormater.WriteStringProperty('link', Url);
@@ -912,7 +974,7 @@ codeunit 7001148 GTask
     //     usuario: Text;
     //     GlSetup: Record "Company Information";
     //     supervisor: Text;
-    //     User: Record User;
+    //     User: Record UsuariosGtask;
     //     Name: Text;
     //     Value1: Text;
     //     Id: Text;
@@ -1075,7 +1137,8 @@ codeunit 7001148 GTask
         usuario: Text;
         GlSetup: Record "Company Information";
         supervisor: Text;
-        User: Record User;
+        User: Record UsuariosGtask;
+        Users: Record "User";
         Name: Text;
         Value1: Text;
         Id: Text;
@@ -1094,8 +1157,10 @@ codeunit 7001148 GTask
         ConfUser: Record "User Setup";
         Customer: Record Contact;
         Client: Text;
-
+        Responsable: Text;
     begin
+        exit;
+        //de momento no se usa
         GlSetup.Get();
         if GlSetup."Url Task" = '' Then Exit;
         Company.Get;
@@ -1137,9 +1202,12 @@ codeunit 7001148 GTask
         wRecordRef.Close();
         SalesPerson.Get(Tarea."Salesperson Code");
         ConfUser.SetRange("Salespers./Purch. Code", Tarea."Salesperson Code");
+        If Not ConfUser.FindFirst() Then exit;
         ConfUser.FindFirst();
-        User.SetRange(User."User Name", ConfUser."User ID");
-        User.FindFirst();
+        Users.SetRange(Users."User Name", ConfUser."User ID");
+        Users.FindFirst();
+        User.SetRange("Id Usuario", Users."User Security ID");
+        If Not User.FindFirst() Then exit;
         // if not Recurso.Get(User."Full Name") then begin
         //     Recurso.Init();
         //     Recurso."No." := User."Full Name";
@@ -1150,13 +1218,11 @@ codeunit 7001148 GTask
         //     CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
 
         // end;
-        wRecordRef.Open(Database::User);
-        wRecordRef.Get(User.RecordId);
-        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if supervisor = 'Error' then Error('Usuario no existe');
-        wRecordRef.Close();
-        User.Get(Tarea.Responsable);
-        wRecordRef.Close();
+        supervisor := User."Id Gtask";
+        User.SetRange("Id Usuario", Tarea.responsable);
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea.Responsable);
+        responsable := User."Id Gtask";
+        usuario := Supervisor;
         //     {
         // "department": "604767e49fea4e001874b283",
         // "expirationDate": {
@@ -1178,8 +1244,10 @@ codeunit 7001148 GTask
         //JsonFormater.WriteStringProperty('service', service);
         JsonFormater.WriteStringProperty('client', Client);
         JsonFormater.WriteStringProperty('category', category);
-        JsonFormater.WriteStringProperty('user', usuario);
+        JsonFormater.WriteStringProperty('user', responsable);
         JsonFormater.WriteStringProperty('supervisor', supervisor);
+        //owner
+        JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"Task Card", Tarea);
         JsonFormater.WriteStringProperty('link', Url);
@@ -1248,7 +1316,7 @@ codeunit 7001148 GTask
         usuario: Text;
         GlSetup: Record "Company Information";
         supervisor: Text;
-        User: Record User;
+        User: Record UsuariosGtask;
         Name: Text;
         Value1: Text;
         Id: Text;
@@ -1264,11 +1332,9 @@ codeunit 7001148 GTask
         wRecordRef: RecordRef;
         Recurso: Record Resource;
         SalesPerson: Record "Salesperson/Purchaser";
-        ConfUser: Record "User Setup";
         Customer: Record Customer;
         Client: Text;
         Proyect: Text;
-
         Departamentos: Record "Responsibility Center";
         Servicios: Record "Work Center";
         JobSetup: Record "Jobs Setup";
@@ -1345,12 +1411,6 @@ codeunit 7001148 GTask
             category := GetMaestro('category', 'Navision', 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
         end;
         wRecordRef.Close();
-
-        // SalesPerson.Get(Tarea."Salesperson Code");
-        // ConfUser.SetRange("Salespers./Purch. Code", Tarea."Salesperson Code");
-        // ConfUser.FindFirst();
-        User.SetRange(User."User Name", ConfUser."User ID");
-        User.FindFirst();
         // if not Recurso.Get(User."Full Name") then begin
         //     Recurso.Init();
         //     Recurso."No." := User."Full Name";
@@ -1362,28 +1422,16 @@ codeunit 7001148 GTask
 
         // end;
         Tarea.CalcFields("Assigned To User Name");
-        User.Get(Tarea."Assigned To");
-        if not Recurso.Get(User."Full Name") then begin
-            Recurso.Init();
-            Recurso."No." := User."Full Name";
-            Recurso.Type := Recurso.Type::Person;
-            Recurso.Name := User."Full Name";
-            Recurso.Insert();
-            Commit();
-            CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
-
-        end;
-        Tarea.CalcFields("Assigned To User Name");
-        User.Get(Tarea."Assigned To");
-
-        wRecordRef.Open(Database::User);
-        wRecordRef.Get(User.RecordId);
-        responsable := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::User, '');
-        if usuario = 'Error' then Error('Usuario no existe');
-        User.Get(Tarea.Supervisor);
-        wRecordRef.Get(GlSetup.RecordId);
-        supervisor := GetMaestro('users', User."Contact Email", 'email', wRecordRef, Database::"User", '');
-        wRecordRef.Close();
+        User.SetRange("Id Usuario", Tarea."Assigned To");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Assigned To User Name");
+        responsable := User."Id Gtask";
+        User.SetRange("Id Usuario", Tarea.Supervisor);
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Supervisor User Name");
+        supervisor := User."Id Gtask";
+        User.SetRange("Id Usuario", Tarea."Created By");
+        Tarea.CalcFields("Created by User Name");
+        If Not User.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created by User Name");
+        usuario := User."Id Gtask";
         //     {
         // "department": "604767e49fea4e001874b283",
         // "expirationDate": {
@@ -1405,8 +1453,10 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('project', Proyect);
         JsonFormater.WriteStringProperty('client', Client);
         JsonFormater.WriteStringProperty('category', category);
-        JsonFormater.WriteStringProperty('user', usuario);
+        JsonFormater.WriteStringProperty('user', responsable);
         JsonFormater.WriteStringProperty('supervisor', supervisor);
+        //owner
+        JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"Task Card", Tarea);
         JsonFormater.WriteStringProperty('link', Url);
@@ -2341,11 +2391,221 @@ codeunit 7001148 GTask
         Value1: Text;
         JSONMgt: Codeunit "JSON Management";
         CompanyInfo: Record "Company Information";
+        UserSetups: Record "User Setup";
+        User: Record User;
+        EmailResponsable: Text;
+        EmailSupervisor: Text;
     begin
         // Delete /task/id
         CompanyInfo.Get();
+        User.SetRange("User Security ID", Rec."Assigned To");
+        User.FindFirst();
+        EmailResponsable := User."Contact Email";
+        User.SetRange("User Security ID", Rec.Supervisor);
+        User.FindFirst();
+        EmailSupervisor := User."Contact Email";
+        User.SetRange("User Security ID", Rec."Assigned To");
+        User.FindFirst();
         Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Rec.Id_Tarea, Token(), RequestType::delete, '');
+        EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, 'Tarea Fijación Eliminada', EmailResponsable, EmailSupervisor, '', User."Full Name");
     end;
+
+    internal procedure CreateUsers(var UsuariosGtask: Record UsuariosGtask)
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Pregunta: Text;
+        JSONMgt: Codeunit "JSON Management";
+        JsonObjt: Codeunit "Json Text Reader/Writer";
+        Name: Text;
+        Value1: Text;
+        i: Integer;
+        a: Integer;
+        Json: Text;
+        Id: Text;
+        Username: Text;
+        Email: Text;
+        Link: Record "Data Migration Error";
+        IdLink: Integer;
+        UsuariosGtaskTemp: Record UsuariosGtask temporary;
+    begin
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'users', Token(), RequestType::Get, '');
+        JSONMgt.InitializeCollection(Json);
+        a := JSONMgt.GetCollectionCount;
+        If a = 0 Then exit;
+        WHILE i < a DO BEGIN
+            UsuariosGtaskTemp.Init();
+            UsuariosGtaskTemp."Id Gtask" := Format(i);
+            UsuariosGtaskTemp.Insert();
+            JSONMgt.GetObjectFromCollectionByIndex(Json, i);
+            JSONMgt.InitializeObject(Json);
+            IF Json <> '' THEN BEGIN
+                JSONMgt.InitializeObject(Json);
+                JSONMgt.ReadProperties();
+                WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
+                    CASE Name OF
+                        '_id':
+                            begin
+                                Id := Value1;
+                                UsuariosGtaskTemp."Id Gtask Providsional" := ID;
+                            end;
+                        'username':
+                            begin
+                                UsuariosGtaskTemp.Nombre := Value1;
+                            end;
+                        'email':
+                            begin
+                                UsuariosGtaskTemp.Email := Value1;
+                            end;
+                    end;
+                end;
+            end;
+            If Not UsuariosGtask.Get(UsuariosGtaskTemp."Id Gtask Providsional") Then begin
+                UsuariosGtask."Id Gtask" := UsuariosGtaskTemp."Id Gtask Providsional";
+                UsuariosGtask.Nombre := UsuariosGtaskTemp.Nombre;
+                UsuariosGtask.Email := UsuariosGtaskTemp.Email;
+                UsuariosGtask.Insert();
+            end;
+            i += 1;
+        end;
+        Exit;
+    end;
+
+
+    procedure EnviaCorreo(
+      "No.": Text;
+      Descrpcion: Text;
+      Adjunto: Boolean;
+      Motivo: Text;
+      Notificacion: Boolean;
+      Asunto: Text;
+      SendTo: Text;
+      CC: Text;
+      BCC: Text; Nombre: Text)
+
+
+    var
+        Mail: Codeunit Mail;
+        Body: Text;
+        Customer: Record 18;
+        BigText: Text;
+        REmail: Record "Email Item" temporary;
+        emilesc: Enum "Email Scenario";
+        rInf: Record "Company Information";
+        Funciones: Codeunit "Funciones Correo PDF";
+        AttachmentStream: InStream;
+        out: OutStream;
+        Secuencia: Integer;
+        ficheros: Record "Document Attachment";
+        SalesHeader: Record "Sales Header";
+        Recref: RecordRef;
+        base64: Text;
+        Cbase64: Codeunit "Base64 Convert";
+        OutStream: OutStream;
+        Tempblob: Codeunit "Temp Blob";
+    begin
+        rInf.Get();
+
+        If Notificacion Then begin
+            BigText := Motivo;
+        end else begin
+            //Andres Serra Candela
+            If StrPos(Nombre, ' ') > 0 then
+                Nombre := CopyStr(Nombre, 1, Strpos(Nombre, ' ') - 1);
+            if Time < 140000T then
+                BigText := ('Buenos días ' + Nombre + ':')
+            else if Time < 200000T then
+                BigText := ('Buenas tardes ' + Nombre + ':')
+            else
+                BigText := ('Buenas noches ' + Nombre + ':');
+            //BigText := ('Estimado:');
+            BigText := BigText + '<br> </br>';
+            BigText := BigText + '<br> </br>';
+            BigText := BigText + ('Se ha eliminado la Tarea: <b>' + Descrpcion + ' </b> ');
+            //BigText := BigText + (', ha cambiado de estado a: <b>' + Format(Estado) + ' .</b>');
+            if Motivo <> '' then
+                BigText := BigText + ('<br> </br>' + 'Motivo: ' + Motivo);
+
+            BigText := BigText + '<br> </br>';
+        end;
+
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Aprovechamos la ocasión para enviarte un cordial saludo');
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Atentamente');
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Dpto. Medios');
+        BigText := BigText + '<br> </br>';
+
+        BigText := BigText + (rInf.Name);
+        //"Plaintext Formatted":=TRUE;
+        // SendMsg.AppendBody(BigText);
+        // CLEAR(BigText);
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<img src="emailFoot.png" />';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=Blue>';
+        BigText := BigText + ('<b>SI NO DESEA RECIBIR MAS INFORMACION, CONTESTE ESTE E-MAIL INDICANDOLO EXPRESAMENTE</b>');
+        BigText := BigText + '</font>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<font face="Franklin Gothic Book" size=1 color=Blue>';
+        BigText := BigText + ('Según la LOPD 15/199, su dirección de correo electrónico junto a los demás datos personales');
+        BigText := BigText + (' que Ud. nos ha facilitado, constan en un fichero titularidad de ');
+        BigText := BigText + (rInf.Name + ', cuyas finalidades son mantener la');
+        BigText := BigText + (' gestión de las comunicaciones con sus clientes y con aquellas personas que solicitan');
+        BigText := BigText + (' información, así como la gestión y atención de los correos entrantes o sugerencias que');
+        BigText := BigText + (' se formulen a través de esta cuenta derivados de su actividad. Podrá ejercitar los derechos');
+        BigText := BigText + (' de acceso, cancelación, rectificación y oposición,  dirigiéndose, por escrito a ');
+        BigText := BigText + (rInf.Name + ' . ' + rInf.Address + '. ' + rInf."Post Code" + '. ' + rInf.City + '. España');
+
+        BigText := BigText + '<br> </br>';
+        //SendMsg.AppendBody(BigText);
+        //CLEAR(BigText);
+        BigText := BigText + ('Este correo y sus archivos asociados son privados y confidenciales y va');
+        BigText := BigText + (' dirigido exclusivamente a su destinatario. Si recibe este correo sin ser');
+        BigText := BigText + (' el destinatario del mismo, le rogamos proceda a su eliminación y lo ponga');
+        BigText := BigText + (' en conocimiento del emisor. La difusión por cualquier medio del contenido de este');
+        BigText := BigText + (' correo podría ser sancionada conforme a lo previsto en las leyes españolas. ');
+        BigText := BigText + ('No se autoriza la utilización con fines comerciales o para su incorporación a ficheros');
+        BigText := BigText + (' automatizados de las direcciones del emisor o del destinatario.');
+        BigText := BigText + '</font>';
+        //REmail.Subject := 'Pago contrato ' + NContrato;
+        REmail.AddAttachment(Funciones.CargaPie(), 'emailfoot.png');
+        REmail.Subject := Asunto;
+        REmail."Send To" := SendTo;
+        if CC <> '' then
+            REmail."Send CC" := CC;
+        if BCC <> '' then
+            REmail."Send BCC" := BCC;
+        REmail.SetBodyText(BigText);
+        REmail."From Name" := UserId;
+        If Adjunto then begin
+
+            // If Contratostemp.FindFirst() then
+            //     repeat
+            ficheros.SetRange("Table ID", Database::"User Task");
+            ficheros.SetRange("No.", "No.");
+            If ficheros.FindLast() then
+                repeat
+                    base64 := ficheros.ToBase64StringOcr(ficheros.url);
+                    Clear(Cbase64);
+                    Tempblob.CreateOutStream(OutStream);
+                    Cbase64.FromBase64(base64, OutStream);
+                    Tempblob.CreateInStream(AttachmentStream);
+                    REmail.AddAttachment(AttachmentStream, ficheros."File Name" + '.' + ficheros."File Extension");
+                until ficheros.Next() = 0;
+        end;
+        if REmail.Send(true, emilesc::Gtasks) then begin
+
+        end;
+    end;
+
 
     local procedure CrearDepartamnetoyServicio(var departament: Text; var service: Text)
     var
@@ -2395,5 +2655,47 @@ codeunit 7001148 GTask
             exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T0<Hours24>:<Minutes,2>:<Seconds,2>'))
         else
             exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'));
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Document Attachment FactBox", 'OnBeforeDrillDown', '', false, false)]
+    local procedure OnBeforeDrillDown(DocumentAttachment: Record "Document Attachment"; var RecRef: RecordRef)
+    var
+        "Task": Record "User Task";
+
+    begin
+        If DocumentAttachment."Table ID" = Database::"User Task" then begin
+            Task.SetRange("No.", DocumentAttachment."No.");
+            If Task.FindFirst() then
+                RecRef.GetTable("Task");
+        end;
+
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Document Attachment Details", 'OnAfterOpenForRecRef', '', false, false)]
+    local procedure OnAfterOpenForRecRef(var DocumentAttachment: Record "Document Attachment"; var RecRef: RecordRef; var FlowFieldsEditable: Boolean)
+    var
+        "Task": Record "User Task";
+
+    begin
+        If DocumentAttachment."Table ID" = Database::"User Task" then begin
+            Task.SetRange("No.", DocumentAttachment."No.");
+            If Task.FindFirst() then
+                RecRef.GetTable("Task");
+        end;
+
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document Attachment Mgmt", 'OnAfterSetDocumentAttachmentFiltersForRecRefInternal', '', false, false)]
+    local procedure OnAfterSetDocumentAttachmentFiltersForRecRefInternal(var DocumentAttachment: Record "Document Attachment"; RecordRef: RecordRef; GetRelatedAttachments: Boolean)
+    var
+        FieldRef: FieldRef;
+        RecNo: Code[20];
+        UserTask: Record "User Task";
+    begin
+        If RecordRef.Number = Database::"User Task" then begin
+            FieldRef := RecordRef.Field(UserTask.FieldNo("No."));
+            RecNo := FieldRef.Value();
+            DocumentAttachment.SetRange("No.", RecNo);
+        end;
     end;
 }

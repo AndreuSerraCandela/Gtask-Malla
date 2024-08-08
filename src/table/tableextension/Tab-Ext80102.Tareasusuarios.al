@@ -18,6 +18,13 @@ tableextension 92103 Tareasusuarios extends "User Task"
             ValidateTableRelation = false;
 
         }
+        field(50015; "Supervisor User Name"; Code[50])
+        {
+            CalcFormula = lookup(User."User Name" where("User Security ID" = field("Supervisor")));
+            Caption = 'Nombre Supervisor';
+            Editable = false;
+            FieldClass = FlowField;
+        }
         field(50002; "No."; Code[20])
         {
 

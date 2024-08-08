@@ -6,7 +6,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
         {
             action("Crear Tarea")
             {
-                Image = "Task";
+                Image = TaskPage;
                 ApplicationArea = All;
                 Caption = 'Crear Tarea';
                 trigger OnAction()
@@ -32,7 +32,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     User: Record User;
                     EmailResponsable: Text;
                     EmailSupervisor: Text;
-                    UserSetups: Record "User Setup";
+                    UserSetups: Record UsuariosGtask;
                 begin
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", Format(Rec."Nº Orden"));
@@ -68,17 +68,16 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserTask.Validate("Created DateTime", CurrentDateTime);
                     Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
                     Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
+                    UserSetups.SetRange(Departamento, 'TALLER');
                     UserSetups.SetRange(Responsable, true);
                     UserSetups.FindFirst();
-                    User.SetRange("User Name", userSetups."User ID");
-                    User.FindFirst();
+                    User.Get(userSetups."Id Usuario");
                     EmailResponsable := User."Contact Email";
                     UserTask.Validate("Assigned To", User."User Security ID");
                     UserSetups.SetRange(Responsable);
                     UserSetups.SetRange(Supervisor, true);
                     UserSetups.FindFirst();
-                    User.SetRange("User Name", userSetups."User ID");
-                    User.FindFirst();
+                    User.Get(userSetups."Id Usuario");
                     EmailSupervisor := User."Contact Email";
                     UserTask.Validate("Supervisor", User."User Security ID");
                     if not TipoIncidencia.Get('FIJACION') then begin
@@ -97,17 +96,16 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
                     Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
                     Usertask."No." := Format(Rec."Nº Orden");
+                    Usertask.OrdenFijacion := Rec."Nº Orden";
                     UserTask.Insert(true);
                     UserSetups.SetRange(Responsable, true);
                     UserSetups.FindFirst();
-                    User.SetRange("User Name", userSetups."User ID");
-                    User.FindFirst();
+                    User.Get(userSetups."Id Usuario");
                     UserTask.Validate("Assigned To", User."User Security ID");
                     UserSetups.SetRange(Responsable);
                     UserSetups.SetRange(Supervisor, true);
                     UserSetups.FindFirst();
-                    User.SetRange("User Name", userSetups."User ID");
-                    User.FindFirst();
+                    User.Get(userSetups."Id Usuario");
                     UserTask.Validate("Supervisor", User."User Security ID");
                     UserTask."User Task Group Assigned To" := 'FIJACION';
                     Usertask.OrdenFijacion := Rec."Nº Orden";
@@ -174,7 +172,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 TM.CalcFields(Content);
                                 TM.Content.CreateOutStream(Outstr);
                                 Clear(RecRef);
-                                RecRef.GetTable(Rec);
+                                RecRef.GetTable(Imagenes);
                                 Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
                                 TM.Insert();
                                 tm.CalcFields(Content);
@@ -230,11 +228,53 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserSetups.SetRange(Responsable, true);
                     UserSetups.SetRange(Supervisor);
                     UserSetups.FindFirst();
-                    User.SetRange("User Name", userSetups."User ID");
+                    User.Get(userSetups."Id Usuario");
                     User.FindFirst();
                     EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, '', User."Full Name");
                 end;
             }
+            action("Ver Tarea")
+            {
+                Image = "Task";
+                ApplicationArea = All;
+                Caption = 'Ver Tarea';
+                trigger OnAction()
+                var
+
+                    Usertask: Record "User Task";
+
+                begin
+                    Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
+                    If Not Usertask.FindFirst() then
+                        Error('No existe una tarea para esta orden')
+                    else
+                        Page.RunModal(Page::"User Task Card", Usertask);
+
+                end;
+            }
+            action("Borrar Tarea")
+            {
+                Image = "Delete";
+                ApplicationArea = All;
+                Caption = 'Borrar Tarea';
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    Usertask: Record "User Task";
+                begin
+                    Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
+                    If Usertask.FindFirst() then begin
+                        Gtask.DeleteTarea(Usertask);
+                        Usertask.Delete();
+
+                    end;
+                end;
+            }
+        }
+        addafter(AsignarImagenaLineas)
+        {
+            actionref(CreartareaRef; "Crear Tarea") { }
+            actionref(VertareaRef; "Ver Tarea") { }
         }
     }
     procedure EnviaCorreo(
@@ -363,7 +403,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     REmail.AddAttachment(AttachmentStream, ficheros."File Name" + '.' + ficheros."File Extension");
                 until ficheros.Next() = 0;
         end;
-        if REmail.Send(true, emilesc::Notification) then begin
+        if REmail.Send(true, emilesc::Gtasks) then begin
 
         end;
     end;
