@@ -33,6 +33,8 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     EmailResponsable: Text;
                     EmailSupervisor: Text;
                     UserSetups: Record UsuariosGtask;
+                    Responsable: Guid;
+                    Supervisor: Guid;
                 begin
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", Format(Rec."Nº Orden"));
@@ -68,18 +70,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserTask.Validate("Created DateTime", CurrentDateTime);
                     Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
                     Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
-                    UserSetups.SetRange(Departamento, 'TALLER');
-                    UserSetups.SetRange(Responsable, true);
-                    UserSetups.FindFirst();
-                    User.Get(userSetups."Id Usuario");
-                    EmailResponsable := User."Contact Email";
-                    UserTask.Validate("Assigned To", User."User Security ID");
-                    UserSetups.SetRange(Responsable);
-                    UserSetups.SetRange(Supervisor, true);
-                    UserSetups.FindFirst();
-                    User.Get(userSetups."Id Usuario");
-                    EmailSupervisor := User."Contact Email";
-                    UserTask.Validate("Supervisor", User."User Security ID");
+                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'MEDIOS', 'Fijacion', EmailResponsable, EmailSupervisor, User, UserTask);
                     if not TipoIncidencia.Get('FIJACION') then begin
                         TipoIncidencia.Init();
                         TipoIncidencia."Code" := 'FIJACION';
@@ -88,7 +79,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
 
                     end;
                     UserSetups.Reset();
-                    UserTask.Validate("User Task Group Assigned To", 'FIJACION');
+                    //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
                     UserTask.Validate(Priority, Usertask.Priority::High);
                     UserTask.Validate("Object Type", Usertask."Object Type"::Page);
                     UserTask.Validate("Object ID", Page::"Ficha Orden Fijacion");
@@ -98,18 +89,10 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Usertask."No." := Format(Rec."Nº Orden");
                     Usertask.OrdenFijacion := Rec."Nº Orden";
                     UserTask.Insert(true);
-                    UserSetups.SetRange(Responsable, true);
-                    UserSetups.FindFirst();
-                    User.Get(userSetups."Id Usuario");
-                    UserTask.Validate("Assigned To", User."User Security ID");
-                    UserSetups.SetRange(Responsable);
-                    UserSetups.SetRange(Supervisor, true);
-                    UserSetups.FindFirst();
-                    User.Get(userSetups."Id Usuario");
-                    UserTask.Validate("Supervisor", User."User Security ID");
+                    UserTask.Validate("Supervisor", Supervisor);
                     UserTask."User Task Group Assigned To" := 'FIJACION';
                     Usertask.OrdenFijacion := Rec."Nº Orden";
-                    Usertask.Departamento := 'Taller';
+                    Usertask.Departamento := 'TALLER';
                     Usertask.Servicio := 'Medios';
                     Usertask."Job No." := Rec."Nº Proyecto";
                     Usertask.Modify();
@@ -222,14 +205,13 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         //DoccAttach.Insert();
                         tm.Delete();
                     end;
-
+                    Commit();
+                    Page.RunModal(Page::"User Task Card", UserTask);
+                    Commit();
+                    UserTask.Get(UserTask.ID);
                     Clear(Gtask);
                     Gtask.CrearTareaFijacion(Rec, Usertask);
-                    UserSetups.SetRange(Responsable, true);
-                    UserSetups.SetRange(Supervisor);
-                    UserSetups.FindFirst();
-                    User.Get(userSetups."Id Usuario");
-                    User.FindFirst();
+                    Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
                     EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, '', User."Full Name");
                 end;
             }

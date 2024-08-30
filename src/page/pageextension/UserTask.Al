@@ -12,21 +12,26 @@ pageextension 92154 "UserTask" extends "User Task card"
             {
                 Caption = 'Responsable';
                 ApplicationArea = Basic, Suite;
-                DrillDown = false;
+                DrillDown = true;
                 ToolTip = 'Responsable de la tarea';
+
 
                 trigger OnAssistEdit()
                 var
-                    User: Record User;
-                    Users: Page Users;
+                    User: Record UsuariosGtask;
+                    Users: Page UsuariosGtask;
                 begin
-                    if User.Get(Rec."Assigned To") then
+                    User.SetRange("Id Usuario", Rec."Assigned To");
+                    if User.FindFirst() then begin
+                        User.SetRange("Id Usuario");
+                        User.Get(User."Id Gtask");
                         Users.SetRecord(User);
+                    end;
 
                     Users.LookupMode := true;
                     if Users.RunModal() = ACTION::LookupOK then begin
                         Users.GetRecord(User);
-                        Rec.Validate("Assigned To", User."User Security ID");
+                        Rec.Validate("Assigned To", User."Id Usuario");
                         CurrPage.Update(true);
                     end;
                 end;
@@ -36,21 +41,25 @@ pageextension 92154 "UserTask" extends "User Task card"
             {
                 Caption = 'Suipervisor';
                 ApplicationArea = Basic, Suite;
-                DrillDown = false;
+                DrillDown = true;
                 ToolTip = 'Especifique el supervisor de la tarea';
 
                 trigger OnAssistEdit()
                 var
-                    User: Record User;
-                    Users: Page Users;
+                    User: Record UsuariosGtask;
+                    Users: Page UsuariosGtask;
                 begin
-                    if User.Get(Rec."Supervisor") then
+                    User.SetRange("Id Usuario", Rec.Supervisor);
+                    if User.FindFirst() then begin
+                        User.SetRange("Id Usuario");
+                        User.Get(User."Id Gtask");
                         Users.SetRecord(User);
+                    end;
 
                     Users.LookupMode := true;
                     if Users.RunModal() = ACTION::LookupOK then begin
                         Users.GetRecord(User);
-                        Rec.Validate("Supervisor", User."User Security ID");
+                        Rec.Validate(Supervisor, User."Id Usuario");
                         CurrPage.Update(true);
                     end;
                 end;
@@ -72,7 +81,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         }
         addafter("User Task Group Assigned To")
         {
-            field(Categoria; Rec."User Task Group Assigned To")
+            field(Categoria; Rec."Categoría")
             {
                 Caption = 'Categoría';
                 ApplicationArea = All;
@@ -118,16 +127,20 @@ pageextension 92157 "UserTaskList" extends "User Task List"
 
                 trigger OnAssistEdit()
                 var
-                    User: Record User;
-                    Users: Page Users;
+                    User: Record UsuariosGtask;
+                    Users: Page UsuariosGtask;
                 begin
-                    if User.Get(Rec."Assigned To") then
+                    User.SetRange("Id Usuario", Rec."Assigned To");
+                    if User.FindFirst() then begin
+                        User.SetRange("Id Usuario");
+                        User.Get(User."Id Gtask");
                         Users.SetRecord(User);
+                    end;
 
                     Users.LookupMode := true;
                     if Users.RunModal() = ACTION::LookupOK then begin
                         Users.GetRecord(User);
-                        Rec.Validate("Assigned To", User."User Security ID");
+                        Rec.Validate("Assigned To", User."Id Usuario");
                         CurrPage.Update(true);
                     end;
                 end;
@@ -142,16 +155,19 @@ pageextension 92157 "UserTaskList" extends "User Task List"
 
                 trigger OnAssistEdit()
                 var
-                    User: Record User;
-                    Users: Page Users;
+                    User: Record UsuariosGtask;
+                    Users: Page UsuariosGtask;
                 begin
-                    if User.Get(Rec."Supervisor") then
+                    User.SetRange("Id Usuario", Rec.Supervisor);
+                    if User.FindFirst() then begin
+                        User.SetRange("Id Usuario");
+                        User.Get(User."Id Gtask");
                         Users.SetRecord(User);
-
+                    end;
                     Users.LookupMode := true;
                     if Users.RunModal() = ACTION::LookupOK then begin
                         Users.GetRecord(User);
-                        Rec.Validate("Supervisor", User."User Security ID");
+                        Rec.Validate(Supervisor, User."Id Usuario");
                         CurrPage.Update(true);
                     end;
                 end;

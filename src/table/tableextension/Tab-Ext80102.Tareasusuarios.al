@@ -16,8 +16,16 @@ tableextension 92103 Tareasusuarios extends "User Task"
             DataClassification = ToBeClassified;
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
             ValidateTableRelation = false;
+            trigger OnLookup()
+            var
+                User: Record UsuariosGtask;
+            begin
+                If Page.RunModal(Page::UsuariosGtask, User) = Action::LookupOK then
+                    Supervisor := user."Id Usuario";
+            end;
 
         }
+
         field(50015; "Supervisor User Name"; Code[50])
         {
             CalcFormula = lookup(User."User Name" where("User Security ID" = field("Supervisor")));
@@ -61,11 +69,33 @@ tableextension 92103 Tareasusuarios extends "User Task"
         {
             TableRelation = User."User Security ID";//WHERE("License Type" = CONST("Full User"));
 
+
         }
         modify("User Task Group Assigned To")
         {
             Caption = 'Categoría';
+
         }
+        field(50008; Categoría; Code[20])
+        {
+            Caption = 'User Task Group Assigned To';
+            DataClassification = CustomerContent;
+            TableRelation = "User Task Group".Code;
+
+            trigger OnValidate()
+            var
+                Categorias: Record "User Task Group Member";
+            begin
+                "User Task Group Assigned To" := Categoría;
+                Categorias.SetRange("User Task Group Code", Categoría);
+                Categorias.SetRange(Departamento, Departamento);
+                Categorias.SetRange(Responsable, true);
+                if Categorias.FindFirst() then
+                    Validate("Assigned To", Categorias."User Security ID");
+
+            end;
+        }
+
     }
     trigger OnAfterDelete()
     var
