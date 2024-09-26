@@ -4,15 +4,14 @@ pageextension 92163 Categorias extends "User Task Group"
     AdditionalSearchTerms = 'Categorías';
     layout
     {
-        // addafter("Description")
-        // {
-        //     part(Usuarios; "Usuarios x Categoría")
-        //     {
-        //         ApplicationArea = Basic, Suite;
-        //         SubPageLink = "User Task Group Code" = field(Code);
-        //     }
+        addafter("Description")
+        {
+            field("Material Fijación"; Rec."Material Fijación")
+            {
+                ApplicationArea = All;
+            }
 
-        // }
+        }
         // modify(Control4)
         // {
         //     Visible = false;

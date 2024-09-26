@@ -333,6 +333,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Usuarios x Categoría - Control Usuario - Property ToolTip</note>
         </trans-unit>
+        <trans-unit id="TableExtension 3377152574 - Field 2852855596 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2618634653">
+          <source>Material Fijación</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Categorias - Field Material Fijación - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 1302225088 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
           <source>Hoja de Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>

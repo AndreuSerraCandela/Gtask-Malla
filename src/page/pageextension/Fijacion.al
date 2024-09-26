@@ -22,6 +22,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Gtask: Codeunit "Gtask";
                     TM: Record "Tenant Media";
                     DoccAttach: Record "Document Attachment";
+                    DoccAttach2: Record "Document Attachment";
                     Outstr: OutStream;
                     RecRef: RecordRef;
                     InStr: InStream;
@@ -70,7 +71,6 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserTask.Validate("Created DateTime", CurrentDateTime);
                     Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
                     Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
-                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'MEDIOS', 'Fijacion', EmailResponsable, EmailSupervisor, User, UserTask);
                     if not TipoIncidencia.Get('FIJACION') then begin
                         TipoIncidencia.Init();
                         TipoIncidencia."Code" := 'FIJACION';
@@ -78,6 +78,63 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         TipoIncidencia.Insert();
 
                     end;
+                    If Rec."Material Fijación" <> "Material de Fijación"::"Sin Especificar" then begin
+                        TipoIncidencia.SetRange("Material Fijación", Rec."Material Fijación");
+                        if not TipoIncidencia.FindFirst() then begin
+                            TipoIncidencia.Init();
+
+                            Case Rec."Material Fijación" Of
+                                "Material de Fijación"::Lona:
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Lona';
+                                        TipoIncidencia."Code" := 'FIJA_LONA';
+                                    END;
+                                "Material de Fijación"::Papel:
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Papel';
+                                        TipoIncidencia."Code" := 'FIJA_PAPEL';
+                                    END;
+                                "Material de Fijación"::Vinilo:
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Vinilo';
+                                        TipoIncidencia."Code" := 'FIJA_VINILO';
+                                    END;
+                                "Material de Fijación"::"Vinilo y lona":
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Vinilo';
+                                        TipoIncidencia."Code" := 'FIJA_VINILO';
+                                    END;
+                                "Material de Fijación"::"Vinilo y papel":
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Vinilo';
+                                        TipoIncidencia."Code" := 'FIJA_VINILO';
+                                    END;
+
+                            End;
+                            TipoIncidencia.Insert();
+                        end;
+
+                    end else begin
+                        If Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then begin
+                            TipoIncidencia.SetRange("Code", 'FIJA_OPIS');
+                            If Not TipoIncidencia.FindFirst() then begin
+                                TipoIncidencia.Init();
+                                TipoIncidencia."Code" := 'FIJA_OPIS';
+                                TipoIncidencia."Description" := 'Fijación Opis';
+                                TipoIncidencia.Insert();
+                            end;
+                        end;
+                        If Rec."Tipo soporte" = Rec."Tipo soporte"::OTROS then begin
+                            TipoIncidencia.SetRange("Code", 'FIJA_OTROS');
+                            If Not TipoIncidencia.FindFirst() then begin
+                                TipoIncidencia.Init();
+                                TipoIncidencia."Code" := 'FIJA_OTROS';
+                                TipoIncidencia."Description" := 'Fijación Otros';
+                                TipoIncidencia.Insert();
+                            end;
+                        end;
+                    end;
+                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'MEDIOS', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask);
                     UserSetups.Reset();
                     //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
                     UserTask.Validate(Priority, Usertask.Priority::High);
@@ -90,12 +147,21 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Usertask.OrdenFijacion := Rec."Nº Orden";
                     UserTask.Insert(true);
                     UserTask.Validate("Supervisor", Supervisor);
-                    UserTask."User Task Group Assigned To" := 'FIJACION';
+                    UserTask."User Task Group Assigned To" := TipoIncidencia."Code";
                     Usertask.OrdenFijacion := Rec."Nº Orden";
                     Usertask.Departamento := 'TALLER';
                     Usertask.Servicio := 'Medios';
                     Usertask."Job No." := Rec."Nº Proyecto";
                     Usertask.Modify();
+                    DoccAttach2.SetRange("Table ID", Database::"Cab Orden fijación");
+                    DoccAttach2.SetRange("Line No.", Rec."Nº Orden");
+                    If DoccAttach.FindFirst() then
+                        repeat
+                            DoccAttach := DoccAttach2;
+                            DoccAttach."Table ID" := Database::"User Task";
+                            DoccAttach."No." := Format(Rec."Nº Orden");
+                            If DoccAttach.Insert() Then;
+                        until DoccAttach2.Next() = 0;
                     //Inserto los report
                     If Opcion = 1 then begin
                         DoccAttach.Init();
