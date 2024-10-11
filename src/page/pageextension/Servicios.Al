@@ -1,4 +1,4 @@
-pageextension 92162 Servicios extends "Work Center List"
+pageextension 92166 Servicios extends "Work Center List"
 {
     Caption = 'Servicios';
     AdditionalSearchTerms = 'Servicios';

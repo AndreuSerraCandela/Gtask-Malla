@@ -2689,7 +2689,10 @@ codeunit 7001148 GTask
                 end;
             Database::Emplazamientos:
                 begin
-                    UserTask.Validate("Object ID", Page::"Ficha emplazamiento");
+                    if Categoria = 'PNEL' then
+                        UserTask.Validate("Object ID", Page::"PNEL Emplazamientos")
+                    else
+                        UserTask.Validate("Object ID", Page::"Ficha emplazamiento");
                     UserTask."No." := Format(RecRef.Field(Emplazamientos.FieldNo("Nº Emplazamiento")).Value);
                     Resource.SetRange("Nº Emplazamiento", RecRef.Field(Emplazamientos.FieldNo("Nº Emplazamiento")).Value);
                 end;
@@ -2739,9 +2742,88 @@ codeunit 7001148 GTask
         end;
         Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
         Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
-        EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, 'Tarea Emplazamiento', EmailResponsable, EmailSupervisor, '', User."Full Name");
+        EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, EmailSupervisor, '', User."Full Name");
     end;
 
+
+
+    internal procedure CrearTareaVisita(RecRef: RecordRef; Descripcion: Text;
+    Departamento: Text; Servicio: Text; Title: Text;
+    Categoria: Text; Adjuntar: Boolean; Adjunto: Text;
+    Fecha: Date; Hora: Time; Responsable: Guid)
+    var
+        UserTask: Record "User Task";
+        User: Record User;
+        Gtask: Codeunit Gtask;
+        EmailResponsable: Text[250];
+        EmailSupervisor: Text[250];
+        TipoIncidencia: Record "User Task Group";
+        Todo: Record "To-Do";
+        G: Guid;
+        Emplazamientos: Record Emplazamientos;
+        Supervisor: Guid;
+        TM: Record "Tenant Media";
+        InStr: Instream;
+        DoccAttach: Record "Document Attachment";
+        FileMgt: Codeunit "File Management";
+        TempBlob: Codeunit "Temp Blob";
+    begin
+        Gtask.CrearCategorias(CompanyName);
+        Commit();
+        UserTask.Init();
+        UserTask.Validate(Title, Title);
+
+        UserTask.SetDescription(Descripcion);
+        UserTask."Created By" := UserSecurityId();
+        UserTask.Validate("Created DateTime", CurrentDateTime);
+        Usertask."Start DateTime" := CreateDateTime(Fecha, Hora);
+        Usertask."Due DateTime" := CreateDateTime(Fecha, Hora);
+        Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, Categoria, EmailResponsable, EmailSupervisor, User, UserTask);
+        UserTask.Validate(Priority, Usertask.Priority::High);
+        UserTask.Validate("Object Type", Usertask."Object Type"::Page);
+        UserTask.Validate("Object ID", Page::"Visitas Emplazamiento");
+        UserTask."No." := Format(RecRef.Field(Todo.FieldNo("No.")).Value);
+        UserTask.Insert(true);
+
+        If (UserTask."Supervisor" = G) or (UserTask."Assigned To" = G)
+        or (UserTask."User Task Group Assigned To" = '') Or (UserTask.Departamento = '')
+        or (UserTask.Servicio = '') Then begin
+            If Confirm('No ha completado los campos Supervisor, Responsable, Categoría, Departamento y Servicio, ¿Desea continuar?') then begin
+                Commit();
+                UserTask.Get(UserTask.ID);
+                Page.RunModal(Page::"User Task Card", UserTask);
+                Commit();
+                UserTask.Get(UserTask.ID);
+            end else begin
+                UserTask.Delete();
+                exit;
+            end;
+            If (UserTask."Supervisor" = G) or (UserTask."Assigned To" = G)
+            or (UserTask."User Task Group Assigned To" = '') Or (UserTask.Departamento = '')
+            or (UserTask.Servicio = '') Then begin
+                Message('No ha completado los campos Supervisor, Responsable, Categoría, Departamento y Servicio, Proceso cancelado');
+                UserTask.Delete();
+                exit;
+            end;
+        end;
+        Clear(Gtask);
+
+        RecRef.Close();
+        Clear(RecRef);
+        If Adjuntar then begin
+            RecRef.GetTable(Usertask);
+            RecRef.Get(Usertask.RecordId);
+
+            FileMgt.BLOBImport(TempBlob, Adjunto);
+            TempBlob.CreateInStream(InStr);
+            DoccAttach.SaveAttachmentFromStream(InStr, RecRef, UserTask."No." + '.pdf');
+            //DoccAttach.Insert();
+            tm.Delete();
+        end;
+        Gtask.CrearTareaTecnico('', UserTask, UserTask.Departamento, UserTask.Servicio, false);
+        Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+        EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, EmailSupervisor, '', User."Full Name");
+    end;
 
     procedure EnviaCorreo(
       "No.": Text;
@@ -2816,7 +2898,8 @@ codeunit 7001148 GTask
         // CLEAR(BigText);
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
-        BigText := BigText + '<img src="emailFoot.png" />';
+        REmail.AddAttachment(Funciones.CargaPie(Base64), 'emailfoot.png');
+        BigText := BigText + '<img src="data:image/png;base64,' + base64 + '" />';//"emailFoot.png" />';
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=Blue>';
@@ -2845,7 +2928,6 @@ codeunit 7001148 GTask
         BigText := BigText + (' automatizados de las direcciones del emisor o del destinatario.');
         BigText := BigText + '</font>';
         //REmail.Subject := 'Pago contrato ' + NContrato;
-        REmail.AddAttachment(Funciones.CargaPie(), 'emailfoot.png');
         REmail.Subject := Asunto;
         REmail."Send To" := SendTo;
         if CC <> '' then
@@ -2998,21 +3080,28 @@ codeunit 7001148 GTask
     var
         Users: Record UsuariosGtask;
         UserxbyCategory: Record "User Task Group Member";
+        G: Guid;
     begin
+        If Responsable <> G then begin
+            Users.SetRange("Id Usuario", Responsable);
+            If not Users.FindFirst() then Error('Usuario % 1 no encontrado en Gtask', Responsable);
+        end;
         Users.SetRange("Id Usuario", UserSecurityId());
         If not Users.FindFirst() then Error('Usuario % 1 no encontrado en Gtask', UserId());
-        Users.Reset();
-        UserxbyCategory.SetRange(Departamento, Departamento);
-        UserxbyCategory.SetRange("User Task Group Code", Categoria);
-        UserxbyCategory.SetRange(Responsable, true);
-        If UserxbyCategory.FindFirst() then begin
-            Responsable := UserxbyCategory."User Security ID";
+        If Responsable = G then begin
+            Users.Reset();
+            UserxbyCategory.SetRange(Departamento, Departamento);
+            UserxbyCategory.SetRange("User Task Group Code", Categoria);
+            UserxbyCategory.SetRange(Responsable, true);
+            If UserxbyCategory.FindFirst() then begin
+                Responsable := UserxbyCategory."User Security ID";
 
-        end else begin
-            Users.SetRange(Departamento, Departamento);
-            Users.SetRange(Responsable, true);
-            If Users.FindFirst() then
-                Responsable := Users."Id Usuario";
+            end else begin
+                Users.SetRange(Departamento, Departamento);
+                Users.SetRange(Responsable, true);
+                If Users.FindFirst() then
+                    Responsable := Users."Id Usuario";
+            end;
         end;
         UserxbyCategory.SetRange(Departamento, Servicio);
         UserxbyCategory.SetRange("User Task Group Code", Categoria);
@@ -3059,6 +3148,27 @@ codeunit 7001148 GTask
             EmailSupervisor := User.Email;
         end;
 
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Crear Visita Emplazamiento", 'OnAfterFinishPage', '', false, false)]
+    local procedure OnAfterFinishPage(var Task: Record "To-do")
+    var
+        gTask: Codeunit Gtask;
+        RecRef: RecordRef;
+        UserSetups: Record "User Setup";
+        Users: record User;
+    begin
+        If Task.Emplazamiento Then begin
+            If Task."Proxima visita" <> 0D Then begin
+                RecRef.Gettable(Task);
+                UserSetups.SetRange("Salespers./Purch. Code", Task."Salesperson Code");
+                UserSetups.FindFirst();
+                Users.SetRange("User Name", UserSetups."User ID");
+                Users.FindFirst();
+                Gtask.CrearTareaVisita(RecRef, Task."Descripción Visita", 'TECNICO', 'TECNICO', Task.Description, 'VISITA', false, '', Task."Proxima visita", Task."Start Time", Users."User Security ID");
+
+            end;
+        end;
     end;
 
 }

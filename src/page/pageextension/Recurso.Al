@@ -4,129 +4,147 @@ pageextension 92160 RecursoExt extends "Resource Card"
     {
         addafter("Crear Recurso")
         {
-            group(Juridico)
+            group("TareasMonjaje/Desmontaje Emplazamiento")
             {
-                action("Crear Tarea TMC")
+                Image = TaskQualityMeasure;
+                group(Tecnico)
                 {
-                    ApplicationArea = All;
-                    Image = TaskPage;
-                    trigger OnAction()
-                    var
-                        Gtask: Codeunit GTask;
-                        RecRef: RecordRef;
-                    begin
-                        Gtask.CrearCategorias(CompanyName);
-                        Commit();
-                        RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Inicio medidas cautelares ' + Rec.name + ' con el número ' + Rec."No.",
-                        'TECNICO', 'JURIDICO', 'Medidas Cautelares ' + Rec.Name, 'TMC', false, '');
 
+                    action("Crear Tarea TMC Tecnico")
+                    {
+                        Caption = 'Crear Tarea TMC-Fijar en Blanco';
+                        ApplicationArea = All;
+                        Image = TaskPage;
+                        trigger OnAction()
+                        var
+                            Gtask: Codeunit GTask;
+                            RecRef: RecordRef;
+                            Resource: Record Resource;
+                        begin
+                            Gtask.CrearCategorias(CompanyName);
+                            Commit();
+                            Resource.Get(Rec."No.");
+                            RecRef.GetTable(Resource);
+                            Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Resource.name + ' con el número ' + Resource."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
+                            'MEDIOS', 'TECNICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '');
 
-                    end;
+                        end;
+                    }
+                    action("Crear Tarea Desmontaje Tec")
+                    {
+                        Caption = 'Crear Tarea Desmontaje';
+                        ApplicationArea = All;
+                        Image = TaskPage;
+                        trigger OnAction()
+                        var
+                            Gtask: Codeunit GTask;
+                            RecRef: RecordRef;
+                            Resource: Record Resource;
+                        begin
+                            Gtask.CrearCategorias(CompanyName);
+                            Commit();
+                            Resource.Get(Rec."No.");
+                            RecRef.GetTable(Resource);
+                            Gtask.CrearTarea(RecRef, 'Proceder a desmontar ' + Resource.name + ' con el número ' + Resource."No.",
+                            'TALLER', 'TECNICO', 'Desmontar recurso ' + Resource.Name, 'DESMONTAJE', false, '');
+
+                        end;
+                    }
                 }
-                action("Crear Tarea Desmontaje")
+                group(Medios)
                 {
-                    ApplicationArea = All;
-                    Image = TaskPage;
-                    trigger OnAction()
-                    var
-                        Gtask: Codeunit GTask;
-                        RecRef: RecordRef;
-                    begin
-                        Gtask.CrearCategorias(CompanyName);
-                        Commit();
-                        RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Proceder a desmontar ' + Rec.name + ' con el número ' + Rec."No.",
-                        'TECNICO', 'JURIDICO', 'Desmontar recurso ' + Rec.Name, 'DESMONTAJE', false, '');
-                    end;
+                    action("Crear Tarea TMC Medios")
+                    {
+                        Caption = 'Crear Tarea TMC-Fijar Blanco';
+                        ApplicationArea = All;
+                        Image = TaskPage;
+                        trigger OnAction()
+                        var
+                            Gtask: Codeunit GTask;
+                            RecRef: RecordRef;
+                            Tipos: Record "Tipo Recurso";
+                            Fichero: Text;
+                            Adjuntar: Boolean;
+                            Resource: Record Resource;
+                        begin
+                            Gtask.CrearCategorias(CompanyName);
+                            Commit();
+                            Resource.Get(Rec."No.");
+                            RecRef.GetTable(Resource);
+                            If Not Tipos.Get(Resource."Tipo Recurso") then
+                                Tipos.Init();
+                            Fichero := Tipos."Ruta imagenes" + '\' + Resource."No.";
+                            //Adjuntar := Exists(Fichero);
+                            Adjuntar := true;
+                            If Not Adjuntar then
+                                Fichero := '';
+                            Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Resource.name + ' con el número ' + Resource."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
+                            'TALLER', 'MEDIOS', 'Fijacion en blanco ' + Resource.Name, 'TMC', Adjuntar, Fichero);
+
+                            // RecRef.Close();
+                            // Clear(RecRef);
+                            // RecRef.GetTable(Usertask);
+                            // RecRef.Get(Usertask.RecordId);
+                            // TM.Insert();
+                            // tm.CalcFields(Content);
+                            // Tm.Content.CreateInStream(InStr);
+                            // DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Rec."No." + '.pdf');
+                            // //DoccAttach.Insert();
+                            // tm.Delete();
+                            // Clear(Gtask);
+                            // Gtask.CrearTareaTecnico(Rec."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
+                            // Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                            // EnviaCorreo(Usertask, true, '', false, 'TMC ' + Rec."No.", EmailResponsable, EmailSupervisor, '', User."Full Name");
+
+                        end;
+                    }
+                }
+                group(Juridico)
+                {
+                    action("Crear Tarea TMC- Medidas Cautelares")
+                    {
+                        ApplicationArea = All;
+                        Image = TaskPage;
+                        trigger OnAction()
+                        var
+                            Gtask: Codeunit GTask;
+                            RecRef: RecordRef;
+                            Resource: Record Resource;
+                        begin
+                            Gtask.CrearCategorias(CompanyName);
+                            Commit();
+                            Resource.Get(Rec."No.");
+                            RecRef.GetTable(Resource);
+                            Gtask.CrearTarea(RecRef, 'Inicio medidas cautelares ' + Resource.name + ' con el número ' + Resource."No.",
+                            'TECNICO', 'JURIDICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '');
+
+                        end;
+                    }
+                    action("Crear Tarea Desmontaje")
+                    {
+                        ApplicationArea = All;
+                        Image = TaskPage;
+                        trigger OnAction()
+                        var
+                            Gtask: Codeunit GTask;
+                            RecRef: RecordRef;
+                            Resource: Record Resource;
+                        begin
+                            Resource.Get(Rec."No.");
+                            Gtask.CrearCategorias(CompanyName);
+                            Commit();
+                            RecRef.GetTable(Resource);
+                            Gtask.CrearTarea(RecRef, 'Proceder a desmontar ' + Resource.name + ' con el número ' + Resource."No.",
+                            'TECNICO', 'JURIDICO', 'Desmontar recurso ' + Resource.Name, 'DESMONTAJE', false, '');
+
+                        end;
+                    }
                 }
             }
-            group(Tecnico)
-            {
-                action("Crear Tarea TMC Tecnico")
-                {
-                    Caption = 'Crear Tarea TMC';
-                    ApplicationArea = All;
-                    Image = TaskPage;
-                    trigger OnAction()
-                    var
-                        Gtask: Codeunit GTask;
-                        RecRef: RecordRef;
-                    begin
-                        Gtask.CrearCategorias(CompanyName);
-                        Commit();
-                        RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Rec.name + ' con el número ' + Rec."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
-                        'MEDIOS', 'TECNICO', 'Medidas Cautelares ' + Rec.Name, 'TMC', false, '');
 
 
-                    end;
-                }
-                action("Crear Tarea Desmontaje Tec")
-                {
-                    Caption = 'Crear Tarea Desmontaje';
-                    ApplicationArea = All;
-                    Image = TaskPage;
-                    trigger OnAction()
-                    var
-                        Gtask: Codeunit GTask;
-                        RecRef: RecordRef;
-                    begin
-                        Gtask.CrearCategorias(CompanyName);
-                        Commit();
-                        RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Proceder a desmontar ' + Rec.name + ' con el número ' + Rec."No.",
-                        'TALLER', 'TECNICO', 'Desmontar recurso ' + Rec.Name, 'DESMONTAJE', false, '');
 
 
-                    end;
-                }
-            }
-            group(Medios)
-            {
-                action("Crear Tarea TMC Medios")
-                {
-                    Caption = 'Crear Tarea TMC';
-                    ApplicationArea = All;
-                    Image = TaskPage;
-                    trigger OnAction()
-                    var
-                        Gtask: Codeunit GTask;
-                        RecRef: RecordRef;
-                        Tipos: Record "Tipo Recurso";
-                        Fichero: Text;
-                        Adjuntar: Boolean;
-                    begin
-                        Gtask.CrearCategorias(CompanyName);
-                        Commit();
-                        RecRef.GetTable(Rec);
-                        If Not Tipos.Get(Rec."Tipo Recurso") then
-                            Tipos.Init();
-                        Fichero := Tipos."Ruta imagenes" + '\' + Rec."No.";
-                        Adjuntar := Exists(Fichero);
-                        If Not Adjuntar then
-                            Fichero := '';
-                        Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Rec.name + ' con el número ' + Rec."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
-                        'TALLER', 'MEDIOS', 'Fijacion en blanco ' + Rec.Name, 'TMC', Adjuntar, Fichero);
-
-                        // RecRef.Close();
-                        // Clear(RecRef);
-                        // RecRef.GetTable(Usertask);
-                        // RecRef.Get(Usertask.RecordId);
-                        // TM.Insert();
-                        // tm.CalcFields(Content);
-                        // Tm.Content.CreateInStream(InStr);
-                        // DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Rec."No." + '.pdf');
-                        // //DoccAttach.Insert();
-                        // tm.Delete();
-                        // Clear(Gtask);
-                        // Gtask.CrearTareaTecnico(Rec."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
-                        // Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
-                        // EnviaCorreo(Usertask, true, '', false, 'TMC ' + Rec."No.", EmailResponsable, EmailSupervisor, '', User."Full Name");
-
-                    end;
-                }
-            }
 
 
             action("Ver Tareas")
@@ -228,7 +246,8 @@ pageextension 92160 RecursoExt extends "Resource Card"
         // CLEAR(BigText);
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
-        BigText := BigText + '<img src="emailFoot.png" />';
+        REmail.AddAttachment(Funciones.CargaPie(Base64), 'emailfoot.png');
+        BigText := BigText + '<img src="data:image/png;base64,' + base64 + '" />';//"emailFoot.png" />';
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=Blue>';
@@ -257,7 +276,6 @@ pageextension 92160 RecursoExt extends "Resource Card"
         BigText := BigText + (' automatizados de las direcciones del emisor o del destinatario.');
         BigText := BigText + '</font>';
         //REmail.Subject := 'Pago contrato ' + NContrato;
-        REmail.AddAttachment(Funciones.CargaPie(), 'emailfoot.png');
         REmail.Subject := Asunto;
         REmail."Send To" := SendTo;
         if CC <> '' then

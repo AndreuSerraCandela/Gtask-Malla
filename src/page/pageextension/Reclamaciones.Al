@@ -189,7 +189,8 @@ pageextension 92158 ReclamacionesExt extends "Ficha Reclamaciones"
         // CLEAR(BigText);
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
-        BigText := BigText + '<img src="emailFoot.png" />';
+        REmail.AddAttachment(Funciones.CargaPie(Base64), 'emailfoot.png');
+        BigText := BigText + '<img src="data:image/png;base64,' + base64 + '" />';//"emailFoot.png" />';
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=Blue>';
@@ -218,7 +219,6 @@ pageextension 92158 ReclamacionesExt extends "Ficha Reclamaciones"
         BigText := BigText + (' automatizados de las direcciones del emisor o del destinatario.');
         BigText := BigText + '</font>';
         //REmail.Subject := 'Pago contrato ' + NContrato;
-        REmail.AddAttachment(Funciones.CargaPie(), 'emailfoot.png');
         REmail.Subject := Asunto;
         REmail."Send To" := SendTo;
         if CC <> '' then

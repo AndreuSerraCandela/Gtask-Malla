@@ -133,30 +133,100 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Departamentos - Action Sincronizar - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 1942227777 - Action 2847790018 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
-          <source>Tareas Técnio</source>
+        <trans-unit id="PageExtension 1942227777 - Action 987292005 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Tareas Firma Emplazamiento</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Tareas Técnio - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Tareas Firma Emplazamiento - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 1942227777 - Action 3791205667 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
-          <source>Crear Tarea Alta Recursos Medios</source>
+        <trans-unit id="PageExtension 1942227777 - Action 2617162387 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Comunicar Pnl a Jurídico</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea Alta Recursos Medios - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 1942227777 - Action 3790529422 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
-          <source>Crear Tarea Alta Recursos Taller</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea Alta Recursos Taller - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Comunicar Pnl a Jurídico - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 1942227777 - Action 802052 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
           <source>Crear Tarea Solicitud Emplazamiento</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea Solicitud Emplazamiento - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 1942227777 - Action 3584913679 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
-          <source>Crear Tareas Emplazamiento</source>
+        <trans-unit id="PageExtension 1942227777 - Action 1660208768 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>PRE-MONTAJE</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tareas Emplazamiento - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action PRE-MONTAJE - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 142518118 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Tarea Solicitud Emplazamiento PRE-Pnel</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Tarea Solicitud Emplazamiento PRE-Pnel - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 4068991003 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>TareasMonjaje/Desmontaje Emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action TareasMonjaje/Desmontaje Emplazamiento - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 33952335 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Juridico</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Juridico - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 1022201308 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Tarea Desmontaje</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea Desmontaje - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 4103277769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Tarea TMC- Medidas Cautelares</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea TMC- Medidas Cautelares - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 3692485251 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Medios</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Medios - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 479972057 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Tarea TMC-Fijar Blanco</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea TMC Medios - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 869117707 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Tecnico</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Tecnico - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 610560672 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Desmontaje</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Desmontaje - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 2277339318 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Tarea Desmontaje</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea Desmontaje Tec - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 1782290769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Tarea TMC-Fijar en Blanco</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea TMC Tecnico - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 1331765762 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Montaje</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Montaje - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 1436058627 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Orden Montaje Taller</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Orden Montaje Taller - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 2448755317 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Orden Pre-Montaje Taller</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Orden Pre-Montaje Taller - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 1942227777 - Action 3791205667 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
+          <source>Crear Tarea Alta Recursos Medios</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Crear Tarea Alta Recursos Medios - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 1942227777 - Action 1928527107 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
           <source>Ver Tareas</source>
@@ -183,6 +253,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Fijacion - Action Ver Tarea - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 4228244613 - Action 1288086261 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 685777706">
+          <source>Comunicar a Jurídico</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PnlExt - Action Comunicar a Jurídico - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4228244613 - Action 1928527107 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 685777706">
+          <source>Ver Tareas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension PnlExt - Action Ver Tareas - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 4199154675 - Action 3625636304 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 3710307143">
           <source>Crear Tarea</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -192,6 +272,11 @@
           <source>Ver Tareas</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension ReclamacionesExt - Action Ver Tareas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2156239730 - Action 4068991003 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
+          <source>TareasMonjaje/Desmontaje Emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action TareasMonjaje/Desmontaje Emplazamiento - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2156239730 - Action 33952335 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
           <source>Juridico</source>
@@ -203,10 +288,10 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea Desmontaje - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 2156239730 - Action 3590762258 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
-          <source>Crear Tarea TMC</source>
+        <trans-unit id="PageExtension 2156239730 - Action 4103277769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
+          <source>Crear Tarea TMC- Medidas Cautelares</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea TMC - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea TMC- Medidas Cautelares - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2156239730 - Action 3692485251 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
           <source>Medios</source>
@@ -214,7 +299,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Medios - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2156239730 - Action 479972057 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
-          <source>Crear Tarea TMC</source>
+          <source>Crear Tarea TMC-Fijar Blanco</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea TMC Medios - Property Caption</note>
         </trans-unit>
@@ -229,7 +314,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea Desmontaje Tec - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2156239730 - Action 1782290769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
-          <source>Crear Tarea TMC</source>
+          <source>Crear Tarea TMC-Fijar en Blanco</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea TMC Tecnico - Property Caption</note>
         </trans-unit>
