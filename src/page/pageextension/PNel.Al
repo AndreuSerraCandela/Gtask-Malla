@@ -32,12 +32,12 @@ pageextension 92164 PnlExt extends "PNEL Emplazamientos"
                     Usertask: Record "User Task";
 
                 begin
-                    Usertask.SetRange("No.", Rec."Nº Emplazamiento");
+                    Usertask.SetRange(Id_Record, Rec.RecordId);
                     Usertask.SetRange("User Task Group Assigned To", 'PNEL');
                     If Not Usertask.FindFirst() then
                         Error('No existe una tarea para esta emplazamiento')
                     else
-                        Page.RunModal(0, Usertask);
+                        Page.RunModal(1170, Usertask);
 
                 end;
             }

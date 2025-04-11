@@ -19,7 +19,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                         RecRef: RecordRef;
                     begin
                         RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, Rec."Descripción", 'TECNICO', 'TECNICO', Rec."Descripción", '', false, 'PRE-MONTAJE');
+                        Gtask.CrearTarea(RecRef, Rec."Descripción", 'TECNICO', 'TECNICO', Rec."Descripción", 'PRE-MONTAJE', false, '');
 
 
                     end;
@@ -36,7 +36,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                         Gtask.CrearCategorias(CompanyName);
                         Commit();
                         RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Dería posible Obtener permiso para ' + Rec."Descripción" + ' con el número ' + Rec."Nº Emplazamiento" + ' Sito en la calle ' + Rec.Calle,
+                        Gtask.CrearTarea(RecRef, 'Sería posible obtener permiso para ' + Rec."Descripción" + ' con el número ' + Rec."Nº Emplazamiento" + ', sito en la calle ' + Rec.Calle,
                         'JURIDICO', 'TECNICO', 'Pre-Solicitud permiso ' + Rec."Descripción", 'Solicitud', false, '');
 
 
@@ -57,27 +57,44 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                     end;
                 }
 
-                action("Crear Tarea Solicitud Emplazamiento")
+                action("Crear Tarea Emplazamiento")
                 {
                     ApplicationArea = All;
                     Image = ViewJob;
                     trigger OnAction()
                     var
                         Gtask: Codeunit GTask;
+                        UsuariodGtask: Record UsuariosGtask;
+                        Supervisor: Guid;
+                        Responsable: Guid;
                         RecRef: RecordRef;
                     begin
                         Gtask.CrearCategorias(CompanyName);
                         Commit();
                         RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Iniciar solicitud para el emplazamiento ' + Rec."Descripción" + ' con el número ' + Rec."Nº Emplazamiento",
-                        'JURIDICO', 'TECNICO', 'Solicitud permiso ' + Rec."Descripción", 'Solicitud', false, '');
+                        UsuariodGtask.ChangeCompany('Malla Publicidad');
+                        UsuariodGtask.SetRange(Departamento, 'TECNICO');
+                        UsuariodGtask.SetRange(Supervisor, true);
+                        if UsuariodGtask.FindFirst() then
+                            Supervisor := UsuariodGtask."Id Usuario";
+                        if not IsNullGuid(Supervisor) then begin
+                            UsuariodGtask.SetRange(Supervisor);
+                            UsuariodGtask.SetFilter("Id Usuario", '<>%1', Supervisor);
+                            if UsuariodGtask.FindFirst() then
+                                Responsable := UsuariodGtask."Id Usuario";
+                        end;
+                        if IsNullGuid(Responsable) then
+                            Responsable := Supervisor;
+
+                        Gtask.CrearTareaEmpazamiento(RecRef, Rec."Nº Emplazamiento" + ' ' + Rec."Descripción"
+                        , Responsable, Supervisor, 'TECNICO', 'TECNICO', false, '');
 
 
                     end;
                 }
 
             }
-            group("TareasMonjaje/Desmontaje Emplazamiento")
+            group("TareasMontaje/Desmontaje Emplazamiento")
             {
                 Image = TaskQualityMeasure;
                 group(Tecnico)
@@ -105,8 +122,8 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 if ListaRecursos <> '' then
                                     ListaRecursos := CopyStr(ListaRecursos, 1, StrLen(ListaRecursos) - 2);
                                 RecRef.GetTable(Rec);
-                                Gtask.CrearTarea(RecRef, 'Proceder al monjage de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
-                                'MEDIOS', 'TECNICO', 'Crear recursos emplazamienyo ' + Rec."Descripción", 'Montaje', false, '');
+                                Gtask.CrearTarea(RecRef, 'Proceder al montaje de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
+                                'MEDIOS', 'TECNICO', 'Crear recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '');
 
 
                             end;
@@ -159,8 +176,8 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 if ListaRecursos <> '' then
                                     ListaRecursos := CopyStr(ListaRecursos, 1, StrLen(ListaRecursos) - 2);
                                 RecRef.GetTable(Rec);
-                                Gtask.CrearTarea(RecRef, 'Proceder al monjage de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
-                                'TALLER', 'TECNICO', 'Montaje recursos emplazamienyo ' + Rec."Descripción", 'Montaje', false, '');
+                                Gtask.CrearTarea(RecRef, 'Proceder al montaje de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
+                                'TALLER', 'TECNICO', 'Montaje recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '');
 
 
                             end;
@@ -325,11 +342,11 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                     Usertask: Record "User Task";
 
                 begin
-                    Usertask.SetRange("No.", Rec."Nº Emplazamiento");
+                    Usertask.SetRange(Id_Record, Rec.RecordId);
                     If Not Usertask.FindFirst() then
                         Error('No existe una tarea para esta emplazamiento')
                     else
-                        Page.RunModal(0, Usertask);
+                        Page.RunModal(1170, Usertask);
 
                 end;
             }

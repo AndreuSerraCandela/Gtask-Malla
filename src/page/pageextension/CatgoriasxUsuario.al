@@ -20,6 +20,7 @@ pageextension 92152 "Usuarios x Categoría" extends "User Task Group Members"
                     User: Record UsuariosGtask;
                     Users: Page UsuariosGtask;
                 begin
+                    User.ChangeCompany('Malla Publicidad');
                     User.SetRange("Id Usuario", Rec."User Security ID");
                     if User.FindFirst() then
                         Users.SetRecord(User);
@@ -43,6 +44,10 @@ pageextension 92152 "Usuarios x Categoría" extends "User Task Group Members"
                 ApplicationArea = All;
             }
             field("Supervisor"; Rec."Supervisor")
+            {
+                ApplicationArea = All;
+            }
+            field("Copiado en Mail"; Rec."Copiado en Mail")
             {
                 ApplicationArea = All;
             }

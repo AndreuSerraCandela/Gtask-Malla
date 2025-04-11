@@ -58,6 +58,7 @@ page 7001184 "UsuariosGtask"
                     User: Record User;
                     Gtask: Codeunit Gtask;
                 begin
+                    UsuariosGtask.ChangeCompany('Malla Publicidad');
                     Gtask.CreateUsers(UsuariosGtask);
                     Commit();
                     if UsuariosGtask.FindSet() then

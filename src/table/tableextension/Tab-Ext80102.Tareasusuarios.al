@@ -20,6 +20,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
             var
                 User: Record UsuariosGtask;
             begin
+                User.ChangeCompany('Malla Publicidad');
                 If Page.RunModal(Page::UsuariosGtask, User) = Action::LookupOK then
                     Supervisor := user."Id Usuario";
             end;
@@ -38,6 +39,10 @@ tableextension 92103 Tareasusuarios extends "User Task"
 
         }
         field(50003; "Line No."; Integer)
+        {
+
+        }
+        field(50012; Id_record; RecordId)
         {
 
         }
@@ -63,7 +68,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
             DataClassification = ToBeClassified;
             TableRelation = "Work Center"."No.";
         }
-
+        field(50013; Reserva; Integer) { }
 
         modify("Assigned To")
         {
@@ -91,9 +96,30 @@ tableextension 92103 Tareasusuarios extends "User Task"
                 Categorias.SetRange(Departamento, Departamento);
                 Categorias.SetRange(Responsable, true);
                 if Categorias.FindFirst() then
-                    Validate("Assigned To", Categorias."User Security ID");
+                    "Assigned To" := Categorias."User Security ID";
+                "User Task Group Assigned To" := "Categoría";
 
             end;
+        }
+        field(50009; Estado; Enum "Task Enum")
+        {
+            Caption = 'Estado';
+            DataClassification = ToBeClassified;
+        }
+        field(50010; "Fecha Comunicado Cambio"; DateTime)
+        {
+            Caption = 'Fecha Comunicado Cambio';
+            DataClassification = ToBeClassified;
+        }
+        field(50011; "Fecha Cambio"; DateTime)
+        {
+            Caption = 'Fecha Comunicado Cambio';
+            DataClassification = ToBeClassified;
+        }
+        field(50014; Mentioned; BLOB)
+        {
+            Caption = 'Mencionados';
+            SubType = Memo;
         }
 
     }
@@ -101,7 +127,28 @@ tableextension 92103 Tareasusuarios extends "User Task"
     var
         Gtask: Codeunit GTask;
     begin
-        Gtask.DeleteTarea(Rec);
+        Gtask.DeleteTarea(Rec.Id_Tarea);
+    end;
+
+    procedure GetMentioned(): Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        TypeHelper: Codeunit "Type Helper";
+        InStream: InStream;
+    begin
+        TempBlob.FromRecord(Rec, FieldNo(Mentioned));
+        TempBlob.CreateInStream(InStream, TEXTENCODING::UTF8);
+        exit(TypeHelper.ReadAsTextWithSeparator(InStream, TypeHelper.LFSeparator()));
+    end;
+
+    procedure SetMentioned(StreamText: Text)
+    var
+        OutStream: OutStream;
+    begin
+        Clear(Mentioned);
+        Description.CreateOutStream(OutStream, TEXTENCODING::UTF8);
+        OutStream.Write(StreamText);
+        if Modify(true) then;
     end;
 }
 tableextension 90109 Tareascomercial extends "To-do"

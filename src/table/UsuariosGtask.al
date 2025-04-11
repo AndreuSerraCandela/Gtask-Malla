@@ -60,6 +60,10 @@ table 7001209 "UsuariosGtask"
         {
             DataClassification = ToBeClassified;
         }
+        field(50005; Tecnico; Code[20])
+        {
+            TableRelation = "Salesperson/Purchaser"."Code";
+        }
     }
 
     keys

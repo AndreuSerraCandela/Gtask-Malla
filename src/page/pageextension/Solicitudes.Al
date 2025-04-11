@@ -17,13 +17,13 @@ pageextension 92159 SolicitudesExt extends "Ficha Solicitudes"
                     EmailSupervisor: Text[250];
                     TipoIncidencia: Record "User Task Group";
                     Resource: Record "Resource";
-                    G: Guid;
                     RecRef: RecordRef;
                     DoccAttach: Record "Document Attachment";
                     InStr: Instream;
                     DoccAttach2: Record "Document Attachment";
                     Responsable: Guid;
                     Supervisor: Guid;
+                    ListaCorreos: Text;
                 begin
                     Gtask.CrearCategorias(CompanyName);
                     Commit();
@@ -39,30 +39,50 @@ pageextension 92159 SolicitudesExt extends "Ficha Solicitudes"
                         Usertask."Start DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 080000T);
                         Usertask."Due DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 130000T);
                     end;
-                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'JURIDICO', 'JURIDICO', 'Solicitud', EmailResponsable, EmailSupervisor, User, UserTask);
+                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'JURIDICO', 'JURIDICO', 'Solicitud', EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserTask.Validate(Priority, Usertask.Priority::High);
                     UserTask.Validate("Object Type", Usertask."Object Type"::Page);
                     UserTask.Validate("Object ID", Page::"Ficha Solicitudes");
-                    Usertask."No." := Format(Rec."Nº Solicitud");
+                    Usertask."Id_Record" := Rec.RecordId;
                     UserTask.Insert(true);
+                    Usertask."No." := Format(Usertask.ID);
+                    // If not IsNullGuid(UserTask.Supervisor) then
+                    //     UserTask."Created By" := Usertask.Supervisor;
+                    UserTask.Modify();
                     Commit();
                     Page.RunModal(Page::"User Task Card", UserTask);
+                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                        UserTask.Get(UserTask.ID);
+                        Commit();
+                        If Confirm('¿Desea borrar la tarea?') then begin
+                            UserTask.Delete();
+                            exit;
+                        end;
+                    end;
                     Commit();
                     UserTask.Get(UserTask.ID);
-                    If (UserTask."Supervisor" = G) or (UserTask."Assigned To" = G)
+                    If IsNullGuid(UserTask."Supervisor") or IsNullGuid(UserTask."Assigned To")
                     or (UserTask."User Task Group Assigned To" = '') Or (UserTask.Departamento = '')
                     or (UserTask.Servicio = '') Then begin
                         If Confirm('No ha completado los campos Supervisor, Responsable, Categoría, Departamento y Servicio, ¿Desea continuar?') then begin
                             Commit();
                             UserTask.Get(UserTask.ID);
                             Page.RunModal(Page::"User Task Card", UserTask);
+                            iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                                UserTask.Get(UserTask.ID);
+                                Commit();
+                                If Confirm('¿Desea borrar la tarea?') then begin
+                                    UserTask.Delete();
+                                    exit;
+                                end;
+                            end;
                             Commit();
                             UserTask.Get(UserTask.ID);
                         end else begin
                             UserTask.Delete();
                             exit;
                         end;
-                        If (UserTask."Supervisor" = G) or (UserTask."Assigned To" = G)
+                        If IsNullGuid(UserTask."Supervisor") or IsNullGuid(UserTask."Assigned To")
                         or (UserTask."User Task Group Assigned To" = '') Or (UserTask.Departamento = '')
                         or (UserTask.Servicio = '') Then begin
                             Message('No ha completado los campos Supervisor, Responsable, Categoría, Departamento y Servicio, Proceso cancelado');
@@ -101,11 +121,11 @@ pageextension 92159 SolicitudesExt extends "Ficha Solicitudes"
                     Usertask: Record "User Task";
 
                 begin
-                    Usertask.SetRange("No.", Format(Rec."Nº Solicitud"));
+                    Usertask.SetRange(Id_Record, Rec.RecordId);
                     If Not Usertask.FindFirst() then
                         Error('No existe una tarea para esta Solicitud')
                     else
-                        Page.RunModal(0, Usertask);
+                        Page.RunModal(1170, Usertask);
 
                 end;
             }

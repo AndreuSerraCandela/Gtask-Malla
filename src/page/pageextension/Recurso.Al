@@ -142,11 +142,6 @@ pageextension 92160 RecursoExt extends "Resource Card"
                 }
             }
 
-
-
-
-
-
             action("Ver Tareas")
             {
                 Image = "TaskList";
@@ -158,13 +153,55 @@ pageextension 92160 RecursoExt extends "Resource Card"
                     Usertask: Record "User Task";
 
                 begin
-                    Usertask.SetRange("No.", Rec."Nº Emplazamiento");
+                    Usertask.SetRange(Id_record, Rec.RecordId);
                     If Not Usertask.FindFirst() then
                         Error('No existe una tarea para esta emplazamiento')
                     else
-                        Page.RunModal(0, Usertask);
+                        Page.RunModal(1170, Usertask);
 
                 end;
+            }
+            action(Sincronizar)
+            {
+                Image = ChangeTo;
+                ApplicationArea = All;
+                Caption = 'Sincronizar';
+                trigger OnAction()
+                var
+                    Gtask: Codeunit GTask;
+                    Resource: Record Resource;
+                    IdKuara: Text;
+                begin
+                    If Resource.FindFirst() then
+                        repeat
+                            IdKuara := Gtask.GetLink(Resource.RecordId, Database::Resource, CompanyName);
+                            If IdKuara <> '' then
+                                Gtask.UpdateRecurso(Resource, Resource.RecordId, Database::Resource, IdKuara);
+                        until Resource.Next() = 0;
+                end;
+
+            }
+            action("Sincronizar errores")
+            {
+                Image = ChangeTo;
+                ApplicationArea = All;
+                Caption = 'Sincronizar errores';
+                trigger OnAction()
+                var
+                    Gtask: Codeunit GTask;
+                    Resourcet: Record Resource temporary;
+                    Resource: Record Resource;
+
+                begin
+                    Gtask.GetResource(Resourcet);
+                    If Resourcet.FindFirst() then
+                        repeat
+                            If Resource.Get(Resourcet."No.") then
+                                If Gtask.InsertLink(Resource.RecordId, Database::Resource, Resourcet."Search Name", CompanyName) Then
+                                    Gtask.UpdateRecurso(Resource, Resource.RecordId, Database::Resource, Resourcet."Search Name");
+                        until Resourcet.Next() = 0;
+                end;
+
             }
 
         }

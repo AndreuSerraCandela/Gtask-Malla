@@ -32,6 +32,11 @@ tableextension 92404 "User Task Group Member" extends "User Task Group Member"
             Editable = false;
             FieldClass = FlowField;
         }
+        field(50004; "Copiado en Mail"; Boolean)
+        {
+
+        }
+
 
     }
 

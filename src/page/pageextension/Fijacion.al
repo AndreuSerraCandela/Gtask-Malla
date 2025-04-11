@@ -1,5 +1,17 @@
 pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
 {
+    layout
+    {
+        addafter("Imagenes Orden fijación")
+        {
+            part("Qrs"; "Imagenes Orden fijacion")
+            {
+                Caption = 'Qr''s';
+                ApplicationArea = All;
+                SubPageLink = "Nº Orden" = field("Nº Orden"), "Valla Fijada" = const(false), "Es Qr" = const(true);
+            }
+        }
+    }
     actions
     {
         addlast(Processing)
@@ -15,28 +27,36 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     rDet: Record "Orden fijación";
                     Cab: Record "Cab Orden fijación";
                     Resource: Record "Resource";
-                    Opcion: Integer;
+                    Opcion: Option " ",Valla,Opi,Otros;
                     Usertask: Record "User Task";
                     Proyecto: Record "Job";
                     TipoIncidencia: Record "User Task Group";
                     Gtask: Codeunit "Gtask";
                     TM: Record "Tenant Media";
                     DoccAttach: Record "Document Attachment";
+                    DoccAttachTask: Record "Document Attachment";
                     DoccAttach2: Record "Document Attachment";
                     Outstr: OutStream;
                     RecRef: RecordRef;
                     InStr: InStream;
                     Imagenes: Record "Imagenes Orden fijación";
+                    Det: Record "Orden fijación";
+                    DetTemp: Record "Orden fijación" temporary;
                     im: Record "Imagenes Orden fijación";
                     Rep: Report "Etiqueta orden fijacion Opis";
                     Rep2: Report "Etiqueta fijacion soportes";
+                    TempBlob: Codeunit "Temp Blob";
                     User: Record User;
                     EmailResponsable: Text;
                     EmailSupervisor: Text;
                     UserSetups: Record UsuariosGtask;
                     Responsable: Guid;
                     Supervisor: Guid;
+                    ListaCorreos: Text;
+                    Id: Integer;
+                    UserTaskNew: Record "User Task";
                 begin
+                    UserSetups.ChangeCompany('Malla Publicidad');
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", Format(Rec."Nº Orden"));
                     DoccAttach.DeleteAll();
@@ -46,23 +66,25 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserSetups.SetRange(Departamento, 'TALLER');
                     UserSetups.FindFirst();
                     rDet.Setrange("Nº Orden", Rec."Nº Orden");
-                    Opcion := 0;
-                    if Rec."Tipo soporte" = Rec."Tipo soporte"::Valla then Opcion := 1;
-                    if Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then Opcion := 2;
-                    if Rec."Tipo soporte" = Rec."Tipo soporte"::Otros then Opcion := 3;
-                    If (rDet.FindFirst()) and (Opcion = 0) then begin
+                    Opcion := Opcion::" ";
+                    if Rec."Tipo soporte" = Rec."Tipo soporte"::Valla then Opcion := Opcion::Valla;
+                    if Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then Opcion := Opcion::Opi;
+                    if Rec."Tipo soporte" = Rec."Tipo soporte"::Otros then Opcion := Opcion::Otros;
+                    If (rDet.FindFirst()) and (Opcion = Opcion::" ") then begin
+                        if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
                         Resource.Get(rDet."Nº Recurso");
-                        Opcion := 0;
+                        Opcion := Opcion::" ";
                         If Resource."Tipo Recurso" in ['VALLA', 'VALLAS', 'P.PEATOAL'] then
-                            Opcion := 1;
+                            Opcion := Opcion::Valla;
                         if Resource."Tipo Recurso" in ['OPI', 'OPIS', 'LUM1,5X1,1', 'OPI ROT.', 'PLANIMETRO', 'RELOJ'] then
-                            Opcion := 2;
+                            Opcion := Opcion::Opi;
                         if Resource."Tipo Recurso" in ['INDICADOR', 'VPEATON', 'MEDIANERA'] then
-                            Opcion := 3;
+                            Opcion := Opcion::Otros;
                     end;
-                    if Opcion = 0 then
+                    if Opcion = Opcion::" " then
                         Opcion := StrMenu(TipoOrden, Opcion, 'Seleccione el tipo de tarea a crear');
                     Usertask.Init();
+                    if rDet.Empresa <> '' then Proyecto.ChangeCompany(rDet.Empresa);
                     Proyecto.Get(rDet."Nº proyecto");
                     if Proyecto."Nombre Comercial" = Proyecto."Bill-to Name" then Proyecto."Nombre Comercial" := '';
                     UserTask.Validate(Title, Proyecto.Description);
@@ -134,7 +156,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                             end;
                         end;
                     end;
-                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'MEDIOS', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask);
+                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserSetups.Reset();
                     //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
                     UserTask.Validate(Priority, Usertask.Priority::High);
@@ -143,31 +165,35 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserTask.Validate("Due DateTime", CreateDateTime(Rec."Fecha fijación", 080000T));
                     Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
                     Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
-                    Usertask."No." := Format(Rec."Nº Orden");
+                    Usertask.Id_record := Rec.RecordId;
                     Usertask.OrdenFijacion := Rec."Nº Orden";
                     UserTask.Insert(true);
-                    UserTask.Validate("Supervisor", Supervisor);
+                    Usertask."No." := Format(Usertask.ID);
+                    UserTask."Supervisor" := Supervisor;
                     UserTask."User Task Group Assigned To" := TipoIncidencia."Code";
+                    UserTask."No." := Format(UserTask.ID);
+                    // If not IsNullGuid(UserTask.Supervisor) then
+                    //     UserTask."Created By" := Usertask.Supervisor;
                     Usertask.OrdenFijacion := Rec."Nº Orden";
                     Usertask.Departamento := 'TALLER';
-                    Usertask.Servicio := 'Medios';
+                    Usertask.Servicio := 'TALLER';
                     Usertask."Job No." := Rec."Nº Proyecto";
                     Usertask.Modify();
                     DoccAttach2.SetRange("Table ID", Database::"Cab Orden fijación");
                     DoccAttach2.SetRange("Line No.", Rec."Nº Orden");
-                    If DoccAttach.FindFirst() then
+                    If DoccAttach2.FindFirst() then
                         repeat
                             DoccAttach := DoccAttach2;
                             DoccAttach."Table ID" := Database::"User Task";
                             DoccAttach."No." := Format(Rec."Nº Orden");
+                            DoccAttach."Line No." := 0;
                             If DoccAttach.Insert() Then;
                         until DoccAttach2.Next() = 0;
                     //Inserto los report
-                    If Opcion = 1 then begin
+                    If Opcion = Opcion::Valla then begin
                         DoccAttach.Init();
                         DoccAttach."Table ID" := Database::"User Task";
                         DoccAttach."No." := Format(Rec."Nº Orden");
-
 
                         TM.Init();
                         TM.ID := CreateGuid();
@@ -190,10 +216,51 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         tm.CalcFields(Content);
                         Tm.Content.CreateInStream(InStr);
                         DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
+                        Det.Reset();
+                        Det.SetRange("Nº Orden", Rec."Nº Orden");
+                        If Det.FindFirst() Then
+                            repeat
+                                DetTemp := Det;
+                                DetTemp.Insert;
+                            until Det.Next() = 0;
+                        Det.DeleteAll();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det.DeleteAll();
+                                Det := DetTemp;
+                                Det.Insert;
+                                Clear(TempBlob);
+                                Clear(Outstr);
+                                Clear(RecRef);
+                                TempBlob.CreateOutStream(Outstr);
+                                RecRef.GetTable(Cab);
+                                Clear(Rep2);
+                                Rep2.CargaObservaciones(Proyecto.Description, '');
+                                Rep2.SetTableView(Rec);
+                                Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                //Report.SaveAs(Report::"Etiqueta orden fijacion Vallas", '', ReportFormat::Pdf, Outstr, RecRef);
+                                RecRef.Close();
+                                Clear(RecRef);
+                                RecRef.GetTable(Usertask);
+                                RecRef.Get(Usertask.RecordId);
+                                TempBlob.CreateInStream(InStr);
+                                DoccAttach.Init();
+                                DoccAttach."Table ID" := Database::"User Task";
+                                DoccAttach."No." := Format(Rec."Nº Orden");
+                                DoccAttach."Line No." := Det."Nº Reserva";
+                                DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
+                            Until DetTemp.Next() = 0;
+                        Det.DeleteAll();
+                        DetTemp.Reset();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det := DetTemp;
+                                Det.Insert;
+                            Until DetTemp.Next() = 0;
                         //DoccAttach.Insert();
                         tm.Delete();
                     end;
-                    if Opcion = 2 then begin
+                    if Opcion = Opcion::Opi then begin
                         Imagenes.SETRANGE("Nº Orden", Rec."Nº Orden");
                         If Imagenes.FINDSET THEN
                             repeat
@@ -235,7 +302,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 tm.Delete();
                             until Imagenes.NEXT = 0;
                     end;
-                    if Opcion = 3 then begin
+                    if Opcion = Opcion::Otros then begin
                         DoccAttach.Init();
                         DoccAttach."Table ID" := Database::"User Task";
                         DoccAttach."No." := Format(Rec."Nº Orden");
@@ -252,13 +319,16 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         TM.CalcFields(Content);
                         TM.Content.CreateOutStream(Outstr);
                         Clear(RecRef);
-                        RecRef.GetTable(Rec);
-                        Proyecto.GET(Rec."Nº Proyecto");
+                        Cab.SetRange("Nº Orden", Rec."Nº Orden");
+                        RecRef.GetTable(Cab);
+                        if rDet.Empresa <> '' then Proyecto.ChangeCompany(rDet.Empresa);
+                        Proyecto.GET(rDet."Nº Proyecto");
                         rDet.SETRANGE("Nº Orden", Rec."Nº Orden");
                         rDet.FindFirst();
+                        if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
                         Resource.GET(rDet."Nº Recurso");
                         Rep2.CargaObservaciones(Proyecto.Description, Resource.Medidas);
-                        Rep2.SetTableView(Rec);
+                        Rep2.SetTableView(Cab);
                         Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
                         TM.Insert();
                         tm.CalcFields(Content);
@@ -268,24 +338,131 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         RecRef.Get(Usertask.RecordId);
                         DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
                         RecRef.Close();
+                        Det.Reset();
+                        Det.SetRange("Nº Orden", Rec."Nº Orden");
+                        //DoccAttach.Insert();
+                        If Det.FindFirst() Then
+                            repeat
+                                DetTemp := Det;
+                                DetTemp.Insert;
+                            until Det.Next() = 0;
+                        Det.DeleteAll();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det.DeleteAll();
+                                Det := DetTemp;
+                                Det.Insert;
+                                Clear(TempBlob);
+                                Clear(Outstr);
+                                Clear(RecRef);
+                                TempBlob.CreateOutStream(Outstr);
+                                Cab.SetRange("Nº Orden", Rec."Nº Orden");
+                                RecRef.GetTable(Cab);
+                                if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                                Resource.GET(rDet."Nº Recurso");
+                                Clear(Rep2);
+                                Rep2.CargaObservaciones(Proyecto.Description, Resource.Medidas);
+                                Rep2.SetTableView(Cab);
+                                Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                RecRef.Close();
+                                Clear(RecRef);
+                                RecRef.GetTable(Usertask);
+                                RecRef.Get(Usertask.RecordId);
+                                TempBlob.CreateInStream(InStr);
+                                DoccAttach.Init();
+                                DoccAttach."Table ID" := Database::"User Task";
+                                DoccAttach."No." := Format(Rec."Nº Orden");
+                                DoccAttach."Line No." := Det."Nº Reserva";
+                                DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
+                            Until DetTemp.Next() = 0;
+                        Det.DeleteAll();
+                        DetTemp.Reset();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det := DetTemp;
+                                Det.Insert;
+                            Until DetTemp.Next() = 0;
                         //DoccAttach.Insert();
                         tm.Delete();
                     end;
                     Commit();
                     Page.RunModal(Page::"User Task Card", UserTask);
+                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                        UserTask.Get(UserTask.ID);
+                        Commit();
+                        If Confirm('¿Desea borrar la tarea?') then begin
+                            UserTask.Delete();
+                            exit;
+                        end;
+                    end;
+
                     Commit();
                     UserTask.Get(UserTask.ID);
-                    Clear(Gtask);
-                    Gtask.CrearTareaFijacion(Rec, Usertask);
+                    Id := UserTask.ID;
+                    If Opcion <> Opcion::Opi Then begin
+                        DoccAttach.Reset();
+                        rDet.Reset;
+                        DoccAttach.SetRange("Table ID", Database::"User Task");
+                        DoccAttach.SetRange("No.", Usertask."No.");
+                        DoccAttach.SetFilter("Line No.", '<>%1', 0);
+                        Message('Se generarán %1 tareas de fijación', DoccAttach.Count);
+                        If DoccAttach.FindFirst() then
+                            repeat
+                                rDet.SetRange("Nº Orden", Rec."Nº Orden");
+                                rDet.SetRange("Nº Reserva", DoccAttach."Line No.");
+                                If Not rDet.FindFirst() then rDet.Init;
+                                if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                                If not Resource.Get(rDet."Nº Recurso") then Resource.iNit();
+                                UserTaskNew.FindLast();
+                                Id := UserTaskNew.ID + 1;
+                                UserTaskNew := Usertask;
+                                UsertaskNew.Id := Id;
+                                UserTaskNew.Insert();
+                                UserTaskNew.Get(ID);
+                                UserTaskNew.Title := Copystr('Fijación ' + Resource.Name + ' ' + Usertask.Title, 1, MaxStrLen(UserTaskNew.Title));
+                                UserTaskNew.SetDescription('Fijación ' + Resource.Name + ' nº ' + Resource."No." + ' del proyecto ' + Rec."Nº proyecto" + ' del cliente ' + Proyecto."Bill-to Name" + ' ' + Proyecto."Nombre Comercial");
+                                Usertasknew.Reserva := DoccAttach."Line No.";
+                                UserTaskNew."No." := Format(UsertaskNew.ID);
+                                UserTaskNew.Estado := UserTask.Estado::Pendiente;
+                                UserTaskNew.Modify();
+                                Clear(Gtask);
+                                DoccAttachTask := DoccAttach;
+                                DoccAttachTask."No." := UsertaskNew."No.";
+                                DoccAttachTask.Insert();
+                            //Generar Una vez Revisadas las tareas
+                            //Gtask.CrearTareaFijacion(Rec, UsertaskNew);
+                            until DoccAttach.Next() = 0;
+                        Commit();
+                        UserTaskNew.SetRange(OrdenFijacion, Rec."Nº Orden");
+                        UserTaskNew.SetFilter(Reserva, '<>%1', 0);
+                        Message('Se han generado %1 tareas de fijación', DoccAttach.Count);
+                        Page.RunModal(Page::"User Task List", UsertaskNew);
+                        If UserTaskNew.FindFirst() Then
+                            repeat
+                                Gtask.CrearTareaFijacion(Rec, UsertaskNew);
+                            until UserTaskNew.Next() = 0;
+
+                    end else begin
+                        Clear(Gtask);
+                        Gtask.CrearTareaFijacion(Rec, Usertask);
+                    end;
+                    DoccAttach.Reset();
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Usertask."No.");
+                    DoccAttach.SetFilter("Line No.", '<>%1', 0);
+                    If Opcion <> Opcion::Opi then
+                        DoccAttach.DeleteAll(true);
+                    DoccAttach.Reset();
                     Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
-                    EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, '', User."Full Name");
+                    EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, 'julian@malla.es;lllompart@malla.es', User."Full Name");
+                    If Opcion <> 2 then Usertask.Delete();
                 end;
             }
-            action("Ver Tarea")
+            action("Ver Tareas")
             {
                 Image = "Task";
                 ApplicationArea = All;
-                Caption = 'Ver Tarea';
+                Caption = 'Ver Tareas';
                 trigger OnAction()
                 var
 
@@ -296,7 +473,14 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     If Not Usertask.FindFirst() then
                         Error('No existe una tarea para esta orden')
                     else
-                        Page.RunModal(Page::"User Task Card", Usertask);
+                        Page.RunModal(Page::"User Task List", Usertask);
+                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                        Commit();
+                        Usertask.Get(Usertask.ID);
+                        UserTask.Delete(true);
+                        exit;
+                    end;
+                    Commit()
 
                 end;
             }
@@ -312,7 +496,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                 begin
                     Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
                     If Usertask.FindFirst() then begin
-                        Gtask.DeleteTarea(Usertask);
+                        Gtask.DeleteTarea(Usertask.Id_Tarea);
                         Usertask.Delete();
 
                     end;
@@ -322,7 +506,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
         addafter(AsignarImagenaLineas)
         {
             actionref(CreartareaRef; "Crear Tarea") { }
-            actionref(VertareaRef; "Ver Tarea") { }
+            actionref(VertareaRef; "Ver Tareas") { }
         }
     }
     procedure EnviaCorreo(
