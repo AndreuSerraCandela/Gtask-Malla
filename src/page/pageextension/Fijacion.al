@@ -2,6 +2,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
 {
     layout
     {
+
         addafter("Imagenes Orden fijación")
         {
             part("Qrs"; "Imagenes Orden fijacion")
@@ -9,6 +10,12 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                 Caption = 'Qr''s';
                 ApplicationArea = All;
                 SubPageLink = "Nº Orden" = field("Nº Orden"), "Valla Fijada" = const(false), "Es Qr" = const(true);
+            }
+            part("Correos"; "Sent Emails List Part")
+
+            {
+                ApplicationArea = Notes;
+                Visible = true;
             }
         }
     }
@@ -55,6 +62,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     ListaCorreos: Text;
                     Id: Integer;
                     UserTaskNew: Record "User Task";
+                    Observaciones: Text;
                 begin
                     UserSetups.ChangeCompany('Malla Publicidad');
                     DoccAttach.SetRange("Table ID", Database::"User Task");
@@ -235,7 +243,8 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 TempBlob.CreateOutStream(Outstr);
                                 RecRef.GetTable(Cab);
                                 Clear(Rep2);
-                                Rep2.CargaObservaciones(Proyecto.Description, '');
+                                Observaciones := Rec.GetWorkDescription();
+                                Rep2.CargaObservaciones(Observaciones, Rec."Título");
                                 Rep2.SetTableView(Rec);
                                 Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
                                 //Report.SaveAs(Report::"Etiqueta orden fijacion Vallas", '', ReportFormat::Pdf, Outstr, RecRef);
@@ -261,20 +270,23 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         tm.Delete();
                     end;
                     if Opcion = Opcion::Opi then begin
-                        Imagenes.SETRANGE("Nº Orden", Rec."Nº Orden");
-                        If Imagenes.FINDSET THEN
+                        DoccAttach.Init();
+                        DoccAttach."Table ID" := Database::"User Task";
+                        DoccAttach."No." := Format(Rec."Nº Orden");
+                        DoccAttach."Line No." := 0;
+                        Imagenes.SetRange("Nº Orden", Rec."Nº Orden");
+                        Imagenes.SetRange("Es Qr", false);
+                        If Imagenes.FindSet() then
                             repeat
                                 im.SetRange("Nº Orden", Imagenes."Nº Orden");
                                 im.SetRange("Nº Imagen", Imagenes."Nº Imagen");
                                 clear(rep);
                                 Rep.Filtra(Imagenes."Nº Orden", Imagenes."Nº Imagen");
                                 rep.SetTableView(im);
-
-
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
                                 DoccAttach."No." := Format(Rec."Nº Orden");
-                                DoccAttach."Line No." := Imagenes."Nº Imagen";
+                                DoccAttach."Line No." := 0;
                                 Clear(TM);
 
                                 TM.Init();
@@ -301,6 +313,56 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 RecRef.Close();
                                 tm.Delete();
                             until Imagenes.NEXT = 0;
+                        Det.Reset();
+                        Det.SetRange("Nº Orden", Rec."Nº Orden");
+                        If Det.FindFirst() Then
+                            repeat
+                                DetTemp := Det;
+                                DetTemp.Insert;
+                            until Det.Next() = 0;
+                        Det.DeleteAll();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det.DeleteAll();
+                                Det := DetTemp;
+                                Det.Insert;
+                                Clear(TempBlob);
+                                Clear(Outstr);
+                                Clear(RecRef);
+                                TempBlob.CreateOutStream(Outstr);
+                                Clear(Rep);
+                                Observaciones := Rec.GetWorkDescription();
+                                Imagenes.SetRange("Nº Orden", Rec."Nº Orden");
+                                Imagenes.SetRange("Es Qr", false);
+
+                                RecRef.GetTable(Imagenes);
+                                im.SetRange("Nº Orden", DetTemp."Nº Orden");
+                                im.SetRange("Nº Imagen", DetTemp."Nº Imagen");
+                                Rep.SetTableView(im);
+                                Rep.Filtra(DetTemp."Nº Orden", DetTemp."Nº Imagen");
+                                Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                //Report.SaveAs(Report::"Etiqueta orden fijacion Vallas", '', ReportFormat::Pdf, Outstr, RecRef);
+                                RecRef.Close();
+                                Clear(RecRef);
+                                RecRef.GetTable(Usertask);
+                                RecRef.Get(Usertask.RecordId);
+                                TempBlob.CreateInStream(InStr);
+                                DoccAttach.Init();
+                                DoccAttach."Table ID" := Database::"User Task";
+                                DoccAttach."No." := Format(Rec."Nº Orden");
+                                DoccAttach."Line No." := Det."Nº Reserva";
+                                DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
+                            Until DetTemp.Next() = 0;
+                        Det.DeleteAll();
+                        DetTemp.Reset();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det := DetTemp;
+                                Det.Insert;
+                            Until DetTemp.Next() = 0;
+                        //DoccAttach.Insert();
+                        //tm.Delete();
+
                     end;
                     if Opcion = Opcion::Otros then begin
                         DoccAttach.Init();
@@ -327,7 +389,8 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         rDet.FindFirst();
                         if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
                         Resource.GET(rDet."Nº Recurso");
-                        Rep2.CargaObservaciones(Proyecto.Description, Resource.Medidas);
+                        Observaciones := Rec.GetWorkDescription();
+                        Rep2.CargaObservaciones(Observaciones, Resource.Medidas + ' ' + Rec."Título");
                         Rep2.SetTableView(Cab);
                         Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
                         TM.Insert();
@@ -361,7 +424,8 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
                                 Resource.GET(rDet."Nº Recurso");
                                 Clear(Rep2);
-                                Rep2.CargaObservaciones(Proyecto.Description, Resource.Medidas);
+                                Observaciones := Rec.GetWorkDescription();
+                                Rep2.CargaObservaciones(Observaciones, Resource.Medidas + ' ' + Rec."Título");
                                 Rep2.SetTableView(Cab);
                                 Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
                                 RecRef.Close();
@@ -399,63 +463,68 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Commit();
                     UserTask.Get(UserTask.ID);
                     Id := UserTask.ID;
-                    If Opcion <> Opcion::Opi Then begin
-                        DoccAttach.Reset();
-                        rDet.Reset;
-                        DoccAttach.SetRange("Table ID", Database::"User Task");
-                        DoccAttach.SetRange("No.", Usertask."No.");
-                        DoccAttach.SetFilter("Line No.", '<>%1', 0);
-                        Message('Se generarán %1 tareas de fijación', DoccAttach.Count);
-                        If DoccAttach.FindFirst() then
-                            repeat
-                                rDet.SetRange("Nº Orden", Rec."Nº Orden");
-                                rDet.SetRange("Nº Reserva", DoccAttach."Line No.");
-                                If Not rDet.FindFirst() then rDet.Init;
-                                if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
-                                If not Resource.Get(rDet."Nº Recurso") then Resource.iNit();
-                                UserTaskNew.FindLast();
-                                Id := UserTaskNew.ID + 1;
-                                UserTaskNew := Usertask;
-                                UsertaskNew.Id := Id;
-                                UserTaskNew.Insert();
-                                UserTaskNew.Get(ID);
-                                UserTaskNew.Title := Copystr('Fijación ' + Resource.Name + ' ' + Usertask.Title, 1, MaxStrLen(UserTaskNew.Title));
-                                UserTaskNew.SetDescription('Fijación ' + Resource.Name + ' nº ' + Resource."No." + ' del proyecto ' + Rec."Nº proyecto" + ' del cliente ' + Proyecto."Bill-to Name" + ' ' + Proyecto."Nombre Comercial");
-                                Usertasknew.Reserva := DoccAttach."Line No.";
-                                UserTaskNew."No." := Format(UsertaskNew.ID);
-                                UserTaskNew.Estado := UserTask.Estado::Pendiente;
-                                UserTaskNew.Modify();
-                                Clear(Gtask);
-                                DoccAttachTask := DoccAttach;
-                                DoccAttachTask."No." := UsertaskNew."No.";
-                                DoccAttachTask.Insert();
-                            //Generar Una vez Revisadas las tareas
-                            //Gtask.CrearTareaFijacion(Rec, UsertaskNew);
-                            until DoccAttach.Next() = 0;
-                        Commit();
-                        UserTaskNew.SetRange(OrdenFijacion, Rec."Nº Orden");
-                        UserTaskNew.SetFilter(Reserva, '<>%1', 0);
-                        Message('Se han generado %1 tareas de fijación', DoccAttach.Count);
-                        Page.RunModal(Page::"User Task List", UsertaskNew);
-                        If UserTaskNew.FindFirst() Then
-                            repeat
-                                Gtask.CrearTareaFijacion(Rec, UsertaskNew);
-                            until UserTaskNew.Next() = 0;
+                    //If Opcion <> Opcion::Opi Then begin
+                    DoccAttach.Reset();
+                    rDet.Reset;
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Usertask."No.");
+                    DoccAttach.SetFilter("Line No.", '<>%1', 0);
+                    Message('Se generarán %1 tareas de fijación', DoccAttach.Count);
+                    If DoccAttach.FindFirst() then
+                        repeat
+                            rDet.SetRange("Nº Orden", Rec."Nº Orden");
+                            rDet.SetRange("Nº Reserva", DoccAttach."Line No.");
+                            If Not rDet.FindFirst() then rDet.Init;
+                            if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                            If not Resource.Get(rDet."Nº Recurso") then Resource.iNit();
+                            UserTaskNew.FindLast();
+                            Id := UserTaskNew.ID + 1;
+                            UserTaskNew := Usertask;
+                            UsertaskNew.Id := Id;
+                            UserTaskNew.Insert();
+                            If Opcion = Opcion::Opi then begin
+                                UserTaskNew.fastPhoto := true;
+                                UserTaskNew.Resource := Resource."No.";
+                            end;
+                            UserTaskNew.Get(ID);
+                            UserTaskNew.Title := Copystr('Fijación ' + Resource.Name + ' ' + Usertask.Title, 1, MaxStrLen(UserTaskNew.Title));
+                            UserTaskNew.SetDescription('Fijación ' + Resource.Name + ' nº ' + Resource."No." + ' del proyecto ' + Rec."Nº proyecto" + ' del cliente ' + Proyecto."Bill-to Name" + ' ' + Proyecto."Nombre Comercial");
+                            Usertasknew.Reserva := DoccAttach."Line No.";
+                            UserTaskNew."No." := Format(UsertaskNew.ID);
+                            UserTaskNew.Estado := UserTask.Estado::Pendiente;
+                            UserTaskNew.Modify();
+                            Clear(Gtask);
+                            DoccAttachTask := DoccAttach;
+                            DoccAttachTask."No." := UsertaskNew."No.";
+                            DoccAttachTask.Insert();
+                        //Generar Una vez Revisadas las tareas
+                        //Gtask.CrearTareaFijacion(Rec, UsertaskNew);
+                        until DoccAttach.Next() = 0;
+                    Commit();
+                    UserTaskNew.SetRange(OrdenFijacion, Rec."Nº Orden");
+                    UserTaskNew.SetFilter(Reserva, '<>%1', 0);
+                    Message('Se han generado %1 tareas de fijación', DoccAttach.Count);
+                    Page.RunModal(Page::"User Task List", UsertaskNew);
+                    If UserTaskNew.FindFirst() Then
+                        repeat
+                            Gtask.CrearTareaFijacion(Rec, UsertaskNew, Opcion);
+                        until UserTaskNew.Next() = 0;
 
-                    end else begin
-                        Clear(Gtask);
-                        Gtask.CrearTareaFijacion(Rec, Usertask);
-                    end;
+                    // end else begin
+                    //     Clear(Gtask);
+                    //     Gtask.CrearTareaFijacion(Rec, Usertask);
+                    // end;
                     DoccAttach.Reset();
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", Usertask."No.");
                     DoccAttach.SetFilter("Line No.", '<>%1', 0);
-                    If Opcion <> Opcion::Opi then
-                        DoccAttach.DeleteAll(true);
+                    //If Opcion <> Opcion::Opi then
+                    DoccAttach.DeleteAll(true);
                     DoccAttach.Reset();
                     Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
-                    EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, 'julian@malla.es;lllompart@malla.es', User."Full Name");
-                    If Opcion <> 2 then Usertask.Delete();
+                    EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, ListaCorreos, 'julian@malla.es;andreuserra@malla.es;lllompart@malla.es', User."Full Name");
+                    //If Opcion <> 2 then 
+                    Usertask.Delete();
                 end;
             }
             action("Ver Tareas")
@@ -502,6 +571,29 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     end;
                 end;
             }
+            action(ReenviarCorreo)
+            {
+                Image = "Email";
+                ApplicationArea = All;
+                Caption = 'Reenviar Correo';
+                trigger OnAction()
+                var
+                    Usertask: Record "User Task";
+                    Gtask: Codeunit Gtask;
+                    Responsable: Text;
+                    Supervisor: Text;
+                    EmailResponsable: Text;
+                    EmailSupervisor: Text;
+                    ListaCorreos: Text;
+                    User: Record User;
+                begin
+                    Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
+                    If Usertask.FindFirst() then begin
+                        Gtask.DevuelveSupervisoryResponsable(Usertask."Assigned To", Usertask.Supervisor, 'TALLER', 'TALLER', Usertask."User Task Group Assigned To", EmailResponsable, EmailSupervisor, User, Usertask, ListaCorreos);
+                        EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, ListaCorreos, 'julian@malla.es;lllompart@malla.es;andreuserra@malla.es', User."Full Name");
+                    end;
+                end;
+            }
         }
         addafter(AsignarImagenaLineas)
         {
@@ -509,6 +601,22 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
             actionref(VertareaRef; "Ver Tareas") { }
         }
     }
+    trigger OnOpenPage()
+    var
+
+    begin
+        CurrPage.Correos.Page.SetRelatedRecord(Database::"User Task", Rec.SystemId);
+        CurrPage.Correos.Page.Load();
+        CurrPage.Correos.Page.Update(false);
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        CurrPage.Correos.Page.SetRelatedRecord(Database::"User Task", Rec.SystemId);
+        CurrPage.Correos.Page.Load();
+        CurrPage.Correos.Page.Update(false);
+    end;
+
     procedure EnviaCorreo(
        Var UserTask: Record "User Task";
        Adjunto: Boolean;
@@ -517,6 +625,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
        Asunto: Text;
        SendTo: Text;
        CC: Text;
+       ListaCorreos: Text;
        BCC: Text; Nombre: Text)
 
 
@@ -586,36 +695,30 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
 
         BigText := BigText + '<br> </br>';
         BigText := BigText + '<br> </br>';
-        BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=Blue>';
+        BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=#A6A6A6>';
         BigText := BigText + ('<b>SI NO DESEA RECIBIR MAS INFORMACION, CONTESTE ESTE E-MAIL INDICANDOLO EXPRESAMENTE</b>');
         BigText := BigText + '</font>';
         BigText := BigText + '<br> </br>';
-        BigText := BigText + '<font face="Franklin Gothic Book" size=1 color=Blue>';
-        BigText := BigText + ('Según la LOPD 15/199, su dirección de correo electrónico junto a los demás datos personales');
-        BigText := BigText + (' que Ud. nos ha facilitado, constan en un fichero titularidad de ');
-        BigText := BigText + (rInf.Name + ', cuyas finalidades son mantener la');
-        BigText := BigText + (' gestión de las comunicaciones con sus clientes y con aquellas personas que solicitan');
-        BigText := BigText + (' información, así como la gestión y atención de los correos entrantes o sugerencias que');
-        BigText := BigText + (' se formulen a través de esta cuenta derivados de su actividad. Podrá ejercitar los derechos');
-        BigText := BigText + (' de acceso, cancelación, rectificación y oposición,  dirigiéndose, por escrito a ');
-        BigText := BigText + (rInf.Name + ' . ' + rInf.Address + '. ' + rInf."Post Code" + '. ' + rInf.City + '. España');
-
+        BigText := BigText + '<font face="Franklin Gothic Book" size=1 color=#A6A6A6>';
+        BigText := BigText + ('En cumplimiento de lo establecido en el REGLAMENTO (UE) 2016/679, de 27 de abril de 2016, con plenos efectos desde el 25 de mayo de 2018, le recordamos que sus datos personales son');
+        BigText := BigText + ('objeto de tratamiento por parte de MALLA S.A. Le informamos también que tiene la posibilidad de ejercer los derechos de acceso, rectificación, supresión, oposición, limitación del');
+        BigText := BigText + (' tratamiento y portabilidad de sus datos, mediante comunicación escrita a la dirección de correo electrónico <a href="mailto:lopd@malla.es" rel="noreferrer" target="_blank" heap-ignore="true"><span style="color:blue">lopd@malla.es</span></a>, o bien, a nuestra dirección postal (' + rInf.Name + ')');
+        BigText := BigText + (rInf.Address + '. ' + rInf."Post Code" + '. ' + rInf.City + '. España');
         BigText := BigText + '<br> </br>';
-        //SendMsg.AppendBody(BigText);
-        //CLEAR(BigText);
-        BigText := BigText + ('Este correo y sus archivos asociados son privados y confidenciales y va');
-        BigText := BigText + (' dirigido exclusivamente a su destinatario. Si recibe este correo sin ser');
-        BigText := BigText + (' el destinatario del mismo, le rogamos proceda a su eliminación y lo ponga');
-        BigText := BigText + (' en conocimiento del emisor. La difusión por cualquier medio del contenido de este');
-        BigText := BigText + (' correo podría ser sancionada conforme a lo previsto en las leyes españolas. ');
-        BigText := BigText + ('No se autoriza la utilización con fines comerciales o para su incorporación a ficheros');
-        BigText := BigText + (' automatizados de las direcciones del emisor o del destinatario.');
+        BigText := BigText + ('Este correo y sus archivos asociados son privados y confidenciales y va dirigido exclusivamente a su destinatario. Si recibe este correo sin ser el destinatario del mismo, le rogamos proceda');
+        BigText := BigText + (' a su eliminación y lo ponga en conocimiento del emisor. La difusión por cualquier medio del contenido de este correo podría ser sancionada conforme a lo previsto en las leyes españolas.');
+        BigText := BigText + ('No se autoriza la utilización con fines comerciales o para su incorporación a ficheros automatizados de las direcciones del emisor o del destinatario');
         BigText := BigText + '</font>';
         //REmail.Subject := 'Pago contrato ' + NContrato;
         REmail.Subject := Asunto;
         REmail."Send To" := SendTo;
         if CC <> '' then
             REmail."Send CC" := CC;
+        if ListaCorreos <> '' then
+            if REmail."Send To" = '' then
+                REmail."Send To" := ListaCorreos
+            else
+                REmail."Send To" := REmail."Send To" + ';' + ListaCorreos;
         if BCC <> '' then
             REmail."Send BCC" := BCC;
         REmail.SetBodyText(BigText);
@@ -630,15 +733,33 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                 repeat
                     base64 := ficheros.ToBase64StringOcr(ficheros.url);
                     Clear(Cbase64);
-                    Tempblob.CreateOutStream(OutStream);
-                    Cbase64.FromBase64(base64, OutStream);
-                    Tempblob.CreateInStream(AttachmentStream);
-                    REmail.AddAttachment(AttachmentStream, ficheros."File Name" + '.' + ficheros."File Extension");
+                    If UrlToBase64(Tempblob, base64, AttachmentStream) then begin
+                        //si filename ya con tiene la extensión no poner extension
+                        if StrPos(ficheros."File Name", '.' + ficheros."File Extension") > 0 then
+                            REmail.AddAttachment(AttachmentStream, ficheros."File Name")
+                        else
+                            REmail.AddAttachment(AttachmentStream, ficheros."File Name" + '.' + ficheros."File Extension");
+                    end;
+
                 until ficheros.Next() = 0;
         end;
+        REmail.AddSourceDocument(Database::"User Task", UserTask.SystemId);
         if REmail.Send(true, emilesc::Gtasks) then begin
 
         end;
     end;
 
+    [TryFunction]
+    procedure UrlToBase64(var TempBlob: Codeunit "Temp Blob"; var Base64: Text; Var InsTream: InStream)
+    var
+        OutStream: OutStream;
+        Cbase64: Codeunit "Base64 Convert";
+    begin
+        Tempblob.CreateOutStream(OutStream);
+        Cbase64.FromBase64(base64, OutStream);
+        Tempblob.CreateInStream(InStream);
+
+
+    end;
 }
+

@@ -64,6 +64,10 @@ table 7001209 "UsuariosGtask"
         {
             TableRelation = "Salesperson/Purchaser"."Code";
         }
+        field(50006; "Id Usuario Limpieza EMT"; Integer)
+        {
+            DataClassification = ToBeClassified;
+        }
     }
 
     keys

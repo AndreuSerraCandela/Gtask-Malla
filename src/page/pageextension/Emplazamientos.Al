@@ -19,7 +19,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                         RecRef: RecordRef;
                     begin
                         RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, Rec."Descripción", 'TECNICO', 'TECNICO', Rec."Descripción", 'PRE-MONTAJE', false, '');
+                        Gtask.CrearTarea(RecRef, Rec."Descripción", 'TECNICO', 'TECNICO', Rec."Descripción", 'PRE-MONTAJE', false, '', '');
 
 
                     end;
@@ -37,7 +37,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                         Commit();
                         RecRef.GetTable(Rec);
                         Gtask.CrearTarea(RecRef, 'Sería posible obtener permiso para ' + Rec."Descripción" + ' con el número ' + Rec."Nº Emplazamiento" + ', sito en la calle ' + Rec.Calle,
-                        'JURIDICO', 'TECNICO', 'Pre-Solicitud permiso ' + Rec."Descripción", 'Solicitud', false, '');
+                        'JURIDICO', 'TECNICO', 'Pre-Solicitud permiso ' + Rec."Descripción", 'Solicitud', false, '', '');
 
 
                     end;
@@ -53,7 +53,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                         RecRef: RecordRef;
                     begin
                         RecRef.GetTable(Rec);
-                        Gtask.CrearTarea(RecRef, 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'JURIDICO', 'TECNICO', 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'PNEL', false, '');
+                        Gtask.CrearTarea(RecRef, 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'JURIDICO', 'TECNICO', 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'PNEL', false, '', '');
                     end;
                 }
 
@@ -123,7 +123,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                     ListaRecursos := CopyStr(ListaRecursos, 1, StrLen(ListaRecursos) - 2);
                                 RecRef.GetTable(Rec);
                                 Gtask.CrearTarea(RecRef, 'Proceder al montaje de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
-                                'MEDIOS', 'TECNICO', 'Crear recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '');
+                                'MEDIOS', 'TECNICO', 'Crear recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '', '');
 
 
                             end;
@@ -150,7 +150,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                     ListaRecursos := CopyStr(ListaRecursos, 1, StrLen(ListaRecursos) - 2);
                                 RecRef.GetTable(Rec);
                                 Gtask.CrearTarea(RecRef, 'Visita conjunta al emplazamiento ' + Rec."Nº Emplazamiento",
-                                'TALLER', 'TECNICO', 'Pre-Montaje emplazamiento ' + Rec."Descripción", 'Montaje', false, '');
+                                'TALLER', 'TECNICO', 'Pre-Montaje emplazamiento ' + Rec."Descripción", 'Montaje', false, '', '');
 
 
                             end;
@@ -177,7 +177,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                     ListaRecursos := CopyStr(ListaRecursos, 1, StrLen(ListaRecursos) - 2);
                                 RecRef.GetTable(Rec);
                                 Gtask.CrearTarea(RecRef, 'Proceder al montaje de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
-                                'TALLER', 'TECNICO', 'Montaje recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '');
+                                'TALLER', 'TECNICO', 'Montaje recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '', '');
 
 
                             end;
@@ -203,7 +203,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 If Page.RunModal(0, Resource) = Action::LookupOK then begin
                                     RecRef.GetTable(Resource);
                                     Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Resource.name + ' con el número ' + Resource."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
-                                    'MEDIOS', 'TECNICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '');
+                                    'MEDIOS', 'TECNICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '', '');
                                 End;
 
                             end;
@@ -226,7 +226,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 If Page.RunModal(0, Resource) = Action::LookupOK then begin
                                     RecRef.GetTable(Resource);
                                     Gtask.CrearTarea(RecRef, 'Proceder a desmontar ' + Resource.name + ' con el número ' + Resource."No.",
-                                    'TALLER', 'TECNICO', 'Desmontar recurso ' + Resource.Name, 'DESMONTAJE', false, '');
+                                    'TALLER', 'TECNICO', 'Desmontar recurso ' + Resource.Name, 'DESMONTAJE', false, '', '');
                                 end;
 
                             end;
@@ -264,7 +264,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 If Not Adjuntar then
                                     Fichero := '';
                                 Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Resource.name + ' con el número ' + Resource."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
-                                'TALLER', 'MEDIOS', 'Fijacion en blanco ' + Resource.Name, 'TMC', Adjuntar, Fichero);
+                                'TALLER', 'MEDIOS', 'Fijacion en blanco ' + Resource.Name, 'TMC', Adjuntar, Fichero, '.pdf');
 
                                 // RecRef.Close();
                                 // Clear(RecRef);
@@ -303,7 +303,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                             If Page.RunModal(0, Resource) = Action::LookupOK then begin
                                 RecRef.GetTable(Resource);
                                 Gtask.CrearTarea(RecRef, 'Inicio medidas cautelares ' + Resource.name + ' con el número ' + Resource."No.",
-                                'TECNICO', 'JURIDICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '');
+                                'TECNICO', 'JURIDICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '', '');
                             End;
 
                         end;
@@ -325,7 +325,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 Commit();
                                 RecRef.GetTable(Resource);
                                 Gtask.CrearTarea(RecRef, 'Proceder a desmontar ' + Resource.name + ' con el número ' + Resource."No.",
-                                'TECNICO', 'JURIDICO', 'Desmontar recurso ' + Resource.Name, 'DESMONTAJE', false, '');
+                                'TECNICO', 'JURIDICO', 'Desmontar recurso ' + Resource.Name, 'DESMONTAJE', false, '', '');
                             End;
                         end;
                     }

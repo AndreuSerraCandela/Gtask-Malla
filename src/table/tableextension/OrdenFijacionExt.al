@@ -8,7 +8,7 @@ tableextension 50102 "Orden Fijacion Ext" extends "Orden fijación"
             FieldClass = FlowField;
             CalcFormula = exist("Document Attachment" where("Table ID" = const(Database::"Orden fijación"),
                                                                 "Line No." = field("Nº Reserva"),
-                                                                "No." = field("Nº Proyecto"),
+                                                                "ID_Doc" = field("Nº Orden"),
                                                                 "File Name" = filter('*jpg')));
             Editable = false;
         }
@@ -34,7 +34,7 @@ tableextension 50102 "Orden Fijacion Ext" extends "Orden fijación"
                                                                 "Es QR" = const(true)));
             Editable = false;
         }
-       
+
         field(50006; "Tipo Recurso"; Text[30])
         {
             Caption = 'Tipo Recurso';
@@ -49,6 +49,7 @@ tableextension 50102 "Orden Fijacion Ext" extends "Orden fijación"
             CalcFormula = lookup("User Task"."Assigned To" where(Reserva = field("Nº Reserva")));
             Editable = false;
         }
+
     }
 
     procedure "Fecha Inicio Reserva"(): Date

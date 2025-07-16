@@ -17,3 +17,10 @@ enum 50020 "Task Enum"
         Caption = 'Cancelado';
     }
 }
+enum 50021 "Tipo Incidencia"
+{
+    value(0; "Incidencias Taller") { }
+    value(1; "Incidencias EMT")
+    { }
+    value(2; "Incidencias Villena") { }
+}

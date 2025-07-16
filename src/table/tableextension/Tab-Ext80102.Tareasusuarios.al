@@ -91,6 +91,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
             var
                 Categorias: Record "User Task Group Member";
             begin
+                Categorias.ChangeCompany('Malla Publicidad');
                 "User Task Group Assigned To" := Categoría;
                 Categorias.SetRange("User Task Group Code", Categoría);
                 Categorias.SetRange(Departamento, Departamento);
@@ -120,6 +121,16 @@ tableextension 92103 Tareasusuarios extends "User Task"
         {
             Caption = 'Mencionados';
             SubType = Memo;
+        }
+        field(50016; fastPhoto; Boolean)
+        {
+            Caption = 'Foto rápida';
+            DataClassification = ToBeClassified;
+        }
+        field(50017; Resource; Code[20])
+        {
+            Caption = 'Recurso';
+            DataClassification = ToBeClassified;
         }
 
     }

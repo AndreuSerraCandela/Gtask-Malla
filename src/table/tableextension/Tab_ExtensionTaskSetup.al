@@ -11,3 +11,16 @@
 
 //     }
 // }
+
+tableextension 92500 "Tab_ExtensionTaskSetup2" extends "Jobs Setup"
+{
+    fields
+    {
+        field(50110; "Incidencias Nos."; Code[20])
+        {
+            Caption = 'Incidencias Nos.';
+            TableRelation = "No. Series";
+            DataClassification = CustomerContent;
+        }
+    }
+}

@@ -24,7 +24,8 @@ pageextension 92168 "DocumentAttachmentDetailsExt" extends "Document Attachment 
     begin
         If Rec."Table ID" in [Database::"User Task", Database::job] then begin
             DocumentAttachment.SetRange("Table ID", Database::"Orden fijación");
-            DocumentAttachment.SetRange("No.", Rec."No.");
+            //DocumentAttachment.SetRange("No.", Rec."No.");
+            DocumentAttachment.SetRange("ID_Doc", Rec."ID_Doc");
             DocumentAttachment.SetRange("File Name", Rec."File Name");
             if DocumentAttachment.FindFirst() then begin
                 if Reserva.Get(DocumentAttachment."Line No.") then

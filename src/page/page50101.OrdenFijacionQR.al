@@ -159,8 +159,9 @@ page 50101 "Ordenes Fijación QR"
                         UserTask: Record "User Task";
                     begin
                         DocumentAttachment.SetRange("Table ID", Database::"Orden fijación");
-                        DocumentAttachment.SetRange("No.", Rec."Nº Proyecto");
+                        //DocumentAttachment.SetRange("No.", Rec."Nº Proyecto");
                         DocumentAttachment.SetRange("Line No.", Rec."Nº Reserva");
+                        DocumentAttachment.SetRange("ID_Doc", Rec."Nº Orden");
                         DocumentAttachment.SetFilter("File Name", '%1', '*.jpg');
                         Page.Run(Page::"Document Attachment Details", DocumentAttachment);
                     end;
@@ -250,19 +251,20 @@ page 50101 "Ordenes Fijación QR"
                                 if DocumentAttachment.FindSet() then
                                     repeat
                                         DocumentAttachment3.SetRange("Table ID", Database::"Orden fijación");
-                                        DocumentAttachment3.SetRange("No.", OrdenFijacion."Nº Proyecto");
+                                        DocumentAttachment3.SetRange("ID_Doc", OrdenFijacion."Nº Orden");
                                         DocumentAttachment3.SetRange("Line No.", OrdenFijacion."Nº Reserva");
                                         DocumentAttachment3.SetRange("File Name", DocumentAttachment."File Name");
                                         if not DocumentAttachment3.FindSet() then begin
                                             DocumentAttachment2 := DocumentAttachment;
-                                            repeat
-                                                DocumentAttachment2."Line No." := a;
-                                                DocumentAttachment2."Table ID" := Database::"Orden fijación";
-                                                DocumentAttachment2."No." := OrdenFijacion."Nº Proyecto";
-                                                DocumentAttachment2."Line No." := OrdenFijacion."Nº Reserva";
-                                                DocumentAttachment2."Document Flow Service" := true;
-                                                a += 1;
-                                            until DocumentAttachment2.Insert();
+                                            //repeat
+                                            //DocumentAttachment2."Line No." := a;
+                                            DocumentAttachment2."Table ID" := Database::"Orden fijación";
+                                            DocumentAttachment2."No." := OrdenFijacion."Nº Proyecto";
+                                            DocumentAttachment2."Line No." := OrdenFijacion."Nº Reserva";
+                                            DocumentAttachment2."ID_Doc" := OrdenFijacion."Nº Orden";
+                                            DocumentAttachment2."Document Flow Service" := true;
+                                            a += 1;
+                                            If DocumentAttachment2.Insert() Then;
                                         end;
                                         DocumentAttachment3.SetRange("Table ID", Database::Job);
                                         DocumentAttachment3.SetRange("No.", OrdenFijacion."Nº Proyecto");

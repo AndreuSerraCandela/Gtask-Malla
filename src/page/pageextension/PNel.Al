@@ -17,7 +17,7 @@ pageextension 92164 PnlExt extends "PNEL Emplazamientos"
                     RecRef: RecordRef;
                 begin
                     RecRef.GetTable(Rec);
-                    Gtask.CrearTarea(RecRef, 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'JURIDICO', 'TECNICO', 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'PNEL', false, '');
+                    Gtask.CrearTarea(RecRef, 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'JURIDICO', 'TECNICO', 'Pnel Emplazamiento ' + Rec."Nº Emplazamiento", 'PNEL', false, '', '');
                 end;
             }
 
