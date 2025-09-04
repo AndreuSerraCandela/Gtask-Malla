@@ -132,6 +132,12 @@ tableextension 92103 Tareasusuarios extends "User Task"
             Caption = 'Recurso';
             DataClassification = ToBeClassified;
         }
+        field(50018; IdQr; Text[100])
+        { }
+        field(50019; OrdenRetirada; Boolean)
+        {
+            Caption = 'Orden Fijación';
+        }
 
     }
     trigger OnAfterDelete()

@@ -122,8 +122,8 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 if ListaRecursos <> '' then
                                     ListaRecursos := CopyStr(ListaRecursos, 1, StrLen(ListaRecursos) - 2);
                                 RecRef.GetTable(Rec);
-                                Gtask.CrearTarea(RecRef, 'Proceder al montaje de los recuros ' + ListaRecursos + ' del emplazamiento ' + Rec."Nº Emplazamiento",
-                                'MEDIOS', 'TECNICO', 'Crear recursos emplazamiento ' + Rec."Descripción", 'Montaje', false, '', '');
+                                Gtask.CrearTarea(RecRef, 'Emplazamiento ' + Rec."Nº Emplazamiento" + ' proceder al montaje de los recuros ',
+                                'MEDIOS', 'TECNICO', 'Crear recursos emplazamiento ' + Rec."Descripción", 'ALTA RECURSOS', false, '', '');
 
 
                             end;

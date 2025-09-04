@@ -135,7 +135,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
 
                     if LineCount > 0 then begin
                         FileName := GenerarExcelLineasTaller(PurchaseLine);
-                        CrearTareaTaller(PurchaseLine, LineCount, FileName);
+                        CrearTareaTaller(PurchaseLine, LineCount, FileName, true);
 
                         // Generar Excel y enviar correo
 
@@ -146,6 +146,28 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                 end;
             }
 
+            action("Crear Tarea Taller")
+            {
+                ApplicationArea = All;
+                Caption = 'Crear Tarea Taller';
+                Image = SendToMultiple;
+                ToolTip = 'Crea una tarea para el taller';
+
+                trigger OnAction()
+                var
+                    PurchaseLine: Record "Purchase Line";
+                    LineCount: Integer;
+                    Control: Codeunit "Controlprocesos";
+                    Gtask: Codeunit GTask;
+                    FileName: Text;
+                begin
+                    If not Control.CompruebaPermisos(UserSecurityId(), 'ENVIARALTALLER', CompanyName) then
+                        exit;
+
+                    CrearTareaTaller(PurchaseLine, LineCount, FileName, false);
+
+                end;
+            }
             action("Líneas Enviadas Taller")
             {
                 ApplicationArea = All;
@@ -153,6 +175,64 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                 Image = List;
                 ToolTip = 'Abre la página de líneas enviadas al taller para entrada de mercancía';
                 RunObject = Page "Lineas Enviadas Taller";
+            }
+            action("Crear Envio a Terceros")
+            {
+                ApplicationArea = All;
+                Caption = 'Crear Envio a terceros';
+                Image = SendTo;
+                ToolTip = 'Crea una tarea para el proveedor';
+
+                trigger OnAction()
+                var
+                    PurchaseLine: Record "Purchase Line";
+                    LineCount: Integer;
+                    Control: Codeunit "Controlprocesos";
+                    Gtask: Codeunit GTask;
+                    FileName: Text;
+                    PurchaseHeader: Record "Purchase Header";
+                begin
+
+                    If not Control.CompruebaPermisos(UserSecurityId(), 'ENVIARALTALLER', CompanyName) then
+                        exit;
+
+                    CrearTareaEnvio(PurchaseLine);
+                    PurchaseHeader := Rec;
+                    CurrPage.SetSelectionFilter(PurchaseHeader);
+                    PurchaseHeader.SendRecords();
+
+                end;
+            }
+            action("Comprobar Estado Contrato")
+            {
+                ApplicationArea = All;
+                Caption = 'Comprobar Estado Contrato';
+                Image = CheckList;
+                ToolTip = 'Comprueba el estado del contrato';
+                trigger OnAction()
+                var
+                    Contrato: Record "Sales Header";
+                    SalesInvoice: Record "Sales Invoice Header";
+                    MovCliente: Record "Cust. Ledger Entry";
+                    Pagada: Text;
+                    TextoMensaje: Text;
+
+                begin
+                    Contrato.SetRange("Nº Proyecto", Rec."Nº Proyecto");
+                    If Contrato.FindFirst() then begin
+                        TextoMensaje := 'El contrato está ' + Format(Contrato."Estado");
+                        SalesInvoice.SetRange("Nº Proyecto", Rec."Nº Proyecto");
+                        SalesInvoice.SetRange("Prepayment Invoice", true);
+                        if SalesInvoice.FindFirst() then begin
+                            MovCliente.SetRange("Document No.", SalesInvoice."No.");
+                            if MovCliente.FindFirst() then begin
+                                if MovCliente.Open Then Pagada := 'Pendiente' else Pagada := 'Pagada';
+                                TextoMensaje += ' Se ha creado la factura de prepago y su estado es ' + Pagada;
+                            end;
+                        end;
+                    end;
+                    Message(TextoMensaje);
+                end;
             }
 
 
@@ -173,10 +253,15 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
             actionref(CrearTareaEnvioTaller; "Crear Tarea envio Taller")
             {
             }
+            actionref(CrearTareaTaller; "Crear Tarea Taller")
+            {
+            }
+            actionref(CrearTareaEnvioRef; "Crear Envio a Terceros")
+            { }
         }
     }
 
-    local procedure CrearTareaTaller(PurchaseLine: Record "Purchase Line"; LineCount: Integer; FileName: Text)
+    local procedure CrearTareaTaller(PurchaseLine: Record "Purchase Line"; LineCount: Integer; FileName: Text; EnvioLineas: Boolean)
     var
         Gtask: Codeunit GTask;
         RecRef: RecordRef;
@@ -185,14 +270,52 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
     begin
         // Contar líneas enviadas al taller
 
-        if LineCount > 0 then begin
+        if (LineCount > 0) and (EnvioLineas) then begin
             RecRef.GetTable(PurchaseLine);
             Gtask.CrearTarea(RecRef,
-                'Seguimiento Recepciones ' + Format(Today(), 0, '<Day,2>/<Month,2>/<Year4>'),
+                'Orden Cartelería ' + Format(Today(), 0, '<Day,2>/<Month,2>/<Year4>'),
                 'TALLER', 'COMPRAS',
                 'Seguimiento Recepciones',
                 'RECEPCIONES', true, FileName, '.xlsx');
+        end else begin
+            if not EnvioLineas then begin
+                RecRef.GetTable(PurchaseLine);
+                Gtask.CrearTarea(RecRef,
+                    'Orden de trabajo ' + Format(Today(), 0, '<Day,2>/<Month,2>/<Year4>'),
+                    'TALLER', 'COMPRAS',
+                    'Tareas Talles',
+                    'PRODUCCION', false, '', '');
+            end;
         end;
+    end;
+
+    local procedure CrearTareaEnvio(PurchaseLine: Record "Purchase Line")
+    var
+        Gtask: Codeunit GTask;
+        RecRef: RecordRef;
+        PurcChaseHeader: Record "Purchase Header";
+        Tempblob: Codeunit "Temp Blob";
+        Out: OutStream;
+        Base64Data: Text;
+        AttachmentStream: InStream;
+        Base64Convert: Codeunit "Base64 Convert";
+        Selecction: Record "Report Selections";
+    begin
+        // Contar líneas enviadas al taller
+        Selecction.SetRange(Usage, Selecction.Usage::"P.Order");
+        If not Selecction.FindFirst() then exit;
+        Recref.GetTable(PurcChaseHeader);
+        TempBlob.CreateOutStream(Out);
+        REPORT.SaveAs(Selecction."Report ID", '', ReportFormat::Pdf, out, Recref);
+        TempBlob.CreateInStream(AttachmentStream);
+        Base64Data := Base64Convert.ToBase64(AttachmentStream);
+        RecRef.GetTable(PurchaseLine);
+        Gtask.CrearTarea(RecRef,
+            'Seguimiento Recepciones ' + Format(Today(), 0, '<Day,2>/<Month,2>/<Year4>'),
+            'COMPRAS', 'COMPRAS',
+            'Seguimiento Recepciones',
+            'TERCEROS', true, Base64Data, '.pdf');
+        ;
     end;
 
     local procedure GenerarExcelLineasTaller(var PurchaseLine: Record "Purchase Line"): Text

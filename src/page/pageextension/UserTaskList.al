@@ -185,6 +185,26 @@ pageextension 92157 "UserTaskList" extends "User Task List"
                         until DocAttach.Next() = 0;
                 end;
             }
+            action("Recuperar IdQR")
+            {
+                ApplicationArea = all;
+                Image = BarCode;
+                trigger OnAction()
+                var
+                    Task: Record "User Task";
+                    Gtask: Codeunit GTask;
+                begin
+                    CurrPage.SetSelectionFilter(Task);
+                    If Task.FindSet() Then
+                        repeat
+                            If Task.IdQr = '' Then begin
+                                Clear(Gtask);
+                                Task.IdQr := Gtask.DevuelveDatoTarea(Task.Id_Tarea, 'IdQr');
+                                Task.Modify();
+                            end;
+                        until Task.Next() = 0;
+                end;
+            }
             // action("Actualizar Documentos Adjuntos")
             // {
             //     ApplicationArea = All;

@@ -148,7 +148,9 @@ page 50105 "Create Chat"
                         IsHandled: Boolean;
                     begin
                         if (Rec.GetFilter("Contact No.") = '') and (Rec.GetFilter("Contact Company No.") = '') and (Rec."Segment Description" = '') then begin
-                            if Cont.Get(Rec."Contact No.") then;
+                            Cont.Reset();
+                            Cont.SetRange("Nº Emplazamiento", Rec."Contact No.");
+                            if Cont.FindFirst() then;
                             if PAGE.RunModal(0, Cont) = ACTION::LookupOK then begin
                                 Rec."Contact No." := Cont."Nº Emplazamiento";
                                 Emplazamientos.OnBeforeValidateContactNo(Rec, Rec, IsHandled);

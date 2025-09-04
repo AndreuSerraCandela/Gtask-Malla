@@ -86,6 +86,12 @@ page 50101 "Ordenes Fijación QR"
                         Page.Run(Page::"Tabla Tipo Recurso", TipoRecurso);
                     end;
                 }
+                field(Revisión; Cab.Revisión)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Especifica si es revisión';
+                    StyleExpr = RowStyle;
+                }
                 field("Equipo"; Rec.Nombre())
                 {
                     ApplicationArea = All;
@@ -237,7 +243,7 @@ page 50101 "Ordenes Fijación QR"
                     DocumentAttachment3: Record "Document Attachment";
                     UserTask: Record "User Task";
                     OrdenFijacion: Record "Orden fijación";
-
+                    Gtask: Codeunit GTask;
                 begin
                     CurrPage.SetSelectionFilter(OrdenFijacion);
                     if OrdenFijacion.FindSet() then
@@ -264,7 +270,7 @@ page 50101 "Ordenes Fijación QR"
                                             DocumentAttachment2."ID_Doc" := OrdenFijacion."Nº Orden";
                                             DocumentAttachment2."Document Flow Service" := true;
                                             a += 1;
-                                            If DocumentAttachment2.Insert() Then;
+                                            If DocumentAttachment2.Insert() Then Gtask.AdImagenValla(DocumentAttachment2);
                                         end;
                                         DocumentAttachment3.SetRange("Table ID", Database::Job);
                                         DocumentAttachment3.SetRange("No.", OrdenFijacion."Nº Proyecto");
@@ -285,6 +291,63 @@ page 50101 "Ordenes Fijación QR"
                         until OrdenFijacion.Next() = 0;
                 end;
             }
+            action(FinalizaTareas)
+            {
+                ApplicationArea = All;
+                Caption = 'Finalizar Tareas';
+                Image = ClosePeriod;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                ToolTip = 'Cerrar las tareas desde Gtask';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    UserTask: Record "User Task";
+                    OrdenFijacion: Record "Orden fijación";
+
+                begin
+                    CurrPage.SetSelectionFilter(OrdenFijacion);
+                    if OrdenFijacion.FindSet() then
+                        repeat
+                            UserTask.SetRange(Reserva, OrdenFijacion."Nº Reserva");
+                            if UserTask.FindSet() then begin
+                                if UserTask.Id_Tarea <> '' then
+                                    Gtask.CloseTarea(UserTask.Id);
+                            end else begin
+                                UserTask.SetRange(OrdenFijacion, OrdenFijacion."Nº Orden");
+                                UserTask.SetRange(Reserva);
+                                if UserTask.FindFirst() then
+                                    repeat
+                                        Gtask.CloseTarea(UserTask.Id);
+                                    until UserTask.Next() = 0;
+                            end;
+                        until OrdenFijacion.Next() = 0;
+
+                    CurrPage.Update(false);
+                    Message('Tareas actualizadas correctamente');
+                end;
+            }
+            action("Actualizar Vallas")
+            {
+                ApplicationArea = All;
+                Caption = 'Actualizar Vallas';
+                Image = RefreshLines;
+                trigger OnAction()
+                var
+                    DocumentAttachment: Record "Document Attachment";
+                    a: Integer;
+                    Gtask: Codeunit GTask;
+
+                begin
+                    DocumentAttachment.SetRange("Table ID", Database::"Orden fijación");
+                    repeat
+                        Gtask.AdImagenValla(DocumentAttachment);
+                    until DocumentAttachment.Next() = 0;
+
+                end;
+            }
         }
     }
 
@@ -300,6 +363,7 @@ page 50101 "Ordenes Fijación QR"
             RowStyle := 'Unfavorable';
             exit;
         end;
+        if Not Cab.Get(Rec."Nº Orden") then Cab.Init();
 
         // Si tiene fotos (prioridad 2: azul)
         if Rec.TieneFotos then
@@ -335,6 +399,9 @@ page 50101 "Ordenes Fijación QR"
         Rec.SetRange(TieneQR, true);
         Rec.SetRange(TieneFotos, false);
     end;
+
+    var
+        Cab: Record "Cab Orden fijación";
 
 
 

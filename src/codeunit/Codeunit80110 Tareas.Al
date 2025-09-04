@@ -216,6 +216,58 @@ codeunit 7001148 GTask
 
     end;
 
+    procedure UpdateTaskGtaskUserandStatus(idTarea: Text; IdKey: Integer; Responsable: Text)
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Name: Text;
+        Value1: Text;
+        i: Integer;
+        a: Integer;
+        Json: Text;
+        Id: Text;
+        Link: Record "Data Migration Error";
+        IdLink: Integer;
+        Tareas: Record "User Task";
+        UserMalla: Record UsuariosGtask;
+        Desde: DateTime;
+        JsonObjt: JsonObject;
+        Supervisor: Text;
+        departament: Text;
+        service: Text;
+        DesdeF: Date;
+        Hastaf: Date;
+        Dias: Integer;
+    begin
+        CompanyInfo.Get();
+        If Tareas.Get(IdKey) then Begin
+            Clear(JsonObjt);
+            Case Tareas.Estado Of
+                Tareas.Estado::Pendiente:
+                    begin
+                        JsonObjt.Add('state', 'PENDING');
+                    end;
+                Tareas.Estado::"En Proceso":
+                    begin
+                        JsonObjt.Add('state', 'INPROCESS');
+                    end;
+                Tareas.Estado::Finalizado:
+                    begin
+                        JsonObjt.Add('state', 'FINISHED');
+                    end;
+            end;
+            JsonObjt.Add('user', responsable);
+            JsonObjt.WriteTo(Json);
+            Clear(RestApi);
+
+            Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Tareas.Id_Tarea, Token(), RequestType::put, Json);
+            // GetSetChat(Tareas, Tareas.Id_Tarea);
+        End;
+
+
+    end;
+
     Procedure GetSetDocattchment(var Tarea: Record "User Task"; Id_Tarea: Text);
     var
         JsonFormater: Codeunit "Json Text Reader/Writer";
@@ -241,6 +293,8 @@ codeunit 7001148 GTask
         DocUrl: Text;
         DocName: Text;
         a: Integer;
+
+
     begin
         //Get https://gtasks-api.deploy.malla.es/task/67ac9479d035cb001379b780
         CompanyInfo.Get();
@@ -308,7 +362,10 @@ codeunit 7001148 GTask
                             DocumentAttachment."ID_Doc" := Ordenfijacion."Nº Orden";
                             DocumentAttachment."No." := Ordenfijacion."Nº Proyecto";
                             DocumentAttachment."Line No." := Tarea."Reserva";
-                            If DocumentAttachment.Insert() then;
+                            // Buscar el registro en "Imagenes Orden fijación" para la valla correspondiente.
+
+                            If DocumentAttachment.Insert() then
+                                AdImagenValla(DocumentAttachment);
                         end;
                     end;
                     DocumentAttachmentTMP := DocumentAttachment;
@@ -324,30 +381,47 @@ codeunit 7001148 GTask
             repeat
                 DocumentAttachmentTMP.SetRange("File Name", DocumentAttachment."File Name");
                 If Not DocumentAttachmentTMP.FindLast() then begin
-                    Clear(JsonFormater);
-                    JsonFormater.WriteStartObject('');
-                    Base64Data := '';
-                    JsonFormater.WriteStringProperty('establishment', '6581485f67b6630011d83caf');
-                    If DocumentAttachment."Document Reference ID".HasValue then begin
-                        DocumentAttachment."Document Reference ID".ExportStream(DocumentStream);
-                        TempBlob.CreateInStream(Int);
-                        Base64Data := Bs64.ToBase64(Int);
-                    end else begin
-                        if DocumentAttachment."Url" <> '' then begin
-                            Base64Data := DocumentAttachment.ToBase64StringOcr(DocumentAttachment.Url);
-
-                        end;
-                    end;
-                    JsonFormater.WriteStringProperty('document', Base64Data);
-                    JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name" + '.' + DocumentAttachment."File Extension");
-                    JsonFormater.WriteEndObject();
-                    Clear(RestApi);
-                    Json := JsonFormater.GetJSonAsText();
-                    CompanyInfo.Get();
-                    Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/document/' + Id_Tarea, Token(), RequestType::put, jSon);
+                    SetDocAttachment(DocumentAttachment, Id_Tarea);
                 end;
             until DocumentAttachment.Next() = 0;
         //GetSetChat(Tarea, Id_Tarea);
+    end;
+
+    procedure SetDocAttachment(var DocumentAttachment: Record "Document Attachment"; Id_Tarea: Text)
+    var
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        Base64Data: Text;
+        DocumentStream: OutStream;
+        Int: InStream;
+        TempBlob: Codeunit "Temp Blob";
+        Bs64: Codeunit "Base64 Convert";
+        RestApi: Codeunit "RestApi";
+        Json: Text;
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+
+    begin
+        Clear(JsonFormater);
+        JsonFormater.WriteStartObject('');
+        Base64Data := '';
+        JsonFormater.WriteStringProperty('establishment', '6581485f67b6630011d83caf');
+        If DocumentAttachment."Document Reference ID".HasValue then begin
+            DocumentAttachment."Document Reference ID".ExportStream(DocumentStream);
+            TempBlob.CreateInStream(Int);
+            Base64Data := Bs64.ToBase64(Int);
+        end else begin
+            if DocumentAttachment."Url" <> '' then begin
+                Base64Data := DocumentAttachment.ToBase64StringOcr(DocumentAttachment.Url);
+
+            end;
+        end;
+        JsonFormater.WriteStringProperty('document', Base64Data);
+        JsonFormater.WriteStringProperty('name', DocumentAttachment."File Name" + '.' + DocumentAttachment."File Extension");
+        JsonFormater.WriteEndObject();
+        Clear(RestApi);
+        Json := JsonFormater.GetJSonAsText();
+        CompanyInfo.Get();
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/document/' + Id_Tarea, Token(), RequestType::put, jSon);
     end;
 
     procedure BusCaUsuario(Id: Text; var UserGtaskMalla: Record UsuariosGtask)
@@ -738,6 +812,56 @@ codeunit 7001148 GTask
 
     end;
 
+    procedure DevuelveDatoTarea(IdTarea: Text; Dato: Text): Text
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        JsonObjt: JsonObject;
+        JsonArray: JsonArray;
+        JsonToken: JsonToken;
+        JsonCampo: JsonToken;
+        JsonTarea: JsonObject;
+        JsonDetalleCampo: JsonObject;
+        Json: Text;
+        Id: Integer;
+        Tareas: Record "User Task";
+        UserTaskGroup: Record "User Task Group";
+        ResponsabilitiCenter: Record "Responsibility Center";
+        WorkCenter: Record "Work Center";
+        UserGtaskMalla: Record UsuariosGtask;
+        RecordiD: RecordId;
+        RecordRef: RecordRef;
+        Job: Record Job;
+        CodEmpresa: Text[2];
+        Texto: Text;
+        JSonDocument: JsonObject;
+        DocumentAtt: Record "Document Attachment";
+        Line: Integer;
+        DocUrl: Text;
+        DocuName: Text;
+    begin
+        if IdTarea = '' then
+            exit;
+
+        CompanyInfo.Get();
+        UserGtaskMalla.ChangeCompany('Malla Publicidad');
+        // Obtener una tarea específica
+        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + IdTarea, Token(), RequestType::Get, '');
+
+        if Json = '' then
+            exit;
+
+        JsonTarea.ReadFrom(Json);
+
+        // Procesar la tarea
+        If JsonTarea.Get(dato, JsonCampo) Then begin
+            Texto := JsonCampo.AsValue().AsText();
+            exit(texto);
+        end;
+
+    end;
+
     procedure GetTareas(): Text;
     var
         RestApi: Codeunit "Control Ocr";
@@ -1031,6 +1155,7 @@ codeunit 7001148 GTask
         DocumentAttachment2: Record "Document Attachment";
         DocumentAttachment3: Record "Document Attachment";
         OrdenFijacion: Record "Orden fijación";
+        FileManager: Codeunit "File Management";
     begin
         JsonArray.ReadFrom(JsonText);
         foreach JsonToken in JsonArray do begin
@@ -1237,7 +1362,9 @@ codeunit 7001148 GTask
                                             DocumentAtt."Table ID" := Database::"User Task";
                                             DocumentAtt."No." := Tareas."No.";
                                             DocumentAtt."File Name" := DocuName;
+                                            DocumentAtt."File Extension" := FileManager.GetExtension(DocuName);
                                             DocumentAtt."URL" := DocUrl;
+                                            DocumentAtt."Attached Date" := CurrentDateTime;
                                             DocumentAtt.Insert();
                                             DocumentAttachment2 := DocumentAtt;
                                             DocumentAttachment2."Table ID" := Database::"Orden fijación";
@@ -1246,7 +1373,8 @@ codeunit 7001148 GTask
                                             DocumentAttachment2."ID_Doc" := Tareas.OrdenFijacion;
                                             DocumentAttachment2."Document Flow Service" := true;
                                             If DocumentAttachment2.Insert() Then
-                                                DocumentAttachment3.SetRange("Table ID", Database::Job);
+                                                AdImagenValla(DocumentAttachment2);
+                                            DocumentAttachment3.SetRange("Table ID", Database::Job);
                                             DocumentAttachment3.SetRange("No.", Tareas."Job No.");
                                             DocumentAttachment3.SetRange("File Name", DocumentAtt."File Name");
                                             if not DocumentAttachment3.FindSet() then begin
@@ -1267,6 +1395,142 @@ codeunit 7001148 GTask
                 END;
             end;
         end;
+        exit('OK');
+    end;
+
+    [ServiceEnabled]
+    procedure PostFijacion(JsonText: Text): Text;
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        JsonObjt: JsonObject;
+        JsonArray: JsonArray;
+        JsonToken: JsonToken;
+        JsonCampo: JsonToken;
+        JsonTarea: JsonObject;
+        JsonDetalleCampo: JsonObject;
+        Json: Text;
+        Tareas: Record "User Task";
+        UserTaskGroup: Record "User Task Group";
+        ResponsabilitiCenter: Record "Responsibility Center";
+        WorkCenter: Record "Work Center";
+        UserGtaskMalla: Record UsuariosGtask;
+        "TO-Do": Record "To-Do";
+        RecordiD: RecordId;
+        RecordRef: RecordRef;
+        Job: Record Job;
+        jSonDocument: JsonObject;
+        DocumentAtt: Record "Document Attachment";
+        Line: Integer;
+        DocBase64: Text;
+        Num: Integer;
+        CodEmpresa: Text[2];
+        Empresas: Record "Company";
+        Texto: Text;
+        DocuName: Text;
+        DocumentAttachment2: Record "Document Attachment";
+        DocumentAttachment3: Record "Document Attachment";
+        OrdenFijacion: Record "Orden fijación";
+        FileManager: Codeunit "File Management";
+        Encontrada: Boolean;
+        Company: Record Company;
+        Id: Integer;
+        userGtask: Text;
+
+    begin
+        JsonArray.ReadFrom(JsonText);
+        foreach JsonToken in JsonArray do begin
+            JsonTarea := JsonToken.AsObject();
+            If JsonTarea.Get('qrtarea', JsonCampo) Then begin
+                Texto := JsonCampo.AsValue().AsText();
+                Tareas.SetRange(IdQr, Texto);
+                Encontrada := true;
+                If Not Tareas.Findlast() Then begin
+                    Encontrada := false;
+                    repeat
+                        Tareas.ChangeCompany(Company.Name);
+                        Tareas.SetRange(IdQr, Texto);
+                        Encontrada := Tareas.FindLast();
+                    Until (Company.Next() = 0) or Encontrada
+                end;
+                if not Encontrada then Error('Tarea con IdQR %1, no encontrada', Texto);
+                userGtask := '';
+                if JsonTarea.Get('user', JsonCampo) then begin
+                    userGtask := JsonCampo.AsValue().AsText();
+
+                end;
+                if JsonTarea.Get('document', JsonCampo) then begin
+                    JsonArray := JsonCampo.AsArray();
+                    foreach JsonToken in JsonArray do begin
+                        JsonDetalleCampo := JsonToken.AsObject();
+                        If JsonDetalleCampo.Get('document', JsonCampo) then begin
+                            JSonDocument := JsonCampo.AsObject();
+                            If jSonDocument.Get('url', JsonCampo) then begin
+                                DocBase64 := JsonCampo.AsValue().AsText();
+                                If jSonDocument.get('name', JsonCampo) then
+                                    DocuName := JsonCampo.AsValue().AsText();
+                                DocumentAtt.Reset();
+                                DocumentAtt.SetRange("Table ID", Database::"User Task");
+                                DocumentAtt.SetRange("No.", Tareas."No.");
+                                DocumentAtt.SetRange("File Name", DocuName);
+                                If Not DocumentAtt.Findfirst() then begin
+                                    DocumentAtt.SetRange("File Name");
+                                    if DocumentAtt.FindLast() then
+                                        Line := DocumentAtt.Id + 1
+                                    else
+                                        Line := 1;
+                                    DocumentAtt.Init();
+                                    DocumentAtt.Id := Line;
+                                    DocumentAtt."Table ID" := Database::"User Task";
+                                    DocumentAtt."No." := Tareas."No.";
+                                    DocumentAtt."File Name" := DocuName;
+                                    DocumentAtt."File Extension" := FileManager.GetExtension(DocuName);
+                                    DocumentAtt."Document Flow Service" := true;
+                                    DocumentAtt."URL" := DocumentAtt.FormBase64ToUrl(DocBase64, DocuName, Id);
+                                    DocumentAtt."Attached Date" := CurrentDateTime;
+                                    DocumentAtt.Insert();
+                                    DocumentAttachment2 := DocumentAtt;
+                                    DocumentAttachment2."Table ID" := Database::"Orden fijación";
+                                    DocumentAttachment2."No." := Tareas."Job No.";
+                                    DocumentAttachment2."Line No." := Tareas.Reserva;
+                                    DocumentAttachment2."ID_Doc" := Tareas.OrdenFijacion;
+                                    DocumentAttachment2."Document Flow Service" := true;
+                                    If DocumentAttachment2.Insert() Then
+                                        AdImagenValla(DocumentAttachment2);
+                                    DocumentAttachment3.SetRange("Table ID", Database::Job);
+                                    DocumentAttachment3.SetRange("No.", Tareas."Job No.");
+                                    DocumentAttachment3.SetRange("File Name", DocumentAtt."File Name");
+                                    if not DocumentAttachment3.FindSet() then begin
+                                        DocumentAttachment2 := DocumentAtt;
+                                        repeat
+                                            DocumentAttachment2."Line No." := Line;
+                                            DocumentAttachment2."Table ID" := Database::Job;
+                                            DocumentAttachment2."No." := Tareas."Job No.";
+                                            DocumentAttachment2."Document Flow Service" := true;
+                                            Line += 1;
+                                        until DocumentAttachment2.Insert();
+                                    end;
+                                    SetDocAttachment(DocumentAtt, Tareas.Id_Tarea);
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+                If userGtask <> '' then begin
+                    UserGtaskMalla.SetRange("Id Gtask", userGtask);
+                    If UserGtaskMalla.FindFirst() then begin
+                        Tareas.Estado := Tareas.Estado::"En Proceso";
+                        Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
+                        Tareas."Fecha Comunicado Cambio" := CurrentDateTime;
+                        Tareas."Fecha Cambio" := DaTi2Variant(Calcdate('-1D', Today), Time);
+                        Tareas.Modify();
+                    end;
+                    UpdateTaskGtaskUserandStatus(Tareas.Id_Tarea, Tareas.ID, userGtask);
+                end;
+            end;
+        end;
+
         exit('OK');
     end;
 
@@ -1505,10 +1769,13 @@ codeunit 7001148 GTask
         if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
             Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
         JsonFormater.WriteStringProperty('link', Url);
-        if Opcion = Opcion::Opi then
-            JsonFormater.WriteStringProperty('IdQr', Tarea.Resource)
-        else
+        if Opcion = Opcion::Opi then begin
+            JsonFormater.WriteStringProperty('IdQr', Tarea.Resource);
+            Tarea.IdQr := Tarea.Resource;
+        end else begin
             JsonFormater.WriteStringProperty('IdQr', Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva));
+            Tarea.IdQr := Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva);
+        end;
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         CompanyInfo.Get();
@@ -4195,6 +4462,18 @@ codeunit 7001148 GTask
         Exit('');
     end;
 
+    internal procedure CloseTarea(Id: Integer
+
+    )
+    var
+        UserTask: Record "User Task";
+    begin
+        if UserTask.Get(Id) then begin
+            UserTask.Estado := UserTask.Estado::Finalizado;
+            UserTask.Modify(true);
+        end;
+    end;
+
     internal procedure CrearTarea(
         RecRef: RecordRef;
         Descripcion: Text;
@@ -5067,6 +5346,36 @@ codeunit 7001148 GTask
         wRecordRef.Close();
     end;
 
+    procedure AdImagenValla(var DocumentAttachment: Record "Document Attachment")
+    var
+        ImagenValla: Record "Imagenes Orden fijación";
+        DetOrden: Record "Orden fijación";
+        LineNo: Integer;
+    begin
+        If Strpos(DocumentAttachment."File Name", '.pdf') <> 0 Then exit;
+        If DocumentAttachment."File Extension" = 'PDF' then exit;
+        If DetOrden.Get(DocumentAttachment.ID_Doc, DocumentAttachment."Line No.")
+        then begin
+            LineNo := 0;
+            If DetOrden."Imagen Valla Fijada" = 0 Then begin
+                ImagenValla.SetRange("Nº Orden", DetOrden."Nº Orden");
+                If ImagenValla.FindLast() Then LineNo := ImagenValla."Nº Imagen";
+                LineNo += 1;
+                ImagenValla.Init();
+                ImagenValla."Es Incidencia" := false;
+                ImagenValla."Valla Fijada" := true;
+                ImagenValla."Nº Imagen" := LineNo;
+                DetOrden."Imagen Valla Fijada" := LineNo;
+                ImagenValla."Nº Orden" := DetOrden."Nº Orden";
+                ImagenValla."Es Qr" := false;
+                ImagenValla.Nombre := DocumentAttachment."File Name";
+                ImagenValla.Url := DocumentAttachment.Url;
+                ImagenValla.Insert();
+                DetOrden.Modify;
+            end;
+        end;
+    end;
+
     procedure Hora(Datetime: DateTime): Text
     var
         Hora: Time;
@@ -5212,7 +5521,7 @@ codeunit 7001148 GTask
                 If UserxbyCategory.FindFirst() then begin
                     Responsable := UserxbyCategory."User Security ID";
                 end else begin
-                    UserGtaskMalla.SetRange(Departamento, Departamento);
+                    UserGtaskMalla.SetRange(Departamento);
                     UserGtaskMalla.SetRange(Responsable, true);
                     If UserGtaskMalla.FindFirst() then
                         Responsable := UserGtaskMalla."Id Usuario";
@@ -5233,7 +5542,7 @@ codeunit 7001148 GTask
             If UserxbyCategory.FindFirst() then begin
                 Supervisor := UserxbyCategory."User Security ID";
             end else begin
-                UserGtaskMalla.SetRange(Departamento, Servicio);
+                UserGtaskMalla.SetRange(Departamento);
                 UserGtaskMalla.SetRange(Supervisor, true);
                 UserGtaskMalla.SetRange(Responsable);
                 If UserGtaskMalla.FindFirst() then
@@ -5272,22 +5581,22 @@ codeunit 7001148 GTask
         //     UserTask."Created By" := Supervisor
         // else
         UserTask.Validate("Created By", UserSecurityId());
-        UserxbyCategory.Reset();
-        UserxbyCategory.SetRange(Departamento, Servicio);
-        UserxbyCategory.SetRange("User Task Group Code", Categoria);
-        UserxbyCategory.SetRange(Supervisor);
-        UserxbyCategory.SetRange(Responsable);
-        UserxbyCategory.SetRange("Copiado en Mail", true);
-        User.Reset();
-        If UserxbyCategory.FindFirst() then
-            repeat
-                User.SetRange("User Security ID", UserxbyCategory."User Security ID");
-                if User.FindFirst() then
-                    if (User."Contact Email" <> '') And (User."Contact Email" <> EmailSupervisor) and (User."Contact Email" <> EmailResponsabe) then
-                        ListaCorreo := ListaCorreo + User."Contact Email" + ';';
-            until UserxbyCategory.Next() = 0;
-        UserxbyCategory.Reset();
-        UserxbyCategory.SetRange(Departamento, Departamento);
+        // UserxbyCategory.Reset();
+        // UserxbyCategory.SetRange(Departamento, Servicio);
+        // UserxbyCategory.SetRange("User Task Group Code", Categoria);
+        // UserxbyCategory.SetRange(Supervisor);
+        // UserxbyCategory.SetRange(Responsable);
+        // UserxbyCategory.SetRange("Copiado en Mail", true);
+        // User.Reset();
+        // If UserxbyCategory.FindFirst() then
+        //     repeat
+        //         User.SetRange("User Security ID", UserxbyCategory."User Security ID");
+        //         if User.FindFirst() then
+        //             if (User."Contact Email" <> '') And (User."Contact Email" <> EmailSupervisor) and (User."Contact Email" <> EmailResponsabe) then
+        //                 ListaCorreo := ListaCorreo + User."Contact Email" + ';';
+        //     until UserxbyCategory.Next() = 0;
+        // UserxbyCategory.Reset();
+        UserxbyCategory.SetRange(Departamento);
         UserxbyCategory.SetRange("User Task Group Code", Categoria);
         UserxbyCategory.SetRange(Responsable);
         UserxbyCategory.SetRange(Supervisor);
@@ -5505,10 +5814,27 @@ codeunit 7001148 GTask
         Contratos: Record "Sales Header";
         LineCount: Integer;
         RecRef: RecordRef;
+        Control: Codeunit "Controlprocesos";
     begin
         RecRef.GetTable(RecordVariant);
         If RecRef.Number <> Database::"Purchase Header" then exit;
         If Not PurchaseHeader.Get(PurchaseHeader."Document Type"::Order, DocNo) then exit;
+        //Control.CompruebaPermisos(UserSecurityId(), 'ENVIARALTALLER', CompanyName);
+
+        PurchaseLine.SetRange("Document Type", PurchaseHeader."Document Type");
+        PurchaseLine.SetRange("Document No.", PurchaseHeader."No.");
+        PurchaseLine.SetRange("Enviado a Taller", false);
+        PurchaseLine.SetRange("Validado PB", false);
+
+        if PurchaseLine.FindSet() then begin
+            repeat
+                if Not PurchaseLine."Enviado a Taller" then begin
+                    LineCount += 1;
+                    PurchaseLine."Enviado a Taller" := true;
+                    PurchaseLine.Modify();
+                end;
+            until PurchaseLine.Next() = 0;
+        end;
         If not Job.Get(PurchaseHeader."Nº Proyecto") then exit;
         Contratos.SetRange("Nº Proyecto", Job."No.");
         if Not Contratos.FindFirst() then exit;
