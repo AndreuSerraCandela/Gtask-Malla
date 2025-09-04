@@ -11,6 +11,12 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                 ApplicationArea = All;
                 SubPageLink = "Nº Orden" = field("Nº Orden"), "Valla Fijada" = const(false), "Es Qr" = const(true);
             }
+            part("Documentos"; "Documentos Orden Fijacion")
+            {
+                Caption = 'Documentos Adjuntos';
+                ApplicationArea = All;
+                SubPageLink = ID_Doc = field("Nº Orden");
+            }
             part("Correos"; "Sent Emails List Part")
 
             {
