@@ -565,7 +565,7 @@ page 50107 "Chat Tareas"
         BigText := BigText + '</font>';
         REmail.Subject := 'Petición disponibilidad tarea nº ' + Task2."No.";
 
-        REmail."Send to" := 'julian@malla.es';
+        REmail."Send to" := 'julian@malla.es;xcastell@malla.es';
         REmail."Send CC" := 'ana@malla.es;marian@malla.es;miguel@malla.es';
         REmail."Send BCC" := Salesperson2."E-Mail";
         REmail.SetBodyText(BigText);

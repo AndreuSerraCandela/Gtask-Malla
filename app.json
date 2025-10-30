@@ -17,13 +17,15 @@
       "name": "Malla Wave 2.0",
       "publisher": "Grupo Malla by Andreu",
       "version": "2.1.5.9"
-    },
+    }
+    ,
     {
       "id": "7a7d3479-e693-4f3d-8336-aac424523186",
       "name": "Ocr Malla",
       "publisher": "Andreu Serra",
       "version": "2.1.3.0"
-    },
+    }
+    ,
     {
       "id": "4c3e28b8-7fe9-4a33-ad5d-d26cbf8f7765",
       "name": "Emplazamientos",
@@ -35,11 +37,12 @@
   "platform": "24.0.0.0",
   "application": "24.0.0.0",
   "idRanges": [],
+  "features": ["NoImplicitWith","TranslationFile","GenerateCaptions"],
   "resourceExposurePolicy": {
     "allowDebugging": true,
     "allowDownloadingSource": true,
     "includeSourceInSymbolFile": true
   },
-  "runtime": "13.1",
-  "features": ["NoImplicitWith","TranslationFile","GenerateCaptions"]
+  "runtime": "13.1"
+  
 }

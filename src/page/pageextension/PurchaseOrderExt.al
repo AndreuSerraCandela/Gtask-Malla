@@ -10,7 +10,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
             action("Enviar Líneas a Taller")
             {
                 ApplicationArea = All;
-                Caption = 'Enviar Líneas a Taller';
+                Caption = 'Preparar Líneas para Taller';
                 Image = SendTo;
                 ToolTip = 'Marca las líneas seleccionadas como enviadas al taller';
 
@@ -146,28 +146,28 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                 end;
             }
 
-            action("Crear Tarea Taller")
-            {
-                ApplicationArea = All;
-                Caption = 'Crear Tarea Taller';
-                Image = SendToMultiple;
-                ToolTip = 'Crea una tarea para el taller';
+            // action("Crear Tarea Taller")
+            // {
+            //     ApplicationArea = All;
+            //     Caption = 'Crear Tarea Taller';
+            //     Image = SendToMultiple;
+            //     ToolTip = 'Crea una tarea para el taller';
 
-                trigger OnAction()
-                var
-                    PurchaseLine: Record "Purchase Line";
-                    LineCount: Integer;
-                    Control: Codeunit "Controlprocesos";
-                    Gtask: Codeunit GTask;
-                    FileName: Text;
-                begin
-                    If not Control.CompruebaPermisos(UserSecurityId(), 'ENVIARALTALLER', CompanyName) then
-                        exit;
+            //     trigger OnAction()
+            //     var
+            //         PurchaseLine: Record "Purchase Line";
+            //         LineCount: Integer;
+            //         Control: Codeunit "Controlprocesos";
+            //         Gtask: Codeunit GTask;
+            //         FileName: Text;
+            //     begin
+            //         If not Control.CompruebaPermisos(UserSecurityId(), 'ENVIARALTALLER', CompanyName) then
+            //             exit;
 
-                    CrearTareaTaller(PurchaseLine, LineCount, FileName, false);
+            //         CrearTareaTaller(PurchaseLine, LineCount, FileName, false);
 
-                end;
-            }
+            //     end;
+            // }
             action("Líneas Enviadas Taller")
             {
                 ApplicationArea = All;
@@ -253,9 +253,9 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
             actionref(CrearTareaEnvioTaller; "Crear Tarea envio Taller")
             {
             }
-            actionref(CrearTareaTaller; "Crear Tarea Taller")
-            {
-            }
+            // actionref(CrearTareaTaller; "Crear Tarea Taller")
+            // {
+            // }
             actionref(CrearTareaEnvioRef; "Crear Envio a Terceros")
             { }
         }

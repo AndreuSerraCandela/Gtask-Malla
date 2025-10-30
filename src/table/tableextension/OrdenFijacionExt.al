@@ -49,6 +49,32 @@ tableextension 50102 "Orden Fijacion Ext" extends "Orden fijación"
             CalcFormula = lookup("User Task"."Assigned To" where(Reserva = field("Nº Reserva")));
             Editable = false;
         }
+        field(50018; "Cerrada Medios"; Boolean)
+        {
+            ObsoleteState = Removed;
+
+        }
+        field(50019; "Estado Medios"; Option)
+        {
+            OptionMembers = " ",Retirada,Finalizado;
+            OptionCaption = ' ,Retirada,Finalizado';
+        }
+        modify(Retirar)
+        {
+            trigger OnBeforeValidate()
+            begin
+                if Rec.Retirar then Rec."Estado Medios" := Rec."Estado Medios"::Retirada;
+            end;
+        }
+        modify(Retirada)
+        {
+            trigger OnBeforeValidate()
+            begin
+                if Rec.Retirada then Rec."Estado Medios" := Rec."Estado Medios"::Retirada;
+
+            end;
+        }
+
 
     }
 

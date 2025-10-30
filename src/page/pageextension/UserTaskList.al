@@ -111,6 +111,48 @@ pageextension 92157 "UserTaskList" extends "User Task List"
     {
         addafter("Delete User Tasks")
         {
+            action("Avanzar Nueva Tarea")
+            {
+                ApplicationArea = All;
+                Caption = 'Avanzar Nueva Tarea';
+                Image = Task;
+                trigger OnAction()
+                var
+                    Categoria: Record "User Task Group";
+                    Departamento: Record "Responsibility Center";
+                    Gtask: Codeunit GTask;
+                    UserxCategoria: Record "User Task Group Member";
+                    dpto: Text;
+                begin
+                    Message('Elija la categoría de la nueva tarea');
+                    If Page.RunModal(Page::"User Task Groups", Categoria) <> Action::LookupOK then
+                        exit;
+                    UserxCategoria.SetRange("User Task Group Code", Categoria.Code);
+                    dpto := '';
+                    if UserxCategoria.FindFirst() then begin
+                        dpto := UserxCategoria.Departamento;
+                        repeat
+                            if UserxCategoria.Departamento <> dpto then begin
+                                dpto := '';
+                                break;
+                            end;
+                        until UserxCategoria.Next() = 0;
+                    end;
+                    if dpto = '' then begin
+                        Message('Elija el departamento de la nueva tarea, quien debe hacer el trabajo');
+                        if Page.RunModal(Page::"Responsibility Center list", Departamento) <> Action::LookupOK then
+                            exit;
+                        dpto := Departamento.Code;
+
+                    end;
+                    if dpto <> '' then
+                        Gtask.DupliCarTarea(Rec.GetDescription(), dpto, Rec.Servicio, Rec.Title, Categoria.Code, false, '', '', Rec);
+                    If Confirm('Quiere finalizar la tarea actual?') then begin
+                        Rec.Validate(Estado, Rec.Estado::Finalizado);
+                        Rec.Modify();
+                    end;
+                end;
+            }
             action("Tareas Supervisadas")
             {
                 ApplicationArea = All;
@@ -238,6 +280,7 @@ pageextension 92157 "UserTaskList" extends "User Task List"
         }
         addbefore("User Task Groups_Promoted")
         {
+            actionref("Avanzar_Nueva_Tarea_ref"; "Avanzar Nueva Tarea") { }
             actionref("Tareas_Supervisadas_ref"; "Tareas Supervisadas") { }
             actionref("Tareas_Asignadas_ref"; "Tareas Asignadas") { }
             actionref("Tareas_Creadas_ref"; "Tareas creadas") { }

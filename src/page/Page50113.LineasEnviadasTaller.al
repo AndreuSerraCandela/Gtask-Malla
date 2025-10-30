@@ -159,6 +159,13 @@ page 50113 "Lineas Enviadas Taller"
                     ToolTip = 'Fecha esperada de recepción';
                     Editable = false;
                 }
+                field("Requested Receipt Date"; Rec."Requested Receipt Date")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Fecha de Recepción';
+                    ToolTip = 'Fecha de recepción';
+                    Editable = false;
+                }
 
             }
         }
@@ -184,7 +191,7 @@ page 50113 "Lineas Enviadas Taller"
             action("Validar Seleccionadas")
             {
                 ApplicationArea = All;
-                Caption = 'Validar Seleccionadas';
+                Caption = 'Validar Seleccionadas PB';
                 Image = Approve;
                 ToolTip = 'Marca las líneas seleccionadas como validadas por PB';
 
@@ -261,6 +268,8 @@ page 50113 "Lineas Enviadas Taller"
                                 PurchaseLine.Validate("Validar Cantidad recibida", true);
                                 PurchaseLine.Modify();
                                 LineCount += 1;
+                                Rec."Validar Cantidad recibida" := true;
+                                Rec.Modify();
                             end;
                         until Rec.Next() = 0;
                     end;

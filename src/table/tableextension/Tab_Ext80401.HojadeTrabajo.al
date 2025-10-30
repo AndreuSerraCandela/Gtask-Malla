@@ -8,6 +8,13 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
     fields
     {
 
+        field(80001; Tipo; Option)
+        {
+            OptionMembers = " ",Trabajo,Nacional;
+            Caption = 'Tipo';
+            DataClassification = ToBeClassified;
+        }
+
         field(80002; Cliente; Code[20])
         {
             Caption = 'Cliente';
@@ -54,23 +61,30 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
         field(80007; Proyecto; Code[20])
         {
             Caption = 'Proyecto';
-            DataClassification = ToBeClassified;
+            TableRelation = Job;
+            trigger OnValidate()
+            var
+                Job: Record Job;
+            begin
+                if Job.Get(Proyecto) then
+                    Description := Job.Description;
+            end;
         }
         field(80008; "Fecha Inicio"; Date)
         {
             Caption = 'Fecha Inicio';
             DataClassification = ToBeClassified;
         }
-        field(80009; "Fecha Fin"; Date)
+        field(80015; "Fecha Fin"; Date)
         {
             Caption = 'Fecha Fin';
             DataClassification = ToBeClassified;
         }
-        field(80010; Tarea; Integer)
+        field(80016; Tarea; Integer)
         {
             TableRelation = "User Task".ID;
         }
-        field(80011; "Producto Servicio"; code[20])
+        field(80017; "Producto Servicio"; code[20])
         {
             TableRelation = Resource where(Type = const(Machine));
             trigger OnValidate()
@@ -85,7 +99,13 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
         {
             Editable = false;
         }
+        field(80013; "Fecha último Envío"; Date)
+        {
+            Caption = 'Fecha último Envío';
+            DataClassification = ToBeClassified;
+        }
     }
+
 
 
 }

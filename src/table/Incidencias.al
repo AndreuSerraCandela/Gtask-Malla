@@ -60,8 +60,9 @@ table 7001250 "Incidencias"
     begin
         rSelf.SetCurrentKey("Nº Orden");
         if rSelf.FindLast() then
-            Orden := rSelf."Nº Orden" + 1;
-        Orden := 1;
+            Orden := rSelf."Nº Orden" + 1
+        else
+            Orden := 1;
         "Nº Orden" := Orden;
         if "No." = '' then begin
             JobsSetup.Get();

@@ -352,6 +352,15 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
             }
 
         }
+        addafter(SendEmail)
+        {
+            actionref("Ver Tareas_Promoted89509"; "Ver Tareas")
+            {
+            }
+            actionref("Crear Tarea Emplazamiento_Promoted94356"; "Crear Tarea Emplazamiento")
+            {
+            }
+        }
         //     addafter(AsignarImagenaLineas)
         //   {
         //     actionref(CreartareaRef;"Crear Tarea"){}

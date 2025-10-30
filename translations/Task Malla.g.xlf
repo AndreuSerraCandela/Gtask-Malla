@@ -113,6 +113,91 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Tecnico - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2323889025 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Lineas Cartelería Nacional</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 1084521890 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la campaña.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control Campaña - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 1012590354 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si está contrado.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control Contrato - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 2450257710 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la fecha de inicio.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control Fecha Inicio - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 1751879152 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el formato.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control Formato - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 4200184881 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control No. - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 4073400167 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si está recibido.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control Recibido - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Control 1904967325 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica los soportes.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Control Soportes - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Action 4242444679 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Envía por correo las líneas no enviadas con un archivo Excel.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Action Enviar Líneas No Enviadas - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2323889025 - Action 4242444679 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Enviar Líneas No Enviadas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional - Action Enviar Líneas No Enviadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cartelería Nacional</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Control 4200184881 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Control No. - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Control 460889064 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la fecha de inicio.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Control Starting Date - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Control 1891046577 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Proyecto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Control ProyectoInfo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Control 1768628339 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el proyecto.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Control Proyecto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Action 1062208601 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Inserta una nueva línea basada en un proyecto.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Action Insertar Línea de Proyecto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4046753645 - Action 1062208601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Insertar Línea de Proyecto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Cartelería Nacional Card - Action Insertar Línea de Proyecto - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 1394928538 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Chat Tareas</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -698,6 +783,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Quantity - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3101461887 - Control 1602222300 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha de recepción</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Requested Receipt Date - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3101461887 - Control 1602222300 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha de Recepción</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Requested Receipt Date - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3101461887 - Control 1878130204 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Tipo de línea (Artículo, Cuenta, etc.)</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -764,9 +859,119 @@
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Action Validar Seleccionadas - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="Page 3101461887 - Action 1883886487 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Validar Seleccionadas</source>
+          <source>Validar Seleccionadas PB</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Action Validar Seleccionadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Líneas Parte de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 2582977774 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si la línea está comprobada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Comprobada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 3461834954 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la descripción de la línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Description - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 1067240308 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si la línea está enviada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Enviada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 3854388189 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la fecha de aprobación de la línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Fecha Orden - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 3854388189 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha Orden</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Fecha Orden - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 3617530505 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si la línea está finalizada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Fibalizada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 3790198058 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de línea del trabajo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Job Line No. - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 1908272084 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número del trabajo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Job No. - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 3320823955 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Line No. - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 949215307 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número del elemento.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control No - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 2883740582 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el tipo de elemento.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Tipo - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 1878130204 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el tipo de línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Type - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Control 1681689589 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la unidad.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Control Unidad - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 560850137 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Añade un nuevo proyecto a las líneas.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Añadir Proyecto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 560850137 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Añadir Proyecto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Añadir Proyecto - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 946391890 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Envía por correo las líneas no finalizadas con un archivo Excel.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Enviar Líneas No Finalizadas - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 946391890 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Enviar Líneas No Finalizadas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Enviar Líneas No Finalizadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 4288676427 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Marca las líneas seleccionadas como comprobadas.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Marcarcomocomprobadas - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 4288676427 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Marcar como comprobadas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Marcarcomocomprobadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 3705754847 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Muestra los adjuntos relacionados con esta línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Ver Adjuntos - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2539053734 - Action 3705754847 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ver Adjuntos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Ver Adjuntos - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3735471608 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Estado de las Ordenes de Fijación</source>
@@ -903,6 +1108,106 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Fijación QR - Action FinalizaTareas - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3735471608 - Action 3355849662 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cerrar las tareas de retirada desde Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Fijación QR - Action FinalizaTareasRetirada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3735471608 - Action 3355849662 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Finalizar Tareas Retirada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Fijación QR - Action FinalizaTareasRetirada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Orden de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Control 458406397 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la fecha de finalización del período de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Control Ending Date - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Control 4200184881 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Control No. - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Control 1768628339 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el proyecto.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Control Proyecto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Control 460889064 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la fecha de inicio del período de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Control Starting Date - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Action 560850137 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Añade un nuevo proyecto a las líneas de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Action Añadir Proyecto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Action 560850137 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Añadir Proyecto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Action Añadir Proyecto - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Action 1555798978 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crea una tarea para el taller</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Action Crear Tarea Taller - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Action 1555798978 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crear Tarea Taller</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Action Crear Tarea Taller - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Action 146429579 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abre las líneas de la hoja de tiempo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Action Ver Líneas - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1096528819 - Action 146429579 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ver Líneas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo - Action Ver Líneas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ordenes de Trabajo y Cartelería Nacional</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Action 3815499818 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crea una nueva cartelería nacional.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Nueva Cartelería Nacional - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Action 3815499818 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nueva Cartelería Nacional</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Nueva Cartelería Nacional - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Action 3788504877 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crea una nueva parte de trabajo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Nueva Parte de Trabajo - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Action 3788504877 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nueva Parte de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Nueva Parte de Trabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Action 892210059 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abre detalle</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Ver - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1994488138 - Action 892210059 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ver</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Ver - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 91669665 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Usuarios Gtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1033,6 +1338,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension DocumentAttachmentDetailsExt - Control Recurso No - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 3773451075 - Control 1869176257 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 3161236875">
+          <source>Especifica el numero de tareas pendientes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaActExt - Control Tareas Pendientes - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="PageExtension 1942227777 - Action 987292005 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 22563609">
           <source>Tareas Firma Emplazamiento</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1158,6 +1468,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Fijacion - Action Crear Tarea Retirada - Method OnAction - NamedType TipoOrden</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2683253905 - Action 4125762224 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 4074072132">
+          <source>Etiquetas QR Seleccionadas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Fijacion - Action Etiquetas QR Seleccionadas - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2683253905 - Action 3785045186 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 4074072132">
           <source>Reenviar Correo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1167,6 +1482,11 @@
           <source>Ver Tareas</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Fijacion - Action Ver Tareas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2683253905 - Action 2401508365 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 4074072132">
+          <source>Recuperar Imagen Vallas fijadas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Fijacion - Action Recuperar Imagen Vallas fijadas - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2683253905 - Control 2420419660 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 4074072132">
           <source>Qr's</source>
@@ -1182,6 +1502,11 @@
           <source>Todos los Adjuntos</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Fijacion - Control AttachedDocuments - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 3573575021 - Control 4165234317 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2093304926">
+          <source>Url</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Imagenes Orden fijacion ext - Control Url - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4228244613 - Action 1288086261 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 685777706">
           <source>Comunicar a Jurídico</source>
@@ -1223,23 +1548,13 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Purchase Order Ext - Action Crear Tarea envio Taller - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 515410600 - Action 1555798978 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 387971303">
-          <source>Crea una tarea para el taller</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Purchase Order Ext - Action Crear Tarea Taller - Property ToolTip</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 515410600 - Action 1555798978 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 387971303">
-          <source>Crear Tarea Taller</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Purchase Order Ext - Action Crear Tarea Taller - Property Caption</note>
-        </trans-unit>
         <trans-unit id="PageExtension 515410600 - Action 1924158944 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 387971303">
           <source>Marca las líneas seleccionadas como enviadas al taller</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Purchase Order Ext - Action Enviar Líneas a Taller - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="PageExtension 515410600 - Action 1924158944 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 387971303">
-          <source>Enviar Líneas a Taller</source>
+          <source>Preparar Líneas para Taller</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Purchase Order Ext - Action Enviar Líneas a Taller - Property Caption</note>
         </trans-unit>
@@ -1448,6 +1763,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Actualizar Proyectos - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 3818414653 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Avanzar Nueva Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Avanzar Nueva Tarea - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2984827402 - Action 1770992317 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
           <source>Recuperar IdQR</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1553,6 +1873,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Fecha Inicio - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 1302225088 - Field 3057016321 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
+          <source>Fecha último Envío</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Fecha último Envío - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 1302225088 - Field 3612309607 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
           <source>Nombre Cliente</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1573,6 +1898,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Tarea - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 1302225088 - Field 2883740582 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
+          <source>Tipo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Tipo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 1302225088 - Field 2883740582 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
+          <source> ,Trabajo,Nacional</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Tipo - Property OptionCaption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 3604617890 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
           <source>Lineas parte de trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1583,15 +1918,65 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Cantidad - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 2582977774 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Comprobada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Comprobada - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 3604617890 - Field 1475260075 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
           <source>Descripcion</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Descripcion - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 1067240308 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Enviada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Enviada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 3854388189 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Fecha Orden</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Fecha Orden - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 4255494648 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Fecha Recibido</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Fecha Recibido - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 2462746533 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Finalizada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Finalizada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 1751879152 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Formato</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Formato - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 3790198058 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Job Line No.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Job Line No. - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 3604617890 - Field 949215307 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
           <source>No</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field No - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 2716135150 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Nº Contrato</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Nº Contrato - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 4073400167 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Recibido</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Recibido - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3604617890 - Field 1904967325 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
+          <source>Soportes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Soportes - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 3604617890 - Field 2883740582 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
           <source>Tipo</source>
@@ -1599,7 +1984,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Tipo - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 3604617890 - Field 2883740582 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2062634808">
-          <source> ,Producto,Recurso</source>
+          <source> ,Producto,Recurso,Trabajo,Nacional</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Lineas parte de trabajo - Field Tipo - Property OptionCaption</note>
         </trans-unit>
@@ -1612,6 +1997,16 @@
           <source>Equipo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Equipo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 4070963464 - Field 1660517211 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
+          <source>Estado Medios</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Estado Medios - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 4070963464 - Field 1660517211 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
+          <source> ,Retirada,Finalizado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Estado Medios - Property OptionCaption</note>
         </trans-unit>
         <trans-unit id="TableExtension 4070963464 - Field 3225717989 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
           <source>Estado de la Tarea</source>
@@ -1657,6 +2052,16 @@
           <source>Validar Cantidad recibida</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Purchase Line Ext - Field Validar Cantidad recibida - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 59040851 - Field 675990128 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 994825818">
+          <source>Filtro Servicio</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ServCue - Field Filtro Servicio - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 59040851 - Field 1869176257 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 994825818">
+          <source>Tareas Pendientes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ServCue - Field Tareas Pendientes - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 1554482435 - Field 1471875482 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2556642749">
           <source>Incidencias Nos.</source>
