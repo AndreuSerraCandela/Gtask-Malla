@@ -106,7 +106,7 @@ pageextension 92154 "UserTask" extends "User Task card"
 
         addfirst(FactBoxes)
         {
-            part(DocumentAttach; "Document Attachment Factbox")
+            part(DocumentAttach; "Doc. Attachment List FactBox")
             {
                 ApplicationArea = All;
                 Caption = 'Documentos Adjuntos';

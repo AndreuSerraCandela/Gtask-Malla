@@ -127,7 +127,7 @@ page 50121 "Cartelería Nacional"
         // Crear encabezados
         RowNo := 1;
         ExcelBuffer.NewRow();
-        ExcelBuffer.AddColumn('Hoja de Tiempo', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
+        ExcelBuffer.AddColumn('Hoja', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
         ExcelBuffer.AddColumn('Nº Línea', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
         ExcelBuffer.AddColumn('Tipo', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
         ExcelBuffer.AddColumn('Job No.', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);

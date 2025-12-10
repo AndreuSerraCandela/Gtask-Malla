@@ -203,7 +203,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                                 If Page.RunModal(0, Resource) = Action::LookupOK then begin
                                     RecRef.GetTable(Resource);
                                     Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Resource.name + ' con el número ' + Resource."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
-                                    'MEDIOS', 'TECNICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '', '');
+                                    'MEDIOS', 'TECNICO', 'Medidas Cautelares' + Resource.Name, 'TMC', false, '', '');
                                 End;
 
                             end;
@@ -303,7 +303,7 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                             If Page.RunModal(0, Resource) = Action::LookupOK then begin
                                 RecRef.GetTable(Resource);
                                 Gtask.CrearTarea(RecRef, 'Inicio medidas cautelares ' + Resource.name + ' con el número ' + Resource."No.",
-                                'TECNICO', 'JURIDICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '', '');
+                                'TECNICO', 'JURIDICO', 'Medidas Cautelares' + Resource.Name, 'TMC', false, '', '');
                             End;
 
                         end;

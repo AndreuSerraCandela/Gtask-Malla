@@ -23,4 +23,8 @@ enum 50021 "Tipo Incidencia"
     value(1; "Incidencias EMT")
     { }
     value(2; "Incidencias Villena") { }
+    //EMT,Mobiliario Urbano,Grupo Taller,Poda
+    value(3; "Incidencias Mobiliario Urbano") { }
+    value(4; "Incidencias Grupo Taller") { }
+    value(5; "Incidencias Poda") { }
 }

@@ -60,7 +60,31 @@ pageextension 92151 CompantInfoTask extends "Company Information"
 
 
             }
+            action("Probar Url")
+            {
+                ApplicationArea = All;
+                Caption = 'Probar Url';
+                Image = TestReport;
+                trigger OnAction()
+                var
+                    Tareas: Codeunit GTask;
+                    Docurl: Text;
+                    VentanaTexto: Page Dialogo;
+                begin
+                    VentanaTexto.SetTexto('Url');
+                    VentanaTexto.RunModal();
+                    VentanaTexto.GetTexto(Docurl);
+                    if Tareas.ComprobarSiExisteDocumento(Docurl) then
+                        Message('El documento existe')
+                    else
+                        Message('El documento no existe');
+
+
+                end;
+            }
         }
+
+
     }
 
     var

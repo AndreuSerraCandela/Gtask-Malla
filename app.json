@@ -2,7 +2,7 @@
   "id": "366ac4b9-199a-4725-a5f2-9bead2fe08b5",
   "name": "Task Malla",
   "publisher": "Andreu By Malla",
-  "version": "1.0.0.2",
+  "version": "1.0.0.4",
   "target": "OnPrem",
   "brief": "",
   "description": "",
@@ -16,33 +16,37 @@
       "id": "7a7d3479-e693-4f3d-8336-aac424523182",
       "name": "Malla Wave 2.0",
       "publisher": "Grupo Malla by Andreu",
-      "version": "2.1.5.9"
-    }
-    ,
+      "version": "2.1.6.1"
+    },
     {
       "id": "7a7d3479-e693-4f3d-8336-aac424523186",
       "name": "Ocr Malla",
       "publisher": "Andreu Serra",
-      "version": "2.1.3.0"
-    }
-    ,
+      "version": "2.1.3.2"
+    },
     {
       "id": "4c3e28b8-7fe9-4a33-ad5d-d26cbf8f7765",
       "name": "Emplazamientos",
       "publisher": "Andreu Serra",
-      "version": "1.0.0.4"
+      "version": "1.0.0.6"
+    },
+    {
+      "id": "43635513-cb1d-447c-bc2b-a8495e96a0b7",
+      "name": "Funciones",
+      "publisher": "Grupo Malla by Andreu",
+      "version": "1.0.0.1"
     }
   ],
   "screenshots": [],
-  "platform": "24.0.0.0",
-  "application": "24.0.0.0",
+  "preprocessorSymbols": ["CLEAN27"],
+  "platform": "27.0.0.0",
+  "application": "27.0.0.0",
   "idRanges": [],
-  "features": ["NoImplicitWith","TranslationFile","GenerateCaptions"],
   "resourceExposurePolicy": {
     "allowDebugging": true,
     "allowDownloadingSource": true,
     "includeSourceInSymbolFile": true
   },
-  "runtime": "13.1"
-  
+  "runtime": "16.0",
+  "features": ["NoImplicitWith","TranslationFile","GenerateCaptions"]
 }

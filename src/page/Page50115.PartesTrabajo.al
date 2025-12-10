@@ -61,7 +61,7 @@ page 50115 "Partes de Trabajo"
         }
         area(factboxes)
         {
-            part(Documentos; "Document Attachment Factbox")
+            part(Documentos; "Doc. Attachment List FactBox")
             {
                 ApplicationArea = All;
                 Provider = Lines;

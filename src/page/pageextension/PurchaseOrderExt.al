@@ -17,6 +17,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                 trigger OnAction()
                 var
                     PurchaseLine: Record "Purchase Line";
+                    PurchaseHeader: Record "Purchase Header";
                     LineCount: Integer;
                     Control: Codeunit "Controlprocesos";
                 begin
@@ -28,6 +29,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                     PurchaseLine.SetRange("Document Type", Rec."Document Type");
                     PurchaseLine.SetRange("Document No.", Rec."No.");
                     PurchaseLine.SetRange("Enviado a Taller", false);
+                    PurchaseLine.SetFilter(Type, '<>%1', PurchaseLine.Type::" ");
                     PurchaseLine.SetRange("Validado PB", false);
 
                     if PurchaseLine.FindSet() then begin
@@ -35,6 +37,10 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                             if Not PurchaseLine."Enviado a Taller" then begin
                                 LineCount += 1;
                                 PurchaseLine."Enviado a Taller" := true;
+                                PurchaseHeader.ChangeCompany(CompanyName);
+                                if PurchaseHeader.Get(Rec."Document Type", Rec."No.") then
+                                    PurchaseLine."Fecha Inclusión" := PurchaseHeader."Order Date";
+                                PurchaseLine."Empresa" := CompanyName;
                                 PurchaseLine.Modify();
                             end;
                         until PurchaseLine.Next() = 0;
@@ -75,6 +81,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
 
                     PurchaseLine.SetRange("Document Type", Rec."Document Type");
                     PurchaseLine.SetRange("Document No.", Rec."No.");
+                    PurchaseLine.SetFilter(Type, '<>%1', PurchaseLine.Type::" ");
                     PurchaseLine.SetFilter("Line No.", '<>0');
 
                     if PurchaseLine.FindSet() then begin
@@ -108,43 +115,6 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                 end;
             }
 
-            action("Crear Tarea envio Taller")
-            {
-                ApplicationArea = All;
-                Caption = 'Crear Tarea envio Taller';
-                Image = SendToMultiple;
-                ToolTip = 'Crea una tarea para el envío de las líneas al taller';
-
-                trigger OnAction()
-                var
-                    PurchaseLine: Record "Purchase Line";
-                    LineCount: Integer;
-                    Control: Codeunit "Controlprocesos";
-                    Gtask: Codeunit GTask;
-                    FileName: Text;
-                begin
-                    If not Control.CompruebaPermisos(UserSecurityId(), 'ENVIARALTALLER', CompanyName) then
-                        exit;
-
-                    if not Confirm('¿Está seguro de que desea enviar las líneas al taller y crear una tarea?') then
-                        exit;
-
-                    PurchaseLine.SetRange("Enviado a Taller", true);
-                    PurchaseLine.SetRange("Validado PB", false);
-                    LineCount := PurchaseLine.Count();
-
-                    if LineCount > 0 then begin
-                        FileName := GenerarExcelLineasTaller(PurchaseLine);
-                        CrearTareaTaller(PurchaseLine, LineCount, FileName, true);
-
-                        // Generar Excel y enviar correo
-
-
-                        Message('Se han enviado %1 líneas al taller. Se ha creado una tarea y enviado el correo.', LineCount);
-                    end else
-                        Message('No se encontraron líneas para enviar al taller.');
-                end;
-            }
 
             // action("Crear Tarea Taller")
             // {
@@ -250,9 +220,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
             actionref(LíneasEnviadasTaller; "Líneas Enviadas Taller")
             {
             }
-            actionref(CrearTareaEnvioTaller; "Crear Tarea envio Taller")
-            {
-            }
+
             // actionref(CrearTareaTaller; "Crear Tarea Taller")
             // {
             // }
@@ -261,33 +229,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
         }
     }
 
-    local procedure CrearTareaTaller(PurchaseLine: Record "Purchase Line"; LineCount: Integer; FileName: Text; EnvioLineas: Boolean)
-    var
-        Gtask: Codeunit GTask;
-        RecRef: RecordRef;
 
-
-    begin
-        // Contar líneas enviadas al taller
-
-        if (LineCount > 0) and (EnvioLineas) then begin
-            RecRef.GetTable(PurchaseLine);
-            Gtask.CrearTarea(RecRef,
-                'Orden Cartelería ' + Format(Today(), 0, '<Day,2>/<Month,2>/<Year4>'),
-                'TALLER', 'COMPRAS',
-                'Seguimiento Recepciones',
-                'RECEPCIONES', true, FileName, '.xlsx');
-        end else begin
-            if not EnvioLineas then begin
-                RecRef.GetTable(PurchaseLine);
-                Gtask.CrearTarea(RecRef,
-                    'Orden de trabajo ' + Format(Today(), 0, '<Day,2>/<Month,2>/<Year4>'),
-                    'TALLER', 'COMPRAS',
-                    'Tareas Talles',
-                    'PRODUCCION', false, '', '');
-            end;
-        end;
-    end;
 
     local procedure CrearTareaEnvio(PurchaseLine: Record "Purchase Line")
     var
@@ -318,68 +260,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
         ;
     end;
 
-    local procedure GenerarExcelLineasTaller(var PurchaseLine: Record "Purchase Line"): Text
-    var
-        ExcelBuffer: Record "Excel Buffer";
-        TempBlob: Codeunit "Temp Blob";
-        OutStream: OutStream;
-        InStream: InStream;
-        FileName: Text;
-        Base64Content: Text;
-        RowNo: Integer;
-        Base64: Codeunit "Base64 Convert";
-    begin
-        FileName := 'Lineas_Taller_' + Format(CurrentDateTime(), 0, '<Year4><Month,2><Day,2><Hours24,2><Minutes,2><Seconds,2>') + '.xlsx';
 
-        // Limpiar ExcelBuffer
-        ExcelBuffer.DeleteAll();
-
-        // Crear encabezados
-        RowNo := 1;
-        ExcelBuffer.NewRow();
-        ExcelBuffer.AddColumn('Tipo Documento', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Nº Documento', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Nº Línea', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Tipo', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Nº Artículo', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Descripción', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Cantidad', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('U.M.', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Proveedor', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Enviado a Taller', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-        ExcelBuffer.AddColumn('Validado PB', false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-
-
-        if PurchaseLine.FindSet() then begin
-            repeat
-                RowNo += 1;
-                ExcelBuffer.NewRow();
-                ExcelBuffer.AddColumn(Format(PurchaseLine."Document Type"), false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(PurchaseLine."Document No.", false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(Format(PurchaseLine."Line No."), false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(Format(PurchaseLine."Type"), false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(PurchaseLine."No.", false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(PurchaseLine.Description, false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(Format(PurchaseLine.Quantity), false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(PurchaseLine."Unit of Measure Code", false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(PurchaseLine."Buy-from Vendor No.", false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(Format(PurchaseLine."Enviado a Taller"), false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-                ExcelBuffer.AddColumn(Format(PurchaseLine."Validado PB"), false, '', true, false, true, '', ExcelBuffer."Cell Type"::Text);
-            until PurchaseLine.Next() = 0;
-        end;
-
-        // Crear archivo Excel
-        ExcelBuffer.CreateNewBook('Lineas_Taller');
-        ExcelBuffer.WriteSheet('Lineas_Taller', CompanyName, UserId);
-        ExcelBuffer.CloseBook();
-        ExcelBuffer.SetFriendlyFilename(FileName);
-        TempBlob.CreateOutStream(OutStream);
-        ExcelBuffer.SaveToStream(OutStream, true);
-        TempBlob.CreateInStream(InStream);
-        Base64Content := Base64.ToBase64(InStream);
-
-        exit(Base64Content);
-    end;
 
 
 }

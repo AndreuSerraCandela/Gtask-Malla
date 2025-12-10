@@ -20,7 +20,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
         }
         addlast(FactBoxes)
         {
-            part("AttachedDocuments"; "Document Attachment Factbox")
+            part("AttachedDocuments"; "Doc. Attachment List FactBox")
             {
                 ApplicationArea = All;
                 Caption = 'Todos los Adjuntos';
@@ -29,7 +29,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
 
             }
 
-            part("Attached Documents"; "Document Attachment Factbox")
+            part("Attached Documents"; "Doc. Attachment List FactBox")
             {
                 ApplicationArea = All;
                 Caption = 'Attachments';
@@ -627,6 +627,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Observaciones: Text;
                     IdBorrar: RecordId;
                     a: Integer;
+                    ficheros: Record "Document Attachment";
                 begin
                     a := 1;
                     UserSetups.ChangeCompany('Malla Publicidad');
@@ -740,64 +741,52 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Usertask.Servicio := 'TALLER';
                     Usertask."Job No." := Rec."Nº Proyecto";
                     Usertask.Modify();
-                    // DoccAttach2.SetRange("Table ID", Database::"Cab Orden fijación");
-                    // DoccAttach2.SetRange("Line No.", Rec."Nº Orden");
-                    // If DoccAttach2.FindFirst() then
-                    //     repeat
-                    //         DoccAttach := DoccAttach2;
-                    //         DoccAttach."Table ID" := Database::"User Task";
-                    //         DoccAttach."Document Type" := DoccAttach."Document Type"::Order;
-                    //         DoccAttach."No." := Format(Rec."Nº Orden");
-                    //         DoccAttach."Line No." := 0;
-                    //         If DoccAttach.Insert() Then;
-                    //     until DoccAttach2.Next() = 0;
-
                     DoccAttach.Init();
                     DoccAttach."Table ID" := Database::"User Task";
                     DoccAttach."No." := Format(Usertask.ID);
                     DoccAttach."Line No." := 0;
-                    If rDet.FindSet() then begin
-                        cAB.SetRange("Nº oRden", rDet."Nº Orden");
-                        UserTaskOld.SetRange(OrdenFijacion, rDet."Nº Orden");
-                        UserTaskOld.SetRange(OrdenRetirada, true);
-                        UserTaskOld.SetRange(Reserva, rDet."Nº Reserva");
-                        if not UserTaskOld.FindSet() Then begin
-                            rep.SetTableView(Cab);
-                            DoccAttach.Init();
-                            DoccAttach."Table ID" := Database::"User Task";
-                            DoccAttach."No." := Format(Rec."Nº Orden");
-                            DoccAttach."Line No." := 0;
-                            DoccAttach."Document Type" := DoccAttach."Document Type"::Order;
+                    rDet.FindSet();
+                    cAB.SetRange("Nº oRden", rDet."Nº Orden");
+                    //UserTaskOld.SetRange(OrdenFijacion, rDet."Nº Orden");
+                    //UserTaskOld.SetRange(OrdenRetirada, true);
+                    //UserTaskOld.SetRange(Reserva, rDet."Nº Reserva");
+                    //if not UserTaskOld.FindSet() Then begin
+                    rep.SetTableView(Cab);
+                    DoccAttach.Init();
+                    DoccAttach."Table ID" := Database::"User Task";
+                    DoccAttach."No." := Format(Rec."Nº Orden");
+                    DoccAttach."Line No." := 0;
+                    DoccAttach."Document Type" := DoccAttach."Document Type"::Order;
 
-                            Clear(TM);
+                    Clear(TM);
 
-                            TM.Init();
-                            TM.ID := CreateGuid();
-                            TM.Description := StrSubstNo('Signature %1', format(CurrentDateTime));
-                            TM."Mime Type" := 'Pdf/pdf';
-                            TM."Company Name" := COMPANYNAME;
-                            TM."File Name" := TM.Description + '.pdf';
-                            TM.Height := 250;
-                            TM.Width := 250;
-                            TM.CalcFields(Content);
-                            TM.Content.CreateOutStream(Outstr);
-                            Clear(RecRef);
-                            clear(Rep);
-                            RecRef.GetTable(Cab);
-                            Rep.CargaObservaciones(Proyecto.Description, Resource.Medidas);
-                            Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
-                            TM.Insert();
-                            tm.CalcFields(Content);
-                            Tm.Content.CreateInStream(InStr);
-                            Clear(RecRef);
-                            RecRef.GetTable(Usertask);
-                            RecRef.Get(Usertask.RecordId);
-                            DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
-                            //DoccAttach.Insert();
-                            RecRef.Close();
-                            tm.Delete();
-                        end;
-                    END;
+                    TM.Init();
+                    TM.ID := CreateGuid();
+                    TM.Description := StrSubstNo('Signature %1', format(CurrentDateTime));
+                    TM."Mime Type" := 'Pdf/pdf';
+                    TM."Company Name" := COMPANYNAME;
+                    TM."File Name" := TM.Description + '.pdf';
+                    TM.Height := 250;
+                    TM.Width := 250;
+                    TM.CalcFields(Content);
+                    TM.Content.CreateOutStream(Outstr);
+                    Clear(RecRef);
+                    clear(Rep);
+                    RecRef.GetTable(Cab);
+                    Rep.CargaObservaciones(Proyecto.Description, Resource.Medidas);
+                    Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                    TM.Insert();
+                    tm.CalcFields(Content);
+                    Tm.Content.CreateInStream(InStr);
+                    Clear(RecRef);
+                    RecRef.GetTable(Usertask);
+                    RecRef.Get(Usertask.RecordId);
+                    DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
+                    //DoccAttach.Insert();
+                    RecRef.Close();
+                    tm.Delete();
+                    //end;
+
                     Det.Reset();
                     Det.SetRange("Nº Orden", Rec."Nº Orden");
                     Det.SetRange(Retirar, true);
@@ -964,6 +953,44 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     end;
                     DoccAttach.Reset();
                     Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                    ficheros.SetRange("Table ID", Database::"User Task");
+                    ficheros.SetRange("No.", UserTask."No.");
+                    if not ficheros.FindFirst() then begin
+                        ficheros.Init();
+                        ficheros."Table ID" := Database::"User Task";
+                        ficheros."No." := UserTask."No.";
+                        ficheros."Line No." := 0;
+                        ficheros."Document Type" := ficheros."Document Type"::Order;
+
+                        Clear(TM);
+
+                        TM.Init();
+                        TM.ID := CreateGuid();
+                        TM.Description := StrSubstNo('Signature %1', format(CurrentDateTime));
+                        TM."Mime Type" := 'Pdf/pdf';
+                        TM."Company Name" := COMPANYNAME;
+                        TM."File Name" := TM.Description + '.pdf';
+                        TM.Height := 250;
+                        TM.Width := 250;
+                        TM.CalcFields(Content);
+                        TM.Content.CreateOutStream(Outstr);
+                        Clear(RecRef);
+                        clear(Rep);
+                        RecRef.GetTable(Cab);
+                        Rep.CargaObservaciones(Proyecto.Description, Resource.Medidas);
+                        Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                        TM.Insert();
+                        tm.CalcFields(Content);
+                        Tm.Content.CreateInStream(InStr);
+                        Clear(RecRef);
+                        RecRef.GetTable(Usertask);
+                        RecRef.Get(Usertask.RecordId);
+                        DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
+                        //DoccAttach.Insert();
+                        RecRef.Close();
+                        tm.Delete();
+                    end;
+
                     EnviaCorreo(Usertask, true, '', false, 'Tarea Retirada ' + Proyecto.Description, EmailResponsable, EmailSupervisor, ListaCorreos, 'julian@malla.es;xcastell@malla.es;andreuserra@malla.es;lllompart@malla.es', User."Full Name");
                     //If Opcion <> 2 then 
                     Usertask.Delete();

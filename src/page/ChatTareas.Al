@@ -65,7 +65,7 @@ page 50107 "Chat Tareas"
         }
         area(factboxes)
         {
-            part(Adjuntos; "Document Attachment Factbox")
+            part(Adjuntos; "Doc. Attachment List FactBox")
             {
                 ApplicationArea = All;
                 SubPageLink = "Table ID" = const(Database::"To-do"),

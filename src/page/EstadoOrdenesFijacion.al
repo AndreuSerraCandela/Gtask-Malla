@@ -245,6 +245,7 @@ page 50101 "Ordenes Fijación QR"
                     OrdenFijacion: Record "Orden fijación";
                     Gtask: Codeunit GTask;
                 begin
+                    Gtask.UpdateTasksProoriry();
                     CurrPage.SetSelectionFilter(OrdenFijacion);
                     if OrdenFijacion.FindSet() then
                         repeat

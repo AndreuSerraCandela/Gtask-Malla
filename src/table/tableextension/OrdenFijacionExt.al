@@ -134,3 +134,15 @@ tableextension 50102 "Orden Fijacion Ext" extends "Orden fijación"
             exit('');
     end;
 }
+tableextension 50103 "Imagenes Orden fijación Ext" extends "Imagenes Orden fijación"
+{
+    fields
+    {
+        modify("Nº Orden")
+        {
+            TableRelation = if ("Es Incidencia" = const(false)) "Cab Orden fijación"."Nº Orden"
+            else
+            if ("Es incidencia" = const(true)) "Incidencias"."Nº Orden";
+        }
+    }
+}
