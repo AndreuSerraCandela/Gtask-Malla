@@ -63,6 +63,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     DoccAttach: Record "Document Attachment";
                     DoccAttachTask: Record "Document Attachment";
                     DoccAttach2: Record "Document Attachment";
+                    DoccAttach3: Record "Document Attachment";
                     Outstr: OutStream;
                     RecRef: RecordRef;
                     InStr: InStream;
@@ -331,6 +332,8 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 Clear(RecRef);
                                 RecRef.GetTable(Usertask);
                                 RecRef.Get(Usertask.RecordId);
+                                If DoccAttach3.Get(Database::"User Task", Format(Usertask.Id), 0, 0, DoccAttach.Id) then
+                                    DoccAttach3.Delete();
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
                                 //DoccAttach.Insert();
                                 RecRef.Close();
@@ -535,6 +538,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserTaskNew.SetFilter(Reserva, '<>%1', 0);
                     Message('Se han generado %1 tareas de fijación', UserTaskNew.Count);
                     Page.RunModal(Page::"User Task List", UsertaskNew);
+                    Commit();
                     If UserTaskNew.FindFirst() Then
                         repeat
                             Gtask.CrearTareaFijacion(Rec, UsertaskNew, Opcion, false);
@@ -582,7 +586,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Usertask.Delete();
                     UserTaskNew.Reset();
                     UserTaskNew.SetRange("Parent ID", UserTask.Id);
-                    UserTaskNew.ModifyAll("Parent ID", 0);
+                    UserTaskNew.ModifyAll("Parent ID", 0, false);
                 end;
             }
             action("Crear Tarea Retirada")

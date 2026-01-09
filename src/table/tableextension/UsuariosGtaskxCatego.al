@@ -9,7 +9,13 @@ tableextension 92404 "User Task Group Member" extends "User Task Group Member"
         {
             TableRelation = User."User Security ID";
         }
-
+        field(62001; "Zona Limpieza"; Integer)
+        {
+            Caption = 'Zona';
+            DataClassification = ToBeClassified;
+            TableRelation = "Zonas Limpieza".Id;
+        }
+        //Tipo de Tarea --Texto
 
         field(50000; "Responsable"; Boolean)
         {

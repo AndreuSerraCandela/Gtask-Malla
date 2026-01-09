@@ -6,5 +6,10 @@ tableextension 92405 Categorias extends "User Task Group"
         {
 
         }
+        field(62001; "Tipo de Tarea"; Text[20])
+        {
+            Caption = 'Tipo de Tarea';
+            DataClassification = ToBeClassified;
+        }
     }
 }

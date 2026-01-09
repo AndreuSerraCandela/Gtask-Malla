@@ -73,6 +73,10 @@ table 7001250 "Incidencias"
         {
             DataClassification = CustomerContent;
         }
+        field(18; "Enviar Correo"; Boolean)
+        {
+            DataClassification = CustomerContent;
+        }
     }
     keys
     {

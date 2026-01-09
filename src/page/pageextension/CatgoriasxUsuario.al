@@ -10,6 +10,11 @@ pageextension 92152 "Usuarios x Categoría" extends "User Task Group Members"
 
         addafter("User Name")
         {
+            field("Zona Limpieza"; Rec."Zona Limpieza")
+            {
+                ApplicationArea = All;
+            }
+
             field(Usuario; Rec.Usuario)
             {
                 ApplicationArea = Basic, Suite;

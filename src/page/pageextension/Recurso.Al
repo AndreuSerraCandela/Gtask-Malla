@@ -26,7 +26,7 @@ pageextension 92160 RecursoExt extends "Resource Card"
                             Resource.Get(Rec."No.");
                             RecRef.GetTable(Resource);
                             Gtask.CrearTarea(RecRef, 'Fijar en blanco el recurso ' + Resource.name + ' con el número ' + Resource."No." + ', si está en algún contrato, se debe desvincular e informar al cliente y al comercial',
-                            'MEDIOS', 'TECNICO', 'Medidas Cautelares ' + Resource.Name, 'TMC', false, '', '');
+                            'MEDIOS', 'TECNICO', 'Medidas Cautelares' + Resource.Name, 'TMC', false, '', '');
 
                         end;
                     }
@@ -97,6 +97,32 @@ pageextension 92160 RecursoExt extends "Resource Card"
                             // EnviaCorreo(Usertask, true, '', false, 'TMC ' + Rec."No.", EmailResponsable, EmailSupervisor, '', User."Full Name");
 
                         end;
+                    }
+                    action("Crear Tarea CMT")
+                    {
+                        Caption = 'Crear Tarea CMT';
+                        ApplicationArea = All;
+                        Image = TaskPage;
+                        trigger OnAction()
+                        var
+                            Gtask: Codeunit GTask;
+                            RecRef: RecordRef;
+                            Resource: Record Resource;
+                        begin
+                            Gtask.CrearCategorias(CompanyName);
+                            Commit();
+                            Message('Elija El recurso o dejar em blaco para nuevos');
+                            If Page.RunModal(0, Resource) = Action::LookupOK then begin
+                                RecRef.GetTable(Resource);
+                                Gtask.CrearTarea(RecRef, 'Montaje del recurso ' + Resource.name + ' con el número ' + Resource."No." + ', ',
+                                'MEDIOS', 'TECNICO', 'Montaje' + Resource.Name, 'TMC', false, '', '');
+                            End else begin
+                                RecRef.GetTable(Rec);
+                                Gtask.CrearTarea(RecRef, 'Montaje nuevo recurso, ',
+                                'MEDIOS', 'TECNICO', 'Montaje', 'TMC', false, '', '');
+                            end;
+                        end;
+
                     }
                 }
                 group(Juridico)

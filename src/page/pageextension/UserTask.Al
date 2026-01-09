@@ -179,7 +179,7 @@ pageextension 92154 "UserTask" extends "User Task card"
                     Gtask.Email(Rec, EmailResponsable, EmailSupervisor);
                     User.SetRange("User Security ID", Rec."Assigned To");
                     User.FindFirst();
-                    Gtask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea);
+                    Gtask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false);
                 end;
             }
 

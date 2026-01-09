@@ -18,7 +18,7 @@ pageextension 92172 "TaskList" extends "Task List"
                 begin
                     Gtask.CrearCategorias(CompanyName);
                     Commit();
-                    Message('Elija El recurso o dejar em blaco para nuevos');
+                    Message('Elija El recurso o dejar em blanco para nuevos');
                     If Page.RunModal(0, Resource) = Action::LookupOK then begin
                         RecRef.GetTable(Resource);
                         Gtask.CrearTarea(RecRef, 'Montaje del recurso ' + Resource.name + ' con el número ' + Resource."No." + ', ',

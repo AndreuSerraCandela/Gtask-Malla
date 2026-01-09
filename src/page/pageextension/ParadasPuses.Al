@@ -23,7 +23,7 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     ZonasLimpieza: Record "Zonas Limpieza";
                     FechaInicio: Date;
                     FechaFin: Date;
-                    OperarioLimpieza: Guid;
+                    //OperarioLimpieza: Guid;
                     RecRef: RecordRef;
                     ContadorTareas: Integer;
                     ProximoDiaLimpieza: Date;
@@ -48,7 +48,7 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     if not UsuariosGtask.FindFirst() then
                         Error('No se encontró ningún operario de limpieza');
 
-                    OperarioLimpieza := UsuariosGtask."Id Usuario";
+                    //OperarioLimpieza := UsuariosGtask."Id Usuario";
 
                     // Calcular próximo día marcado para esta zona de limpieza
                     ProximoDiaLimpieza := CalcularProximoDiaLimpieza(ZonasLimpieza);
@@ -69,14 +69,14 @@ pageextension 92169 BusExtension extends "Paradas Bus"
 
                             if UsuariosGtask.FindFirst() then begin
                                 // Crear tarea de limpieza para este emplazamiento OPI
-                                OperarioLimpieza := UsuariosGtask."Id Usuario";
+                                //OperarioLimpieza := UsuariosGtask."Id Usuario";
                                 //  Comprobar si la tarea ya existe
                                 UserTask.SetRange(Id_record, Emplazamientos.RecordId);
                                 UserTask.SetRange("Start DateTime", CreateDateTime(FechaInicio, 080000T));
                                 if not UserTask.FindFirst() then begin
                                     RecRef.GetTable(Emplazamientos);
                                     Responsable := UsuariosGtask."Id Usuario";
-                                    Gtask.CrearTareaLimpieza(RecRef, 'Limpieza OPI ' + Emplazamientos."Nº Emplazamiento", Responsable, Supervisor, 'TALLER', 'TECNICO', 'LIMPIEZA',
+                                    Gtask.CrearTareaLimpieza('LIMPIEZA', RecRef, 'Limpieza OPI ' + Emplazamientos."Nº Emplazamiento", Emplazamientos."Zona Limpieza",
                                     'Tarea de limpieza para el emplazamiento OPI ' + Emplazamientos."Nº Emplazamiento" +
                                                         ' - ' + Emplazamientos."Descripción" + ' en la zona de limpieza ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada"
                                      + Emplazamientos."Nº Emplazamiento", false, '', FechaInicio);
@@ -92,6 +92,59 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                             Message('No se encontraron emplazamientos con recursos OPI en la zona %1', ZonasLimpieza.Descripción);
                     end else
                         Message('No se encontraron emplazamientos en la zona de limpieza %1', ZonasLimpieza.Descripción);
+                end;
+            }
+            //Crear Trabajos de Puesta Apunto, Son Todas las categorías de Tipo 'PuestaApunto'
+            action("Crear Trabajos de Puesta Apunto")
+            {
+                ApplicationArea = All;
+                Caption = 'Crear Trabajos de Puesta Apunto';
+                Image = TaskPage;
+                ToolTip = 'Crear trabajos de puesta apunto para los emplazamientos OPI de las zonas de limpieza';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    UserTask: Record "User Task";
+                    UsuariosGtask: Record UsuariosGtask;
+                    Emplazamientos: Record Emplazamientos;
+                    Resource: Record Resource;
+                    ZonasLimpieza: Record "Zonas Limpieza";
+                    FechaInicio: Date;
+                    FechaFin: Date;
+                    //OperarioLimpieza: Guid;
+                    RecRef: RecordRef;
+                    ContadorTareas: Integer;
+                    ProximoDiaLimpieza: Date;
+                    ZonaSeleccionada: Integer;
+                    Responsable: Guid;
+                    Categoria: Code[20];
+                    Categorias: Record "User Task Group";
+                    EmailResponsable: Text;
+                    EmailSupervisor: Text;
+                    ListaCorreos: List of [Text];
+                begin
+                    // Solicitar al usuario que seleccione una zona de limpieza
+                    //No hace Falta Pedir Zona, porque es para todas, pero sí categoría y solo se crean las tareas de los elementos seleccionado, si no existe ninguna tarea para sese elemento y categoría
+                    if Page.RunModal(Page::"User Task Groups", Categorias) <> Action::LookupOK then
+                        exit;
+                    Categoria := Categorias.Code;
+                    CurrPage.SetSelectionFilter(Emplazamientos);
+                    if Emplazamientos.FindSet() then begin
+                        repeat
+                            //Crear tarea de puesta apunto para este emplazamiento OPI
+                            UserTask.SetRange("No.", Emplazamientos."Nº Emplazamiento");
+                            UserTask.SetRange("User Task Group Assigned To", Categoria);
+                            if not UserTask.FindFirst() then begin
+                                RecRef.GetTable(Emplazamientos);
+                                Gtask.CrearTareaLimpieza('PuestaApunto', RecRef, Categorias.Description + ' ' + Emplazamientos."Nº Emplazamiento", 0,
+                                'Tarea de ' + Categorias.Description + ' para el emplazamiento OPI ' + Emplazamientos."Nº Emplazamiento" +
+                                ' - ' + Emplazamientos."Descripción" + ' en la zona de limpieza ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada"
+                                + Emplazamientos."Nº Emplazamiento", false, '', FechaInicio);
+                            end;
+                        until Emplazamientos.Next() = 0;
+                    end else
+                        Message('No se encontraron emplazamientos seleccionados');
                 end;
             }
         }

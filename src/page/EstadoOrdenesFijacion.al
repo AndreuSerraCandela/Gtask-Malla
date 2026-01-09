@@ -245,13 +245,14 @@ page 50101 "Ordenes Fijación QR"
                     OrdenFijacion: Record "Orden fijación";
                     Gtask: Codeunit GTask;
                 begin
-                    Gtask.UpdateTasksProoriry();
+
                     CurrPage.SetSelectionFilter(OrdenFijacion);
-                    if OrdenFijacion.FindSet() then
+                    if OrdenFijacion.FindSet() then begin
                         repeat
                             UserTask.SetRange(OrdenFijacion, OrdenFijacion."Nº Orden");
                             UserTask.SetRange(Reserva, OrdenFijacion."Nº Reserva");
                             if UserTask.FindSet() then begin
+                                Gtask.UpdateTasksProoriry(UserTask);
                                 DocumentAttachment.SetRange("Table ID", Database::"User Task");
                                 DocumentAttachment.SetRange("No.", UserTask."No.");
                                 DocumentAttachment.SetFilter("File Name", '%1', '*.jpg');
@@ -275,6 +276,7 @@ page 50101 "Ordenes Fijación QR"
                                         end;
                                         DocumentAttachment3.SetRange("Table ID", Database::Job);
                                         DocumentAttachment3.SetRange("No.", OrdenFijacion."Nº Proyecto");
+                                        DocumentAttachment3.SetRange("Line No.");
                                         DocumentAttachment3.SetRange("File Name", DocumentAttachment."File Name");
                                         if not DocumentAttachment3.FindSet() then begin
                                             DocumentAttachment2 := DocumentAttachment;
@@ -290,6 +292,50 @@ page 50101 "Ordenes Fijación QR"
                                     until DocumentAttachment.Next() = 0;
                             end;
                         until OrdenFijacion.Next() = 0;
+                    end else begin
+                        DocumentAttachment.SetRange("Table ID", Database::"Orden fijación");
+                        DocumentAttachment.Reset;
+                        DocumentAttachment.SetRange("Line No.", OrdenFijacion."Nº Reserva");
+                        DocumentAttachment.SetRange(ID_Doc, OrdenFijacion."Nº Orden");
+                        DocumentAttachment.SetFilter("File Name", '%1', '*.jpg');
+
+                        if DocumentAttachment.FindSet() then
+                            Repeat
+                                a += 1;
+                                DocumentAttachment3.Reset;
+                                DocumentAttachment3.SetRange("Table ID", Database::"User Task");
+                                DocumentAttachment3.SetRange("No.", Format(UserTask.Id));
+                                DocumentAttachment3.SetRange("File Name", DocumentAttachment."File Name");
+                                if not DocumentAttachment3.FindSet() then begin
+                                    DocumentAttachment2 := DocumentAttachment;
+                                    //repeat
+                                    //DocumentAttachment2."Line No." := a;
+
+                                    DocumentAttachment2 := DocumentAttachment;
+                                    repeat
+                                        DocumentAttachment2."Line No." := a;
+                                        DocumentAttachment2."Table ID" := Database::"User Task";
+                                        DocumentAttachment2."No." := Format(UserTask."No.");
+                                        DocumentAttachment2."Document Flow Service" := true;
+                                        a += 1;
+                                    until DocumentAttachment2.Insert();
+                                end;
+                                DocumentAttachment3.SetRange("Table ID", Database::Job);
+                                DocumentAttachment3.SetRange("No.", OrdenFijacion."Nº Proyecto");
+                                DocumentAttachment3.SetRange("File Name", DocumentAttachment."File Name");
+                                if not DocumentAttachment3.FindSet() then begin
+                                    DocumentAttachment2 := DocumentAttachment;
+                                    repeat
+                                        DocumentAttachment2."Line No." := a;
+                                        DocumentAttachment2."Table ID" := Database::Job;
+                                        DocumentAttachment2."No." := OrdenFijacion."Nº Proyecto";
+                                        DocumentAttachment2."Document Flow Service" := true;
+                                        a += 1;
+                                    until DocumentAttachment2.Insert();
+
+                                end;
+                            until DocumentAttachment.Next() = 0;
+                    end;
                 end;
             }
             action(FinalizaTareas)

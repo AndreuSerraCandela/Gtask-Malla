@@ -18,6 +18,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Empresa - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 3802043435 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Enviar Correo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Enviar Correo - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 2950845476 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Estado</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1443,6 +1448,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Tareas Limpieza - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 2843282141 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Crear trabajos de puesta apunto para los emplazamientos OPI de las zonas de limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Trabajos de Puesta Apunto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 2843282141 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Crear Trabajos de Puesta Apunto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Trabajos de Puesta Apunto - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 3377152574 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2618634653">
           <source>Categorías</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1843,6 +1858,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Medios - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2156239730 - Action 1920895458 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
+          <source>Crear Tarea CMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension RecursoExt - Action Crear Tarea CMT - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2156239730 - Action 479972057 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1580859378">
           <source>Crear Tarea TMC-Fijar Blanco</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1902,6 +1922,11 @@
           <source>Ver Tareas</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension SolicitudesExt - Action Ver Tareas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2437060273 - Action 1920895458 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 126063057">
+          <source>Crear Tarea CMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension TaskList - Action Crear Tarea CMT - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 301352800 - Action 2477294019 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
           <source>Borra la tarea.</source>
@@ -2052,6 +2077,11 @@
           <source>Material Fijación</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Categorias - Field Material Fijación - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 3377152574 - Field 11378988 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2618634653">
+          <source>Tipo de Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Categorias - Field Tipo de Tarea - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 1302225088 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
           <source>Hoja de Trabajo</source>
@@ -2477,6 +2507,11 @@
           <source>Usuario</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Usuario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 633429605 - Field 1123865071 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 633429605">
+          <source>Zona</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Zona Limpieza - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 4200194699 - Field 811435033 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2612617311">
           <source>Equipo</source>
