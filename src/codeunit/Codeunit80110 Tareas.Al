@@ -16,6 +16,8 @@ codeunit 7001148 GTask
 
     end;
 
+
+
     procedure Token(): Text;
     var
         RestApi: Codeunit "Control Ocr";
@@ -424,6 +426,9 @@ codeunit 7001148 GTask
                                 DocumentAttachment."ID_Doc" := DetOrdenFijcion."Nº Orden";
                                 DocumentAttachment."No." := DetOrdenfijcion."Nº Proyecto";
                                 DocumentAttachment."Line No." := Tarea."Reserva";
+                                //Actualizar el estado de la orden fijación
+                                DetOrdenFijcion."Tiene Fotos" := true;
+                                DetOrdenFijcion.Modify();
                                 // Buscar el registro en "Imagenes Orden fijación" para la valla correspondiente.
 
                                 If DocumentAttachment.Insert() then
@@ -1669,18 +1674,20 @@ codeunit 7001148 GTask
                                     ProyectoJson.Add('nombre_cliente', Customer.Name);
                                     // Buscar el contacto del cliente
                                     Contact.Reset();
+                                    ContactRelation.SetCurrentKey("Link to Table", "No.");
+
                                     ContactRelation.Reset();
                                     ContactRelation.SetRange("No.", Job."Bill-to Customer No.");
                                     ContactRelation.SetRange("Link to Table", ContactRelation."Link to Table"::Customer);
                                     if ContactRelation.FindFirst() then
                                         Repeat
-                                            If Contact.Get(ContactRelation."Contact No.") then
-                                                if Contact.Type = Contact.Type::Person then begin
-                                                    ProyectoJson.Add('nombre_contacto', Contact.Name);
-                                                    // Agregar el email del contacto
-                                                    ProyectoJson.Add('email_contacto', Contact."E-Mail");
-                                                    ContactRelation.FindLast();
-                                                end;
+                                            Contact.SetRange("Company No.", ContactRelation."Contact No.");
+                                            Contact.SetRange(Type, Contact.Type::Person);
+                                            if Contact.FindSet() then begin
+                                                ProyectoJson.Add('nombre_contacto', Contact.Name);
+                                                // Agregar el email del contacto
+                                                ProyectoJson.Add('email_contacto', Contact."E-Mail");
+                                            end;
                                         until ContactRelation.Next() = 0;
 
                                     if FechaInicial <> 0D then
@@ -1709,6 +1716,125 @@ codeunit 7001148 GTask
         // Preparar respuesta exitosa
         ResultJson.Replace('success', true);
         ResultJson.Replace('message', 'Proyectos obtenidos correctamente con estos filtros: ' + FiltrosTxt);
+        ResultJson.Replace('proyectos', ProyectosArray);
+        ResultJson.Add('total', ProyectosArray.Count());
+
+        ResultJson.WriteTo(ResponseText);
+        exit(ResponseText);
+    end;
+
+    [ServiceEnabled]
+    procedure Proyecto(JsonText: Text): Text;
+    var
+        JsonObj: JsonObject;
+        JsonCampo: JsonToken;
+        Job: Record Job;
+        Customer: Record Customer;
+        empresa: Text;
+        numero_proyecto: Text;
+        ResultJson: JsonObject;
+        ProyectosArray: JsonArray;
+        ProyectoJson: JsonObject;
+        ResponseText: Text;
+        FechaInicial: Date;
+        FechaFinal: Date;
+        TipoProyecto: Text;
+        EstadoContrato: Text;
+        Contact: Record Contact;
+        ContactRelation: Record "Contact Business Relation";
+
+    begin
+        // Inicializar el objeto JSON de respuesta
+        Clear(ResultJson);
+        Clear(ProyectosArray);
+        ResultJson.Add('success', false);
+        ResultJson.Add('message', '');
+        ResultJson.Add('proyectos', ProyectosArray);
+
+        // Leer el JSON de entrada
+        if not JsonObj.ReadFrom(JsonText) then begin
+            ResultJson.Replace('message', 'Error al leer el JSON de entrada');
+            ResultJson.WriteTo(ResponseText);
+            exit(ResponseText);
+        end;
+
+        // Obtener el número de proyecto
+        if not JsonObj.Get('numero_proyecto', JsonCampo) then begin
+            ResultJson.Replace('message', 'El campo "numero_proyecto" es requerido');
+            ResultJson.WriteTo(ResponseText);
+        end;
+        numero_proyecto := JsonCampo.AsValue().AsText();
+        // Obtener la empresa
+        if not JsonObj.Get('empresa', JsonCampo) then begin
+            ResultJson.Replace('message', 'El campo "empresa" es requerido');
+            ResultJson.WriteTo(ResponseText);
+            exit(ResponseText);
+        end;
+
+        empresa := JsonCampo.AsValue().AsText();
+
+        // Cambiar de empresa
+        Job.ChangeCompany(empresa);
+        if Job.Get(numero_proyecto) then begin
+            // Obtener fechas del proyecto
+            FechaInicial := Job."Starting Date";
+            FechaFinal := Job."Ending Date";
+
+            // Obtener tipo de proyecto (campo personalizado)
+            TipoProyecto := Format(Job.Tipo);
+
+            // Obtener estado del contrato (campo personalizado)
+            Job.CalcFields("Estado Contrato");
+            EstadoContrato := Format(Job."Estado Contrato");
+
+            // Crear objeto JSON para este proyecto
+            Clear(ProyectoJson);
+            ProyectoJson.Add('empresa', empresa);
+            ProyectoJson.Add('numero_proyecto', Job."No.");
+            ProyectoJson.Add('descripcion', Job.Description);
+            ProyectoJson.Add('numero_cliente', Job."Bill-to Customer No.");
+            ProyectoJson.Add('nombre_cliente', Customer.Name);
+            // Buscar el contacto del cliente
+            Contact.Reset();
+            ContactRelation.SetCurrentKey("Link to Table", "No.");
+
+            ContactRelation.Reset();
+            ContactRelation.SetRange("No.", Job."Bill-to Customer No.");
+            ContactRelation.SetRange("Link to Table", ContactRelation."Link to Table"::Customer);
+            if ContactRelation.FindFirst() then
+                Repeat
+                    Contact.SetRange("Company No.", ContactRelation."Contact No.");
+                    Contact.SetRange(Type, Contact.Type::Person);
+                    if Contact.FindSet() then begin
+                        ProyectoJson.Add('nombre_contacto', Contact.Name);
+                        // Agregar el email del contacto
+                        ProyectoJson.Add('email_contacto', Contact."E-Mail");
+                    end;
+                until ContactRelation.Next() = 0;
+
+            if FechaInicial <> 0D then
+                ProyectoJson.Add('fecha_inicial', Format(FechaInicial, 0, '<Year4>-<Month,2>-<Day,2>'))
+            else
+                ProyectoJson.Add('fecha_inicial', '');
+
+            if FechaFinal <> 0D then
+                ProyectoJson.Add('fecha_final', Format(FechaFinal, 0, '<Year4>-<Month,2>-<Day,2>'))
+            else
+                ProyectoJson.Add('fecha_final', '');
+
+            ProyectoJson.Add('tipo', TipoProyecto);
+            ProyectoJson.Add('estado_contrato', EstadoContrato);
+
+            // Agregar a la lista
+            ProyectosArray.Add(ProyectoJson);
+        end;
+
+
+
+
+        // Preparar respuesta exitosa
+        ResultJson.Replace('success', true);
+        ResultJson.Replace('message', 'Proyecto obtenido correctamente');
         ResultJson.Replace('proyectos', ProyectosArray);
         ResultJson.Add('total', ProyectosArray.Count());
 
@@ -2404,10 +2530,29 @@ codeunit 7001148 GTask
     [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterModifyEvent', '', false, false)]
     procedure UserTaskOnAfterModifyEvent(var Rec: Record "User Task"; var xRec: Record "User Task"; RunTrigger: Boolean)
     var
+        Ficheros: Record Ficheros;
+        OrdenFijacion: Record "Orden fijación";
     begin
+        Ficheros.SetRange(Procesado, true);
+        Ficheros.SetRange("Nombre fichero", Rec.Id_Tarea);
+        Ficheros.SetRange(Proceso, 'UPDATEGTASK');
+        If Ficheros.FindFirst() then begin
+            Ficheros.Delete(false);
+            Commit();
+            exit;
+        end;
+        if Rec.Id_Tarea <> '' Then begin
+            //where(OrdenFijacion = field("Nº Orden"), Reserva = field("Nº Reserva"))
+            if OrdenFijacion.Get(Rec.OrdenFijacion, Rec.Reserva) then begin
+                OrdenFijacion."Tiene Task" := true;
+                OrdenFijacion."Estado Tarea" := Rec.Estado;
+                OrdenFijacion.Modify();
+            end;
+        end;
         If (Rec."Id_Tarea" <> '') and (RunTrigger) then begin
             rec."Fecha Comunicado Cambio" := CurrentDateTime;
             Rec."Fecha Cambio" := CurrentDateTime;
+            Rec.Modify();
             UpdateTaskGtaskBak(Rec.Id_Tarea, Rec.ID);
         end;
     end;
@@ -8392,11 +8537,16 @@ codeunit 7001148 GTask
 
     begin
         Ficheros.SetRange(Proceso, 'UPDATEGTASK');
+        Ficheros.SetRange(Procesado, false);
         If Ficheros.FindSet() then begin
             repeat
                 UpdateTaskGtask(Ficheros."Nombre fichero", Ficheros."Incoming Entry No.");
-                Ficheros.Delete();
+
             until Ficheros.Next() = 0;
+
+            Ficheros.ModifyAll(Procesado, true);
+            Commit();
+
         end;
     end;
 

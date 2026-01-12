@@ -74,6 +74,26 @@ tableextension 50102 "Orden Fijacion Ext" extends "Orden fijación"
 
             end;
         }
+        field(51000; "Tiene Fotos"; Boolean)
+        {
+            Caption = 'Tiene_Fotos';
+            Editable = false;
+        }
+        field(51001; "Estado Tarea"; Enum "Task Enum")
+        {
+            Caption = 'Estado_Tarea';
+            Editable = false;
+        }
+        field(51002; "Tiene Task"; Boolean)
+        {
+            Caption = 'Tiene_Tarea';
+
+        }
+        field(51003; "Tiene QR"; Boolean)
+        {
+            Caption = 'Tiene_QR';
+            Editable = false;
+        }
 
 
     }

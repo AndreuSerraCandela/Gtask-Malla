@@ -1298,6 +1298,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Fijación QR - Control Tipo Recurso - Property ToolTip</note>
         </trans-unit>
+        <trans-unit id="Page 3735471608 - Action 1196029087 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actualizar Estados</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Fijación QR - Action Actualizar Estados - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3735471608 - Action 2156832117 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Actualizar Vallas</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2258,10 +2263,30 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Estado Medios - Property OptionCaption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 4070963464 - Field 1744921197 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
+          <source>Estado_Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Estado Tarea - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 4070963464 - Field 3225717989 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
           <source>Estado de la Tarea</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field EstadoTarea - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 4070963464 - Field 3237424054 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
+          <source>Tiene_Fotos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Tiene Fotos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 4070963464 - Field 1994233292 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
+          <source>Tiene_QR</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Tiene QR - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 4070963464 - Field 2461706226 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
+          <source>Tiene_Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Orden Fijacion Ext - Field Tiene Task - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 4070963464 - Field 253271846 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1883981587">
           <source>Tiene Fotos</source>

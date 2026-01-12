@@ -496,6 +496,49 @@ page 50101 "Ordenes Fijación QR"
 
                 end;
             }
+            action("Actualizar Estados")
+            {
+                ApplicationArea = All;
+                Caption = 'Actualizar Estados';
+                Image = RefreshLines;
+                trigger OnAction()
+                var
+                    OrdenFijacion: Record "Orden fijación";
+                begin
+                    CurrPage.SetSelectionFilter(OrdenFijacion);
+                    OrdenFijacion.SetRange("Tiene QR", false);
+                    if OrdenFijacion.FindSet() then
+                        repeat
+                            OrdenFijacion.calcfields("EstadoTarea", "TieneQr");
+                            OrdenFijacion."Tiene QR" := OrdenFijacion."TieneQr";
+                            OrdenFijacion."Estado Tarea" := OrdenFijacion.EstadoTarea;
+                            OrdenFijacion.Modify();
+                        until OrdenFijacion.Next() = 0;
+                    commit;
+                    OrdenFijacion.SetRange("Tiene QR");
+                    OrdenFijacion.SetRange("Tiene Fotos", false);
+                    if OrdenFijacion.FindSet() then
+                        repeat
+                            OrdenFijacion.calcfields("EstadoTarea", "TieneFotos");
+                            OrdenFijacion."Tiene Fotos" := OrdenFijacion."TieneFotos";
+                            OrdenFijacion."Estado Tarea" := OrdenFijacion.EstadoTarea;
+                            OrdenFijacion.Modify();
+                        until OrdenFijacion.Next() = 0;
+                    commit;
+                    OrdenFijacion.SetRange("Tiene Fotos");
+                    OrdenFijacion.SetRange("Tiene Task", false);
+                    if OrdenFijacion.FindSet() then
+                        repeat
+                            OrdenFijacion.calcfields("EstadoTarea", "TieneTask");
+                            OrdenFijacion."Tiene Task" := OrdenFijacion."TieneTask";
+                            OrdenFijacion."Estado Tarea" := OrdenFijacion.EstadoTarea;
+                            OrdenFijacion.Modify();
+                        until OrdenFijacion.Next() = 0;
+                    commit;
+                    CurrPage.Update(false);
+                    Message('Estados actualizados correctamente');
+                end;
+            }
         }
     }
 
@@ -544,9 +587,9 @@ page 50101 "Ordenes Fijación QR"
     trigger OnOpenPage()
     begin
         // Filtrar solo órdenes que tienen QR
-        Rec.SetRange(TieneQR, true);
-        Rec.SetRange(TieneFotos, false);
-        Rec.Setrange(TieneTask, true);
+        Rec.SetRange("Tiene QR", true);
+        Rec.SetRange("Tiene Fotos", false);
+        Rec.Setrange("Tiene Task", true);
         Rec.SetFILTER("Estado Medios", '%1|%2', Rec."Estado Medios"::" ", Rec."Estado Medios"::Retirada);
     end;
 

@@ -587,6 +587,11 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     UserTaskNew.Reset();
                     UserTaskNew.SetRange("Parent ID", UserTask.Id);
                     UserTaskNew.ModifyAll("Parent ID", 0, false);
+                    Det.Reset();
+                    Det.SetRange("Nº Orden", Rec."Nº Orden");
+                    det.ModifyAll("Tiene Task", true);
+
+
                 end;
             }
             action("Crear Tarea Retirada")
