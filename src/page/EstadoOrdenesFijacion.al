@@ -353,6 +353,7 @@ page 50101 "Ordenes Fijación QR"
                     Gtask: Codeunit Gtask;
                     UserTask: Record "User Task";
                     OrdenFijacion: Record "Orden fijación";
+                    OrdenFijacion2: Record "Orden fijación";
                     Cerrar: Boolean;
                     TodasCerradas: Boolean;
                 begin
@@ -389,10 +390,14 @@ page 50101 "Ordenes Fijación QR"
                                     until UserTask.Next() = 0;
                             end;
                             if TodasCerradas then begin
-                                OrdenFijacion."Estado Medios" := OrdenFijacion."Estado Medios"::Finalizado;
-                                If OrdenFijacion.Retirada then OrdenFijacion."Estado Medios" := OrdenFijacion."Estado Medios"::Retirada;
+                                OrdenFijacion2.Get(OrdenFijacion.RecordId);
+                                If OrdenFijacion2.Retirada then
+                                    OrdenFijacion2."Estado Medios" := OrdenFijacion2."Estado Medios"::Retirada
+                                else
+                                    OrdenFijacion2."Estado Medios" := OrdenFijacion2."Estado Medios"::Finalizado;
 
-                                OrdenFijacion.Modify();
+                                OrdenFijacion2.Modify(false);
+                                commit;
                             end;
                         until OrdenFijacion.Next() = 0;
                     //OrdenFijacion.ModifyAll("Cerrada Medios", true);

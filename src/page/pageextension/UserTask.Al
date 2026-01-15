@@ -235,9 +235,12 @@ pageextension 92154 "UserTask" extends "User Task card"
 
     }
     trigger OnAfterGetRecord()
+    var
+        NullFrecuencia: DateFormula;
     begin
         If Rec.Estado = Rec.Estado::Pendiente then
-            Rec.Estado := Rec.Estado::Cancelado;
+            If Rec.Frecuencia = NullFrecuencia then
+                Rec.Estado := Rec.Estado::Cancelado;
         if Rec."No." = '' then begin
             Rec."No." := Format(Rec.ID);
             Rec.Modify();
