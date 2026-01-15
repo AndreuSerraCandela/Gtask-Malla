@@ -1266,6 +1266,7 @@ codeunit 7001148 GTask
         OrdenFijacion: Record "Orden fijación";
         FileManager: Codeunit "File Management";
         Docuname2: Text;
+        Frecuencia: DateFormula;
     begin
         JsonArray.ReadFrom(JsonText);
         foreach JsonToken in JsonArray do begin
@@ -1341,6 +1342,14 @@ codeunit 7001148 GTask
                             end;
 
                             Tareas.Modify(false);
+                            If Tareas.Frecuencia <> Frecuencia then begin
+                                if Tareas.DependenciaCreada = false then begin
+                                    commit;
+                                    Tareas.CrearDependencia();
+                                    Commit();
+                                end;
+
+                            end;
                             commit;
 
                         end;
@@ -2364,7 +2373,7 @@ codeunit 7001148 GTask
 
         JsonFormater.WriteStringProperty('state', 'PENDING');
         JsonFormater.WriteStringProperty('incidenceType', GetTipoIncidencia(Format(rDet."Tipo Incidencia")));
-        JsonFormater.WriteStringProperty('observation', '');
+        JsonFormater.WriteStringProperty('observation', Observation);
         JsonFormater.WriteStringProperty('description', Description);
         If (Not Parada) and (Resource <> '') and (Encontrado) then begin
             wRecordRef.Close();
@@ -2425,7 +2434,7 @@ codeunit 7001148 GTask
                     Id := JsonCampo.AsValue().AsText();
             end;
         end;
-        rDet.SetWorkTextDescription(Description);
+        rDet.SetWorkTextDescription(Description + ' ' + Observation);
         rDet.Get(rDet."No.");
         if NuevaIncidencia then
             rDet.Id_Gtask := Id;
@@ -5977,12 +5986,12 @@ codeunit 7001148 GTask
            ZonaLimpieza: Integer;
            Descripcion: Text;
            Adjuntar: Boolean;
-           Adjunto: Text; Fecha: Date)
+           Adjunto: Text; Fecha: Date; Fecuencia: DateFormula): Boolean
     var
 
         Responsable: Guid;
         Supervisor: Guid;
-        Servicio: code[20];
+        Servicio: Text;
         Categoria: Text;
         Departamento: Text;
         UserTask: Record "User Task";
@@ -6000,7 +6009,7 @@ codeunit 7001148 GTask
         TempBlob: Codeunit "Temp Blob";
         ListadeCorreos: Text;
         UserTaskCard: Page "User Task Card";
-        Operario: Guid;
+    //Operario: Guid;
     begin
         Gtask.CrearCategorias(CompanyName);
         Commit();
@@ -6018,6 +6027,9 @@ codeunit 7001148 GTask
         UserTask."Supervisor" := Supervisor;
         UserTask.Departamento := Departamento;
         UserTask.Servicio := Servicio;
+        UserTask.Frecuencia := Fecuencia;
+        UserTask.ZonaLimpieza := ZonaLimpieza;
+        UserTask.TipoTarea := TipoTarea;
         UserTask.Validate("Created DateTime", CurrentDateTime);
         Usertask."Start DateTime" := CreateDateTime(Fecha, 080000T);
         Usertask."Due DateTime" := CreateDateTime(Fecha, 130000T);
@@ -6064,14 +6076,14 @@ codeunit 7001148 GTask
         Commit();
 
         UserTask.Get(UserTask.ID);
-        UserTask."Assigned To" := Operario;
+        //UserTask."Assigned To" := Operario;
         UserTask.Modify();
         If (IsNullGuid(UserTask."Supervisor")) or (IsNullGuid(UserTask."Assigned To"))
         or (UserTask."User Task Group Assigned To" = '') Or (UserTask.Departamento = '')
         or (UserTask.Servicio = '') Then begin
-
             UserTask.Delete();
-            exit;
+
+            exit(False);
 
         end;
         Clear(Gtask);
@@ -6093,6 +6105,226 @@ codeunit 7001148 GTask
         Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
         Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
         EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+        exit(True);
+    end;
+
+    /// <summary>
+    /// Endpoint para recuperar tareas de limpieza filtradas por zona, emplazamiento y/o fechas
+    /// Formato JSON de entrada: {"zonaLimpieza": 1, "codigoEmplazamiento": "COD001", "fechaDesde": "2024-01-15", "fechaHasta": "2024-01-20"}
+    /// Todos los campos son opcionales
+    /// </summary>
+    /// <param name="JsonText">JSON con los filtros de búsqueda</param>
+    /// <returns>JSON array con las tareas encontradas</returns>
+    [ServiceEnabled]
+    procedure GetTareasLimpieza(JsonText: Text): Text
+    var
+        JsonObject: JsonObject;
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonTarea: JsonObject;
+        UserTask: Record "User Task";
+        Emplazamientos: Record Emplazamientos;
+        EmplazamientosFiltrados: Record Emplazamientos;
+        UserTaskGroup: Record "User Task Group";
+        UserTaskGroupMember: Record "User Task Group Member";
+        ZonaLimpieza: Integer;
+        CodigoEmplazamiento: Code[20];
+        FechaDesdeTexto: Text;
+        FechaHastaTexto: Text;
+        FechaDesde: Date;
+        FechaHasta: Date;
+        FechaDesdeDT: DateTime;
+        FechaHastaDT: DateTime;
+        CategoriasLimpieza: Text;
+        JsonResult: Text;
+        RecordIdEmplazamiento: RecordId;
+    begin
+        // Leer JSON de entrada
+        if not JsonObject.ReadFrom(JsonText) then
+            Error('JSON inválido');
+
+        // Inicializar variables
+        ZonaLimpieza := 0;
+        CodigoEmplazamiento := '';
+        FechaDesde := 0D;
+        FechaHasta := 0D;
+
+        // Obtener zona de limpieza (opcional)
+        if JsonObject.Get('zonaLimpieza', JsonToken) then begin
+            if not Evaluate(ZonaLimpieza, JsonToken.AsValue().AsText()) then
+                ZonaLimpieza := 0;
+        end;
+
+        // Obtener código de emplazamiento (opcional)
+        if JsonObject.Get('codigoEmplazamiento', JsonToken) then
+            CodigoEmplazamiento := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(CodigoEmplazamiento));
+
+        // Obtener fecha desde (opcional)
+        if JsonObject.Get('fechaDesde', JsonToken) then begin
+            FechaDesdeTexto := JsonToken.AsValue().AsText();
+            if Evaluate(FechaDesde, FechaDesdeTexto) then
+                FechaDesdeDT := CreateDateTime(FechaDesde, 0T)
+            else
+                FechaDesde := 0D;
+        end;
+
+        // Obtener fecha hasta (opcional)
+        if JsonObject.Get('fechaHasta', JsonToken) then begin
+            FechaHastaTexto := JsonToken.AsValue().AsText();
+            if Evaluate(FechaHasta, FechaHastaTexto) then
+                FechaHastaDT := CreateDateTime(FechaHasta, 235959T)
+            else
+                FechaHasta := 0D;
+        end;
+
+        // Obtener categorías de tipo LIMPIEZA
+        UserTaskGroup.ChangeCompany('Malla Publicidad');
+        UserTaskGroup.SetRange("Tipo de Tarea", 'LIMPIEZA');
+        CategoriasLimpieza := '';
+        if UserTaskGroup.FindSet() then begin
+            repeat
+                if CategoriasLimpieza <> '' then
+                    CategoriasLimpieza := CategoriasLimpieza + '|';
+                CategoriasLimpieza := CategoriasLimpieza + UserTaskGroup.Code;
+            until UserTaskGroup.Next() = 0;
+        end;
+
+        // Inicializar array de resultados
+
+        // Si se proporciona código de emplazamiento, buscar directamente por Id_record
+        if CodigoEmplazamiento <> '' then begin
+            if Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, CodigoEmplazamiento) then begin
+                RecordIdEmplazamiento := Emplazamientos.RecordId;
+                UserTask.Reset();
+                UserTask.SetRange(Id_record, RecordIdEmplazamiento);
+                if CategoriasLimpieza <> '' then
+                    UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                if FechaDesde <> 0D then
+                    UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                if UserTask.FindSet() then begin
+                    repeat
+                        AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                    until UserTask.Next() = 0;
+                end;
+            end;
+        end else begin
+            // Si se proporciona zona, buscar emplazamientos de esa zona
+            if ZonaLimpieza <> 0 then begin
+                EmplazamientosFiltrados.Reset();
+                EmplazamientosFiltrados.SetRange("Zona Limpieza", ZonaLimpieza);
+                if EmplazamientosFiltrados.FindSet() then begin
+                    repeat
+                        UserTask.Reset();
+                        UserTask.SetRange(Id_record, EmplazamientosFiltrados.RecordId);
+                        if CategoriasLimpieza <> '' then
+                            UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                        if FechaDesde <> 0D then
+                            UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                        // Buscar todas las tareas que cumplan los filtros
+                        if UserTask.FindSet() then begin
+                            repeat
+                                AgregarTareaAlJson(UserTask, EmplazamientosFiltrados, JsonArray);
+                            until UserTask.Next() = 0;
+                        end;
+                    until EmplazamientosFiltrados.Next() = 0;
+                end;
+            end else begin
+                // Si no hay filtro de zona ni emplazamiento, buscar todas las tareas de limpieza
+                UserTask.Reset();
+                if CategoriasLimpieza <> '' then
+                    UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                if FechaDesde <> 0D then
+                    UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                if UserTask.FindSet() then begin
+                    repeat
+                        // Intentar obtener el emplazamiento desde Id_record
+                        if UserTask.Id_record.TableNo = Database::Emplazamientos then begin
+                            if Emplazamientos.Get(UserTask.Id_record) then
+                                AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                        end;
+                    until UserTask.Next() = 0;
+                end;
+            end;
+        end;
+
+        JsonArray.WriteTo(JsonResult);
+        exit(JsonResult);
+    end;
+
+    /// <summary>
+    /// Procedimiento auxiliar para agregar una tarea al JSON array de resultados
+    /// </summary>
+    local procedure AgregarTareaAlJson(var UserTask: Record "User Task"; var Emplazamientos: Record Emplazamientos; var JsonArray: JsonArray)
+    var
+        JsonTarea: JsonObject;
+        User: Record User;
+        UserGtask: Record UsuariosGtask;
+        FechaInicio: Date;
+        HoraInicio: Time;
+
+    begin
+        Clear(JsonTarea);
+        JsonTarea.Add('id', UserTask.ID);
+        JsonTarea.Add('no', UserTask."No.");
+        JsonTarea.Add('title', UserTask.Title);
+        JsonTarea.Add('description', UserTask.GetDescription());
+        JsonTarea.Add('codigoEmplazamiento', Emplazamientos."Nº Emplazamiento");
+        JsonTarea.Add('descripcionEmplazamiento', Emplazamientos."Descripción");
+        JsonTarea.Add('zonaLimpieza', Emplazamientos."Zona Limpieza");
+        JsonTarea.Add('categoria', UserTask."User Task Group Assigned To");
+        JsonTarea.Add('departamento', UserTask.Departamento);
+        JsonTarea.Add('servicio', UserTask.Servicio);
+        JsonTarea.Add('estado', Format(UserTask.Estado));
+        case UserTask.Priority of
+            UserTask.Priority::Low:
+                JsonTarea.Add('prioridad', 'Baja');
+            UserTask.Priority::Normal:
+                JsonTarea.Add('prioridad', 'Normal');
+            UserTask.Priority::High:
+                JsonTarea.Add('prioridad', 'Alta');
+        end;
+
+
+        // Fechas
+        if UserTask."Start DateTime" <> 0DT then begin
+            FechaInicio := DT2Date(UserTask."Start DateTime");
+            HoraInicio := DT2Time(UserTask."Start DateTime");
+            JsonTarea.Add('fechaInicio', Format(FechaInicio, 0, '<Year4>-<Month,2>-<Day,2>'));
+            JsonTarea.Add('horaInicio', Format(HoraInicio, 0, '<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        end;
+
+        if UserTask."Due DateTime" <> 0DT then begin
+            JsonTarea.Add('fechaVencimiento', Format(DT2Date(UserTask."Due DateTime"), 0, '<Year4>-<Month,2>-<Day,2>'));
+        end;
+
+        // Usuarios
+        if not IsNullGuid(UserTask."Assigned To") then begin
+            User.SetRange("User Security ID", UserTask."Assigned To");
+            if User.FindFirst() then begin
+                if User."Full Name" <> '' then
+                    JsonTarea.Add('responsable', User."Full Name")
+                else
+                    JsonTarea.Add('responsable', User."User Name");
+            end;
+            UserGtask.SetRange("Id Usuario", UserTask."Assigned To");
+            if UserGtask.FindFirst() then
+                JsonTarea.Add('responsableIdGtask', UserGtask."Id Gtask");
+        end;
+
+        if not IsNullGuid(UserTask.Supervisor) then begin
+            User.SetRange("User Security ID", UserTask.Supervisor);
+            if User.FindFirst() then begin
+                if User."Full Name" <> '' then
+                    JsonTarea.Add('supervisor', User."Full Name")
+                else
+                    JsonTarea.Add('supervisor', User."User Name");
+            end;
+            UserGtask.SetRange("Id Usuario", UserTask.Supervisor);
+            if UserGtask.FindFirst() then
+                JsonTarea.Add('supervisorIdGtask', UserGtask."Id Gtask");
+        end;
+
+        JsonArray.Add(JsonTarea);
     end;
 
     /// <summary>
@@ -6111,6 +6343,7 @@ codeunit 7001148 GTask
         Gtask: Codeunit Gtask;
         ZonasLimpieza: Record "Zonas Limpieza";
         FechaTarea: Date;
+        Periodicidad: DateFormula;
     begin
         // Validar que la categoría existe
         If not Categorias.Get(CodigoCategoria) then
@@ -6143,7 +6376,8 @@ codeunit 7001148 GTask
             ' - ' + Emplazamientos."Descripción",
             false,
             '',
-            FechaTarea);
+            FechaTarea,
+            Periodicidad);
 
         exit(true);
     end;
@@ -7052,8 +7286,8 @@ codeunit 7001148 GTask
        Var Responsable: Guid;
        var Supervisor: Guid;
        var Categoria: Text;
-       Departamento: Text;
-       Servicio: Text;
+       var Departamento: Text;
+       var Servicio: Text;
        var EmailResponsabe: Text;
        var EmailSupervisor: Text;
        VAR User: Record "User";
@@ -7086,7 +7320,8 @@ codeunit 7001148 GTask
         // Buscar categoría basándose en Departamento, Servicio y Zona de Limpieza
         UserxbyCategory.ChangeCompany('Malla Publicidad');
         UserxbyCategory.Reset();
-        UserxbyCategory.SetRange(Departamento, Departamento);
+        if Departamento <> '' then
+            UserxbyCategory.SetRange(Departamento, Departamento);
         if ZonaLimpieza <> 0 then
             UserxbyCategory.SetRange("Zona Limpieza", ZonaLimpieza);
         UserxbyCategory.SetFilter("User Task Group Code", Categorias);
@@ -7096,7 +7331,8 @@ codeunit 7001148 GTask
         //Si no encuentro categoría, intento filtrar por departamento
         If (Categoria = '') then begin
             UserxbyCategory.Reset();
-            UserxbyCategory.SetRange(Departamento, Departamento);
+            if Departamento <> '' then
+                UserxbyCategory.SetRange(Departamento, Departamento);
             UserxbyCategory.SetFilter("User Task Group Code", Categorias);
             If UserxbyCategory.FindFirst() then begin
                 Categoria := UserxbyCategory."User Task Group Code";
@@ -7119,24 +7355,27 @@ codeunit 7001148 GTask
             If not UserTaskGroup.Get(Categoria) then
                 Error('No se ha encontrado la categoría %1 en Gtask', Categoria);
         end;
+        If Categoria = '' then Error('No se ha encontrado la categoría en Gtask');
 
         // Buscar Responsable basándose en Departamento, Categoría y Zona de Limpieza
         If IsnullGuid(Responsable) then begin
             UserGtaskMalla.Reset();
             UserxbyCategory.ChangeCompany('Malla Publicidad');
             UserxbyCategory.Reset();
-            UserxbyCategory.SetRange(Departamento, Departamento);
-            If Categoria <> '' then
-                UserxbyCategory.SetRange("User Task Group Code", Categoria);
+            if Departamento <> '' then
+                UserxbyCategory.SetRange(Departamento, Departamento);
+            UserxbyCategory.SetRange("User Task Group Code", Categoria);
             UserxbyCategory.SetRange("Zona Limpieza", ZonaLimpieza);
             UserxbyCategory.SetRange(Responsable, true);
             UserxbyCategory.SetRange("Copiado en Mail", false);
             If UserxbyCategory.FindFirst() then begin
                 Responsable := UserxbyCategory."User Security ID";
+                If Departamento = '' then Departamento := UserxbyCategory.Departamento;
             end else begin
                 UserxbyCategory.SetRange("Copiado en Mail");
                 If UserxbyCategory.FindFirst() then begin
                     Responsable := UserxbyCategory."User Security ID";
+                    If Departamento = '' then Departamento := UserxbyCategory.Departamento;
                 end else begin
                     // Intentar sin filtrar por zona
                     UserxbyCategory.Reset();
@@ -7147,58 +7386,69 @@ codeunit 7001148 GTask
                     UserxbyCategory.SetRange("Copiado en Mail", false);
                     If UserxbyCategory.FindFirst() then begin
                         Responsable := UserxbyCategory."User Security ID";
+                        If Departamento = '' then Departamento := UserxbyCategory.Departamento;
                     end else begin
                         UserxbyCategory.SetRange("Copiado en Mail");
                         If UserxbyCategory.FindFirst() then begin
                             Responsable := UserxbyCategory."User Security ID";
+                            If Departamento = '' then Departamento := UserxbyCategory.Departamento;
                         end else begin
                             UserGtaskMalla.SetRange(Departamento);
                             UserGtaskMalla.SetRange(Responsable, true);
-                            If UserGtaskMalla.FindFirst() then
+                            If UserGtaskMalla.FindFirst() then begin
                                 Responsable := UserGtaskMalla."Id Usuario";
+                                If Departamento = '' then Departamento := UserGtaskMalla.Departamento;
+                            end;
                         end;
                     end;
                 end;
             end;
         end;
+        If Departamento = '' then Error('No se ha encontrado el departamento en Gtask');
 
         // Buscar Supervisor basándose en Servicio, Categoría y Zona de Limpieza
         UserxbyCategory.ChangeCompany('Malla Publicidad');
         UserxbyCategory.Reset();
-        UserxbyCategory.SetRange(Departamento, Servicio);
-        If Categoria <> '' then
-            UserxbyCategory.SetRange("User Task Group Code", Categoria);
+        if Servicio <> '' then
+            UserxbyCategory.SetRange(Departamento, Servicio);
+        UserxbyCategory.SetRange("User Task Group Code", Categoria);
         UserxbyCategory.SetRange("Zona Limpieza", ZonaLimpieza);
         UserxbyCategory.SetRange(Supervisor, true);
         UserxbyCategory.SetRange("Copiado en Mail", false);
         UserxbyCategory.SetRange(Responsable);
         If UserxbyCategory.FindFirst() then begin
             Supervisor := UserxbyCategory."User Security ID";
+            If Servicio = '' then Servicio := UserxbyCategory.Departamento;
         end else begin
             UserxbyCategory.SetRange("Copiado en Mail");
             If UserxbyCategory.FindFirst() then begin
                 Supervisor := UserxbyCategory."User Security ID";
+                If Servicio = '' then Servicio := UserxbyCategory.Departamento;
             end else begin
                 // Intentar sin filtrar por zona
                 UserxbyCategory.Reset();
                 UserxbyCategory.SetRange(Departamento, Servicio);
-                If Categoria <> '' then
-                    UserxbyCategory.SetRange("User Task Group Code", Categoria);
+                UserxbyCategory.SetRange("User Task Group Code", Categoria);
                 UserxbyCategory.SetRange(Supervisor, true);
                 UserxbyCategory.SetRange("Copiado en Mail", false);
                 UserxbyCategory.SetRange(Responsable);
                 If UserxbyCategory.FindFirst() then begin
                     Supervisor := UserxbyCategory."User Security ID";
+                    If Servicio = '' then Servicio := UserxbyCategory.Departamento;
                 end else begin
                     UserxbyCategory.SetRange("Copiado en Mail");
                     If UserxbyCategory.FindFirst() then begin
                         Supervisor := UserxbyCategory."User Security ID";
+                        If Servicio = '' then Servicio := UserxbyCategory.Departamento;
                     end else begin
                         UserGtaskMalla.SetRange(Departamento);
                         UserGtaskMalla.SetRange(Supervisor, true);
                         UserGtaskMalla.SetRange(Responsable);
-                        If UserGtaskMalla.FindFirst() then
+                        If UserGtaskMalla.FindFirst() then begin
                             Supervisor := UserGtaskMalla."Id Usuario";
+                            If Servicio = '' then Servicio := UserGtaskMalla.Departamento;
+                        end;
+
                     end;
                 end;
             end;

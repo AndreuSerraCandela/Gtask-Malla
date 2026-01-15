@@ -138,7 +138,26 @@ tableextension 92103 Tareasusuarios extends "User Task"
         {
             Caption = 'Orden Fijación';
         }
+        field(50020; Frecuencia; DateFormula)
+        {
 
+        }
+        field(50021; DependenciaCreada; Boolean)
+        {
+            Caption = 'Dependencia Creada';
+        }
+        field(50022; ZonaLimpieza; Integer)
+        {
+            Caption = 'Zona Limpieza';
+            DataClassification = ToBeClassified;
+            TableRelation = "Zonas Limpieza".Id;
+        }
+        field(50023; TipoTarea; Text[50])
+        {
+            Caption = 'Emplazamiento';
+            DataClassification = ToBeClassified;
+            TableRelation = Emplazamientos."Nº Emplazamiento";
+        }
     }
     trigger OnAfterDelete()
     var
@@ -166,6 +185,69 @@ tableextension 92103 Tareasusuarios extends "User Task"
         Description.CreateOutStream(OutStream, TEXTENCODING::UTF8);
         OutStream.Write(StreamText);
         if Modify(true) then;
+    end;
+
+    procedure CalcularProximoDiaLimpieza(ZonaLimpieza: Record "Zonas Limpieza"; Fecha: Date): Date
+    var
+        FechaActual: Date;
+        DiaSemana: Integer;
+        DiasAñadir: Integer;
+        MaxDias: Integer;
+        IsWinter: Boolean;
+        Periodicidad: DateFormula;
+    begin
+        //Si es invierno
+        If Date2DMY(Fecha, 2) in [1, 2, 3, 10, 11, 12] then IsWinter := true;
+        If ZonaLimpieza."Periodicidad Invierno" = Periodicidad then ZonaLimpieza."Periodicidad Invierno" := ZonaLimpieza."Periodicidad";
+        If IsWinter then
+            FechaActual := CalcDate(ZonaLimpieza."Periodicidad Invierno", Fecha)
+        else
+            FechaActual := CalcDate(ZonaLimpieza."Periodicidad", Fecha);
+        exit(FechaActual);
+    end;
+
+    procedure CalcularPeriodicidad(ZonaLimpieza: Record "Zonas Limpieza"; Fecha: Date): DateFormula
+    var
+        FechaActual: Date;
+        DiaSemana: Integer;
+        DiasAñadir: Integer;
+        MaxDias: Integer;
+        IsWinter: Boolean;
+        Periodicidad: DateFormula;
+    begin
+        //Si es invierno
+        If Date2DMY(Fecha, 2) in [1, 2, 3, 10, 11, 12] then IsWinter := true;
+        If ZonaLimpieza."Periodicidad Invierno" = Periodicidad then ZonaLimpieza."Periodicidad Invierno" := ZonaLimpieza."Periodicidad";
+        If IsWinter then
+            Periodicidad := ZonaLimpieza."Periodicidad Invierno"
+        else
+            Periodicidad := ZonaLimpieza."Periodicidad";
+        exit(Periodicidad);
+    end;
+
+    procedure CrearDependencia(): Boolean
+    var
+        FechaActual: Date;
+        DiaSemana: Integer;
+        DiasAñadir: Integer;
+        MaxDias: Integer;
+        IsWinter: Boolean;
+        Periodicidad: DateFormula;
+        Gtask: Codeunit Gtask;
+        RecorId: RecordId;
+        RecRef: RecordRef;
+        Descripcion: Text;
+        ZonaLimpieza: Record "Zonas Limpieza";
+        FechaInicio: Date;
+    begin
+        RecorId := Rec.Id_record;
+        RecRef.Get(RecorId);
+        Descripcion := Rec.GetDescription();
+        ZonaLimpieza.Get(Rec.ZonaLimpieza);
+        FechaInicio := Rec.CalcularProximoDiaLimpieza(ZonaLimpieza, WorkDate());
+        If Gtask.CrearTareaLimpieza(Rec.TipoTarea, RecRef, Rec.Title, Rec.ZonaLimpieza, Descripcion
+                                     , false, '', FechaInicio, Rec.CalcularPeriodicidad(ZonaLimpieza, WorkDate())) then
+            exit(true);
     end;
 }
 tableextension 90109 Tareascomercial extends "To-do"
