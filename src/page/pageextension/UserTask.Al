@@ -266,6 +266,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         UserxbyCategory.SetRange(Supervisor, true);
         UserxbyCategory.SetRange("User Task Group Code", pCategoria);
         If UserxbyCategory.FindFirst() Then Servicio := UserxbyCategory.Departamento;
+        User.Get(UserSecurityId());
         Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, pCategoria, EmailResponsable,
         EmailSupervisor, User, Rec, ListadeCorreos);
         CurrPage.UPDATE(false);

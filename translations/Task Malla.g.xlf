@@ -708,10 +708,10 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Action Asignar Imagen a la Incidencia - Property Caption</note>
         </trans-unit>
-        <trans-unit id="Page 2755427284 - Action 280434384 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Cerrar Incidencia Gtask</source>
+        <trans-unit id="Page 2755427284 - Action 387929602 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crear Incidencia Gtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Action Cerrar Incidencia - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Action Crear Incidencia - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2755427284 - Action 103686177 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Desasignar Imagen de la Incidencia</source>
@@ -2413,6 +2413,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Departamento - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 1432994314 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Dependencia Creada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field DependenciaCreada - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 2950845476 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Estado</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2432,6 +2437,11 @@
           <source>Fecha Comunicado Cambio</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Fecha Comunicado Cambio - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 89990961 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Frecuencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Frecuencia - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 4082900970 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>IdQr</source>
@@ -2502,6 +2512,16 @@
           <source>Nombre Supervisor</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Supervisor User Name - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 3748575955 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field TipoTarea - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 630391303 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Zona Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field ZonaLimpieza - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Change 1076138764 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Categoría</source>

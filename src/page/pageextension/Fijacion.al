@@ -84,6 +84,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Id: Integer;
                     UserTaskNew: Record "User Task";
                     Observaciones: Text;
+                    ficheros: Record "Document Attachment";
 
                 begin
                     UserSetups.ChangeCompany('Malla Publicidad');
@@ -186,6 +187,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                             end;
                         end;
                     end;
+                    User.Get(UserSecurityId());
                     Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserSetups.Reset();
                     //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
@@ -299,6 +301,9 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         Imagenes.SetRange("Nº Orden", Rec."Nº Orden");
                         Imagenes.SetRange("Es Qr", false);
                         Imagenes.SetRange("Valla Fijada", false);
+                        if not Imagenes.FindSet() then
+                            if not Confirm('No se encontraron imágenes para la orden de fijación %1, no se adjuntará pdf a la tarea, ¿desea continuar?', false, Rec."Nº Orden") then
+                                error('Proceso cancelado');
                         If Imagenes.FindSet() then
                             repeat
                                 im.SetRange("Nº Orden", Imagenes."Nº Orden");
@@ -578,6 +583,130 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                             end;
                         end;
                     end;
+                    ficheros.SetRange("Table ID", Database::"User Task");
+                    ficheros.SetRange("No.", UserTask."No.");
+                    If not ficheros.FindLast() then begin
+                        // si no hay adjunto, vuelve a generar el pdf y, lo adjunta a la rtarea
+                        If Opcion = Opcion::Valla then begin
+                            DoccAttach.Init();
+                            DoccAttach."Table ID" := Database::"User Task";
+                            DoccAttach."No." := UserTask."No.";
+
+                            TM.Init();
+                            TM.ID := CreateGuid();
+                            TM.Description := StrSubstNo('Signature %1', format(CurrentDateTime));
+                            TM."Mime Type" := 'Pdf/pdf';
+                            TM."Company Name" := COMPANYNAME;
+                            TM."File Name" := TM.Description + '.pdf';
+                            TM.Height := 250;
+                            TM.Width := 250;
+                            TM.CalcFields(Content);
+                            TM.Content.CreateOutStream(Outstr);
+                            Cab.SetRange("Nº Orden", Rec."Nº Orden");
+                            RecRef.GetTable(Cab);
+                            Report.SaveAs(Report::"Etiqueta orden fijacion Vallas", '', ReportFormat::Pdf, Outstr, RecRef);
+                            RecRef.Close();
+                            Clear(RecRef);
+                            RecRef.GetTable(Usertask);
+                            RecRef.Get(Usertask.RecordId);
+                            TM.Insert();
+                            tm.CalcFields(Content);
+                            Tm.Content.CreateInStream(InStr);
+                            DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
+                            TM.Delete();
+                        end;
+                        if Opcion = Opcion::Opi then begin
+                            DoccAttach.Init();
+                            DoccAttach."Table ID" := Database::"User Task";
+                            DoccAttach."No." := UserTask."No.";
+                            DoccAttach."Line No." := 0;
+                            Imagenes.SetRange("Nº Orden", Rec."Nº Orden");
+                            Imagenes.SetRange("Es Qr", false);
+                            Imagenes.SetRange("Valla Fijada", false);
+                            If Imagenes.FindSet() then
+                                repeat
+                                    im.SetRange("Nº Orden", Imagenes."Nº Orden");
+                                    im.SetRange("Nº Imagen", Imagenes."Nº Imagen");
+                                    im.SetRange("Valla Fijada", false);
+                                    clear(rep);
+                                    Rep.Filtra(Imagenes."Nº Orden", Imagenes."Nº Imagen");
+                                    rep.SetTableView(im);
+                                    DoccAttach.Init();
+                                    DoccAttach."Table ID" := Database::"User Task";
+                                    DoccAttach."No." := Format(Rec."Nº Orden");
+                                    DoccAttach."Line No." := 0;
+                                    Clear(TM);
+
+                                    TM.Init();
+                                    TM.ID := CreateGuid();
+                                    TM.Description := StrSubstNo('Signature %1', format(CurrentDateTime));
+                                    TM."Mime Type" := 'Pdf/pdf';
+                                    TM."Company Name" := COMPANYNAME;
+                                    TM."File Name" := TM.Description + '.pdf';
+                                    TM.Height := 250;
+                                    TM.Width := 250;
+                                    TM.CalcFields(Content);
+                                    TM.Content.CreateOutStream(Outstr);
+                                    Clear(RecRef);
+                                    RecRef.GetTable(Imagenes);
+                                    Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                    TM.Insert();
+                                    tm.CalcFields(Content);
+                                    Tm.Content.CreateInStream(InStr);
+                                    Clear(RecRef);
+                                    RecRef.GetTable(Usertask);
+                                    RecRef.Get(Usertask.RecordId);
+                                    If DoccAttach3.Get(Database::"User Task", Format(Usertask.Id), 0, 0, DoccAttach.Id) then
+                                        DoccAttach3.Delete();
+                                    DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
+                                    //DoccAttach.Insert();
+                                    RecRef.Close();
+                                    tm.Delete();
+                                until Imagenes.NEXT = 0;
+
+                        end;
+                        if Opcion = Opcion::Otros then begin
+                            DoccAttach.Init();
+                            DoccAttach."Table ID" := Database::"User Task";
+                            DoccAttach."No." := Format(Rec."Nº Orden");
+                            DoccAttach."Line No." := 0;
+                            Clear(TM);
+                            TM.Init();
+                            TM.ID := CreateGuid();
+                            TM.Description := StrSubstNo('Signature %1', format(CurrentDateTime));
+                            TM."Mime Type" := 'Pdf/pdf';
+                            TM."Company Name" := COMPANYNAME;
+                            TM."File Name" := TM.Description + '.pdf';
+                            TM.Height := 250;
+                            TM.Width := 250;
+                            TM.CalcFields(Content);
+                            TM.Content.CreateOutStream(Outstr);
+                            Clear(RecRef);
+                            Cab.SetRange("Nº Orden", Rec."Nº Orden");
+                            RecRef.GetTable(Cab);
+                            if rDet.Empresa <> '' then Proyecto.ChangeCompany(rDet.Empresa);
+                            Proyecto.GET(rDet."Nº Proyecto");
+                            rDet.SETRANGE("Nº Orden", Rec."Nº Orden");
+                            rDet.FindFirst();
+                            if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                            Resource.GET(rDet."Nº Recurso");
+                            Observaciones := Rec.GetWorkDescription();
+                            Rep2.CargaObservaciones(Observaciones, Resource.Medidas + ' ' + Rec."Título");
+                            Rep2.SetTableView(Cab);
+                            Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                            TM.Insert();
+                            tm.CalcFields(Content);
+                            Tm.Content.CreateInStream(InStr);
+                            Clear(RecRef);
+                            RecRef.GetTable(Usertask);
+                            RecRef.Get(Usertask.RecordId);
+                            DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
+                            RecRef.Close();
+
+                            tm.Delete();
+                        end;
+                        Commit();
+                    end;
                     EnviaCorreo(Usertask, true, '', false
                     , 'Tarea Fijación ' + Proyecto.Description,
                     EmailResponsable, EmailSupervisor, ListaCorreos,
@@ -725,6 +854,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                             end;
                         end;
                     end;
+                    User.Get(UserSecurityId());
                     Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserSetups.Reset();
                     //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
@@ -1067,10 +1197,12 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     ListaCorreos: Text;
                     User: Record User;
                 begin
+
                     Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
                     if Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then Error('No se puede reenviar correo para OPI');
                     If Usertask.FindFirst() then
                         repeat
+                            user.get(Usertask."Created By");
                             Gtask.DevuelveSupervisoryResponsable(Usertask."Assigned To", Usertask.Supervisor, 'TALLER', 'TALLER', Usertask."User Task Group Assigned To", EmailResponsable, EmailSupervisor, User, Usertask, ListaCorreos);
                             EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, ListaCorreos, 'julian@malla.es;xcastell@malla.es;lllompart@malla.es;andreuserra@malla.es', User."Full Name");
                         until Usertask.Next() = 0;

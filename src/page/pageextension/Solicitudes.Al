@@ -39,6 +39,7 @@ pageextension 92159 SolicitudesExt extends "Ficha Solicitudes"
                         Usertask."Start DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 080000T);
                         Usertask."Due DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 130000T);
                     end;
+                    User.Get(UserSecurityId());
                     Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'JURIDICO', 'JURIDICO', 'Solicitud', EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserTask.Validate(Priority, Usertask.Priority::High);
                     UserTask.Validate("Object Type", Usertask."Object Type"::Page);

@@ -2341,6 +2341,14 @@ codeunit 7001148 GTask
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
 
         end;
+        case Uppercase(State) of
+            'PENDING', 'ABIERTA':
+                rDet.Estado := rDet.Estado::Abierta;
+            'IN_PROGRESS', 'EN_PROCESO':
+                rDet.Estado := rDet.Estado::EnProgreso;
+            'COMPLETED', 'CLOSED', 'CERRADA':
+                rDet.Estado := rDet.Estado::Cerrada;
+        end;
         rDet.Empresa := Empresa;
 
         if NuevaIncidencia then begin
@@ -2370,8 +2378,12 @@ codeunit 7001148 GTask
 
         CompanyInfo.Get();
         JsonFormater.WriteStartObject('');
-
-        JsonFormater.WriteStringProperty('state', 'PENDING');
+        if rDet.Estado = rDet.Estado::Abierta then
+            JsonFormater.WriteStringProperty('state', 'PENDING')
+        else if rDet.Estado = rDet.Estado::EnProgreso then
+            JsonFormater.WriteStringProperty('state', 'IN_PROGRESS')
+        else if rDet.Estado = rDet.Estado::Cerrada then
+            JsonFormater.WriteStringProperty('state', 'CLOSED');
         JsonFormater.WriteStringProperty('incidenceType', GetTipoIncidencia(Format(rDet."Tipo Incidencia")));
         JsonFormater.WriteStringProperty('observation', Observation);
         JsonFormater.WriteStringProperty('description', Description);
@@ -2442,15 +2454,18 @@ codeunit 7001148 GTask
         rDet.Get(rDet."No.");
         If rDet."Id Tarea Gtask" <> '' then begin
             ModifyTareaIncidencia(rDet);
+
         end;
         If not NuevaIncidencia then begin
-            If (rDet."Id Tarea Gtask" = '') then begin
-                IdTarea := CrearTareaIncidencia(rDet);
-                If IdTarea <> 'Error: No ha completado los campos' then
-                    rDet."Id Tarea Gtask" := IdTarea
-                else begin
+            If rDet.Estado <> rDet.Estado::Cerrada then begin
+                If (rDet."Id Tarea Gtask" = '') then begin
+                    IdTarea := CrearTareaIncidencia(rDet);
+                    If IdTarea <> 'Error: No ha completado los campos' then
+                        rDet."Id Tarea Gtask" := IdTarea
+                    else begin
 
-                    Error('Error al crear la tarea: ' + IdTarea);
+                        Error('Error al crear la tarea: ' + IdTarea);
+                    end;
                 end;
             end;
         end;
@@ -2460,6 +2475,254 @@ codeunit 7001148 GTask
             CabOrdenFijacion.Insert();
         end;
         exit('OK:' + Id + ' Id_Gtask:' + rDet."Id Tarea Gtask");
+    end;
+
+    /// <summary>
+    /// Crea tareas desde un array JSON. Por cada elemento: usuariogtask, description, category, resource, fechaHora.
+    /// Responde con un array de tareas usando AgregarTareaUsuarioAlJson (o objeto con "error" si falla una).
+    /// </summary>
+    /// <param name="JsonText">JSON array: [{"usuariogtask":"...","description":"...","category":"...","resource":"...","fechaHora":"..."}, ...]</param>
+    /// <returns>JSON array de tareas (mismo formato que GetTareasUsuario) o elementos {"error": "mensaje"}</returns>
+    [ServiceEnabled]
+    procedure postTarea(JsonText: Text): Text
+    var
+        JsonArrayEntrada: JsonArray;
+        JsonArrayRespuesta: JsonArray;
+        JsonToken: JsonToken;
+        JsonTarea: JsonObject;
+        JsonError: JsonObject;
+        Tareas: Record "User Task";
+        ErrorMsg: Text;
+    begin
+        // Ejemplo JSON entrada: [{"usuariogtask":"...","description":"...","category":"69807bab6823020012e97858","resource":"RECURSO01","fechaHora":"2025-11-13T10:00:00Z"}, ...]
+        if not JsonArrayEntrada.ReadFrom(JsonText) then
+            Error('JSON inválido. Se espera un array de tareas.');
+
+        foreach JsonToken in JsonArrayEntrada do begin
+            JsonTarea := JsonToken.AsObject();
+            if ProcesarUnaTareaPost(JsonTarea, Tareas, ErrorMsg) then begin
+                Tareas.Get(Tareas.ID);
+                AgregarTareaUsuarioAlJson(Tareas, JsonArrayRespuesta);
+            end else begin
+                Clear(JsonError);
+                JsonError.Add('error', CopyStr(ErrorMsg, 1, 250));
+                JsonArrayRespuesta.Add(JsonError);
+            end;
+        end;
+
+        JsonArrayRespuesta.WriteTo(JsonText);
+        exit(JsonText);
+    end;
+
+    local procedure ProcesarUnaTareaPost(JsonTarea: JsonObject; var Tareas: Record "User Task"; var ErrorMsg: Text): Boolean
+    var
+        JsonCampo: JsonToken;
+        UserTaskGroup: Record "User Task Group";
+        ResponsabilitiCenter: Record "Responsibility Center";
+        WorkCenter: Record "Work Center";
+        UserGtaskMalla: Record UsuariosGtask;
+        RecordiD: RecordId;
+        RecordRef: RecordRef;
+        Empresas: Record "Company";
+        Resources: Record Resource;
+        Gtask: Codeunit Gtask;
+        Id: Integer;
+        IdTareaGtask: Text[30];
+        UsuarioGtask: Text;
+        Description: Text;
+        Category: Text;
+        Resource: Text;
+        FechaHora: DateTime;
+        Departamento: Text;
+        Servicio: Text;
+        Empresa: Text;
+        Encontrado: Boolean;
+        EsParada: Boolean;
+        Emplazamientos: Record "Emplazamientos";
+        Categoria: Record "User Task Group";
+        Responsable: Guid;
+        Supervisor: Guid;
+        EmailResponsable: Text;
+        EmailSupervisor: Text;
+        User: Record User;
+        UserTask: Text;
+        ListadeCorreos: Text;
+    begin
+        ErrorMsg := '';
+
+        If Not JsonTarea.Get('usuariogtask', JsonCampo) then begin
+            ErrorMsg := 'Falta usuariogtask';
+            exit(false);
+        end;
+        UsuarioGtask := JsonCampo.AsValue().AsText();
+        UserGtaskMalla.SetRange("Id Gtask", UsuarioGtask);
+        If Not UserGtaskMalla.FindFirst() then begin
+            ErrorMsg := 'usuariogtask no encontrado: ' + UsuarioGtask;
+            exit(false);
+        end else begin
+            Responsable := UserGtaskMalla."Id Usuario";
+            Supervisor := UserGtaskMalla."Id Usuario";
+            User.Get(UserGtaskMalla."Id Usuario");
+        end;
+
+        If Not JsonTarea.Get('description', JsonCampo) then begin
+            ErrorMsg := 'Falta description';
+            exit(false);
+        end;
+        Description := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
+
+        If Not JsonTarea.Get('category', JsonCampo) then begin
+            ErrorMsg := 'Falta category';
+            exit(false);
+
+        end;
+        Category := JsonCampo.AsValue().AsText();
+
+        If JsonTarea.Get('resource', JsonCampo) then
+            Resource := JsonCampo.AsValue().AsText()
+        else begin
+            ErrorMsg := 'Falta resource';
+            exit(false);
+        end;
+        if JsonTarea.Get('esparada', JsonCampo) then
+            EsParada := JsonCampo.AsValue().AsBoolean()
+        else
+            EsParada := false;
+        //PARADA_
+        If copystr(Resource, 1, 7) = 'PARADA_' then
+            EsParada := true;
+
+
+        If JsonTarea.Get('fechahora', JsonCampo) Then
+            FechaHora := JsonCampo.AsValue().AsDateTime()
+        else if JsonTarea.Get('fecha', JsonCampo) Then
+            FechaHora := ParseFechaFromJson(JsonCampo.AsValue().AsText())
+        else
+            FechaHora := CurrentDateTime();
+
+        Departamento := 'TECNICO';
+        Servicio := 'TECNICO';
+        If JsonTarea.Get('department', JsonCampo) then
+            Departamento := JsonCampo.AsValue().AsText();
+        If JsonTarea.Get('service', JsonCampo) then
+            Servicio := JsonCampo.AsValue().AsText();
+
+        Clear(RecordiD);
+        RecordiD := RecuperaId(Category, Database::"User Task Group", CompanyName);
+        If RecordiD.TableNo = 0 then begin
+            If Category = '69807bab6823020012e97858' then begin
+                Categoria.Get('REVISION');
+                InsertLink(Categoria.RecordId, Database::"User Task Group", Category, CompanyName);
+                RecordiD := Categoria.RecordId;
+            end else begin
+                ErrorMsg := 'category no encontrada: ' + Category;
+                exit(false);
+            end;
+        end;
+        RecordRef := RecordiD.GetRecord();
+        Categoria.get(RecordiD);
+        Tareas."User Task Group Assigned To" := RecordRef.Field(UserTaskGroup.FieldNo(Code)).Value;
+        Tareas."Categoría" := Tareas."User Task Group Assigned To";
+
+        Encontrado := false;
+        Empresa := CompanyName;
+        If not EsParada then begin
+            If Resources.Get(Resource) then
+                Encontrado := true
+            else begin
+                Empresas.FindFirst();
+                repeat
+                    Resources.ChangeCompany(Empresas.Name);
+                    Resources.Reset();
+                    If Resources.Get(Resource) then begin
+                        Encontrado := true;
+                        Empresa := Empresas.Name;
+                        break;
+                    end;
+                until Empresas.Next() = 0;
+            end;
+        end;
+        If EsParada then begin
+            If CopyStr(Resource, 1, 7) = 'PARADA_' then
+                Resource := CopyStr(Resource, 8);
+            If not Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, CopyStr(Resource, 1, 20)) then begin
+                ErrorMsg := 'Emplazamiento no encontrado: ' + Resource;
+                exit(false);
+            end;
+        end;
+
+        Tareas.Reset();
+        If Tareas.FindLast() Then
+            Id := Tareas."Id" + 1
+        else
+            Id := 1;
+        Tareas.Init();
+        Tareas."Id" := Id;
+        Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
+        Tareas.Supervisor := UserGtaskMalla."Id Usuario";
+        Tareas."Created By" := UserGtaskMalla."Id Usuario";
+        Tareas.Title := Description;
+        Tareas.SetDescription(Description);
+        Tareas."Start DateTime" := FechaHora;
+        Tareas."Due DateTime" := FechaHora;
+        Tareas.Estado := Tareas.Estado::Pendiente;
+        Tareas.Validate("Created DateTime", CurrentDateTime);
+        Tareas.Validate(Priority, Tareas.Priority::High);
+
+        Clear(RecordiD);
+        RecordiD := RecuperaId(Departamento, Database::"Responsibility Center", CompanyName);
+        If RecordiD.TableNo <> 0 then begin
+            RecordRef := RecordiD.GetRecord();
+            Tareas.Departamento := RecordRef.Field(ResponsabilitiCenter.FieldNo(Code)).Value;
+        end else
+            Tareas.Departamento := CopyStr(InsertarDepartamentoOservicio(Departamento, CompanyName, false), 1, 20);
+        Clear(RecordiD);
+        RecordiD := RecuperaId(Servicio, Database::"Work Center", CompanyName);
+        If RecordiD.TableNo <> 0 then begin
+            RecordRef := RecordiD.GetRecord();
+            Tareas.Servicio := RecordRef.Field(WorkCenter.FieldNo("No.")).Value;
+        end else
+            Tareas.Servicio := CopyStr(InsertarDepartamentoOservicio(Servicio, CompanyName, true), 1, 20);
+
+        If (Resource <> '') and Encontrado then begin
+            Tareas.Resource := CopyStr(Resource, 1, 20);
+            Tareas.Validate("Object ID", Page::"Resource Card");
+            Tareas.Id_record := Resources.RecordId;
+
+        end;
+        If EsParada then begin
+            //Tareas.Validate("Object ID", Page::"Ficha Parada Bus");
+            Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Resource);
+            Tareas.Id_record := Emplazamientos.RecordId;
+        end;
+        Tareas.Insert(true);
+        Tareas."No." := Format(Tareas.ID);
+        Tareas."Categoría" := Categoria.Code;
+        Tareas."User Task Group Assigned To" := Categoria.Code;
+        Tareas.IdQr := 'P_' + Resource;
+        Tareas.Modify();
+        Commit();
+
+        If (Resource <> '') and Encontrado then begin
+            Resources.Reset();
+            If not Resources.Get(Resource) then begin
+                Resources.ChangeCompany(Empresa);
+                Resources.Get(Resource);
+            end;
+        end;
+        if (Tareas.Departamento = '') Or (Tareas.Servicio = '') then begin
+            Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, Categoria.Code, EmailResponsable, EmailSupervisor, User, Tareas, ListadeCorreos);
+        end;
+        IdTareaGtask := Gtask.CrearTareaTecnico(Resource, Tareas, Tareas.Departamento, Tareas.Servicio, true);
+        If IdTareaGtask <> '' then begin
+            Tareas.Get(Tareas.ID);
+            Tareas.Id_Tarea := IdTareaGtask;
+            Tareas.Modify();
+            Commit();
+        end;
+
+
+        exit(true);
     end;
 
     procedure DetalleIncidencia(JsonText: Text): text
@@ -4615,101 +4878,6 @@ codeunit 7001148 GTask
         end;
     end;
 
-    /// <summary>
-    /// CreaServicio.
-    /// </summary>
-    /// <param name="tRecordId">RecordId.</param>
-    /// <param name="Tabla">Integer.</param>
-    // procedure CreaProductoServicio(ProductoServicio: Record Resource; tRecordId: RecordId; Tabla: Integer; Company: Text)
-    // var
-    //     JsonFormater: Codeunit "Json Text Reader/Writer";
-    //     RestApi: Codeunit "Control Ocr";
-    //     jSon: Text;
-    //     RequestType: Option Get,patch,put,post,delete;
-    //     Client: Text;
-    //     Proveedor: Text;
-    //     Customer: Record Customer;
-    //     Vendor: Record Vendor;
-    //     Producto: Text;
-    //     Item: Record Item;
-    //     Link: Record "Data Migration Error";
-    //     Name: Text;
-    //     Value1: Text;
-    //     JSONMgt: Codeunit "JSON Management";
-    //     wRecordRef: RecordRef;
-    // begin
-    //     //       "_id": "60589ab346c40b00195cc993",
-    //     //     "establishment": "604754af75efa40018027f62",
-    //     //     "name": "BBB",
-    //     //     "createdAt": "2021-03-22T13:25:07.999Z",
-    //     //     "updatedAt": "2021-10-25T08:10:42.373Z",
-    //     //     "__v": 0,
-    //     //     "provider": "61711bcbe7a94c289c94fcc3",
-    //     //     "client": "60ed44c26a580923c877cc43",
-    //     //     "componentWarranty": 100,
-    //     //     "componentWork": 13,
-    //     //     "endDate": "2021-10-24T12:05:04.361Z",
-    //     //     "product": "6172a8e7d86b5066a0c8710c",
-    //     //     "resource": "6172a453d86b5066a0c8710a",
-    //     //     "startDate": "2021-10-22T12:05:01.580Z"
-    //     // },
-    //     If Customer.Get(ProductoServicio."Customer No.") then begin
-    //         wRecordRef.Open(Database::Customer, false, CompanyName);
-    //         wRecordRef.Get(Customer.RecordId);
-    //         Client := GetMaestro('client', Customer."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Customer);
-    //         If Client = 'Error' then begin
-    //             CreaCliente(Customer, Customer.RecordId, Database::Customer);
-    //             Client := GetMaestro('client', Customer."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Customer);
-    //         end;
-    //         wRecordRef.Close();
-    //     end;
-    //     If Vendor.Get(ProductoServicio."Vendor No.") then begin
-    //         wRecordRef.Open(Database::Vendor, false, CompanyName);
-    //         wRecordRef.Get(Vendor.RecordId);
-    //         Proveedor := GetMaestro('provider', Vendor."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Vendor);
-    //         if Proveedor = 'Error' Then begin
-    //             CreaProveedor(Vendor, Vendor.RecordId, Database::Vendor);
-    //             Proveedor := GetMaestro('provider', Vendor."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Vendor);
-    //         end;
-    //         wRecordRef.Close();
-    //     end;
-    //     If Item.Get(ProductoServicio."Item No.") then begin
-    //         wRecordRef.Open(Database::Item, false, CompanyName);
-    //         wRecordRef.Get(Item.RecordId);
-    //         Producto := GetMaestro('product', Item.Description, 'name', wRecordRef, Database::Item);
-    //         if Producto = 'Error' Then begin
-    //             CreaProducto(Item, Item.RecordId, Database::Item);
-    //             Producto := GetMaestro('product', Item.Description, 'name', wRecordRef, Database::Item);
-    //         end;
-    //         wRecordRef.Close();
-    //     end;
-    //     JsonFormater.WriteStartObject('');
-    //     JsonFormater.WriteStringProperty('name', ProductoServicio.Name);
-    //     if Proveedor <> '' Then
-    //         JsonFormater.WriteStringProperty('provider', Proveedor);
-    //     if Client <> '' then
-    //         JsonFormater.WriteStringProperty('client', Client);
-    //     JsonFormater.WriteStringProperty('componentWarranty', Format(ProductoServicio."Warranty % (Parts)"));
-    //     JsonFormater.WriteStringProperty('componentWork', Format(ProductoServicio."Warranty % (Labor)"));
-    //     JsonFormater.WriteStringProperty('endDate', Format(ProductoServicio."Warranty Ending Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
-    //     if Producto <> '' Then
-    //         JsonFormater.WriteStringProperty('product', Producto);
-    //     JsonFormater.WriteStringProperty('startDate', Format(ProductoServicio."Warranty Starting Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
-    //     JsonFormater.WriteEndObject();
-    //     Json := JsonFormater.GetJSonAsText();
-    //     CompanyInfo.Get();
-    //     Json := RestApi.RestApiToken(CompanyInfo."Url Task"+'/service', RequestType::post, jSon,Qwark::Ocr);
-    //     JSONMgt.InitializeObject(Json);
-    //     JSONMgt.ReadProperties();
-    //     WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
-    //         CASE Name OF
-    //             '_id':
-    //                 begin
-    //                     InsertLink(tRecordId, Tabla, Value1);
-    //                 end;
-    //         end;
-    //     end;
-    // end;
 
     /// <summary>
     /// CreaProyecto.
@@ -4788,97 +4956,6 @@ codeunit 7001148 GTask
             end;
         end;
     end;
-
-    // procedure CreaServicioServiceItem(ProductoServicio: Record "Service Item"; tRecordId: RecordId; Tabla: Integer)
-    // var
-    //     JsonFormater: Codeunit "Json Text Reader/Writer";
-    //     RestApi: Codeunit "Control Ocr";
-    //     jSon: Text;
-    //     RequestType: Option Get,patch,put,post,delete;
-    //     Client: Text;
-    //     Proveedor: Text;
-    //     Customer: Record Customer;
-    //     Vendor: Record Vendor;
-    //     Producto: Text;
-    //     Item: Record Item;
-    //     Link: Record "Data Migration Error";
-    //     Name: Text;
-    //     Value1: Text;
-    //     JSONMgt: Codeunit "JSON Management";
-    //     wRecordRef: RecordRef;
-    // begin
-    //     //       "_id": "60589ab346c40b00195cc993",
-    //     //     "establishment": "604754af75efa40018027f62",
-    //     //     "name": "BBB",
-    //     //     "createdAt": "2021-03-22T13:25:07.999Z",
-    //     //     "updatedAt": "2021-10-25T08:10:42.373Z",
-    //     //     "__v": 0,
-    //     //     "provider": "61711bcbe7a94c289c94fcc3",
-    //     //     "client": "60ed44c26a580923c877cc43",
-    //     //     "componentWarranty": 100,
-    //     //     "componentWork": 13,
-    //     //     "endDate": "2021-10-24T12:05:04.361Z",
-    //     //     "product": "6172a8e7d86b5066a0c8710c",
-    //     //     "resource": "6172a453d86b5066a0c8710a",
-    //     //     "startDate": "2021-10-22T12:05:01.580Z"
-    //     // },
-    //     If Customer.Get(ProductoServicio."Customer No.") then begin
-    //         wRecordRef.Open(Database::Customer, false, CompanyName);
-    //         wRecordRef.Get(Customer.RecordId);
-    //         Client := GetMaestro('client', Customer."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Customer);
-    //         If Client = 'Error' then begin
-    //             CreaCliente(Customer, Customer.RecordId, Database::Customer);
-    //             Client := GetMaestro('client', Customer."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Customer);
-    //         end;
-    //         wRecordRef.Close();
-    //     end;
-    //     If Vendor.Get(ProductoServicio."Vendor No.") then begin
-    //         wRecordRef.Open(Database::Vendor, false, CompanyName);
-    //         wRecordRef.Get(Vendor.RecordId);
-    //         Proveedor := GetMaestro('provider', Vendor."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Vendor);
-    //         if Proveedor = 'Error' Then begin
-    //             CreaProveedor(Vendor, Vendor.RecordId, Database::Vendor);
-    //             Proveedor := GetMaestro('provider', Vendor."VAT Registration No.", 'vatRegisterNO', wRecordRef, Database::Vendor);
-    //         end;
-    //         wRecordRef.Close();
-    //     end;
-    //     If Item.Get(ProductoServicio."Item No.") then begin
-    //         wRecordRef.Open(Database::Item, false, CompanyName);
-    //         wRecordRef.Get(Item.RecordId);
-    //         Producto := GetMaestro('product', Item.Description, 'name', wRecordRef, Database::Item);
-    //         if Producto = 'Error' Then begin
-    //             CreaProducto(Item, Item.RecordId, Database::Item);
-    //             Producto := GetMaestro('product', Item.Description, 'name', wRecordRef, Database::Item);
-    //         end;
-    //         wRecordRef.Close();
-    //     end;
-    //     JsonFormater.WriteStartObject('');
-    //     JsonFormater.WriteStringProperty('name', ProductoServicio.Description);
-    //     if Proveedor <> '' Then
-    //         JsonFormater.WriteStringProperty('provider', Proveedor);
-    //     if Client <> '' then
-    //         JsonFormater.WriteStringProperty('client', Client);
-    //     JsonFormater.WriteStringProperty('componentWarranty', Format(ProductoServicio."Warranty % (Parts)"));
-    //     JsonFormater.WriteStringProperty('componentWork', Format(ProductoServicio."Warranty % (Labor)"));
-    //     JsonFormater.WriteStringProperty('endDate', Format(ProductoServicio."Warranty Ending Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
-    //     if Producto <> '' Then
-    //         JsonFormater.WriteStringProperty('product', Producto);
-    //     JsonFormater.WriteStringProperty('startDate', Format(ProductoServicio."Warranty Starting Date (Parts)", 0, '<Year4>-<Month,2>-<Day,2>T00:00:00'));
-    //     JsonFormater.WriteEndObject();
-    //     Json := JsonFormater.GetJSonAsText();
-    //     CompanyInfo.Get();
-    //     Json := RestApi.RestApiToken(CompanyInfo."Url Task"+'service', RequestType::post, jSon,Qwark::Ocr);
-    //     JSONMgt.InitializeObject(Json);
-    //     JSONMgt.ReadProperties();
-    //     WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
-    //         CASE Name OF
-    //             '_id':
-    //                 begin
-    //                     InsertLink(tRecordId, Tabla, Value1);
-    //                 end;
-    //         end;
-    //     end;
-    // end;
 
     /// <summary>
     /// GetPartes.
@@ -5526,6 +5603,7 @@ codeunit 7001148 GTask
             Usertask."Start DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 080000T);
             Usertask."Due DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 130000T);
         end;
+        User.Get(UserSecurityId());
         Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, Categoria, EmailResponsable, EmailSupervisor, User, UserTask, ListadeCorreos);
         UserTask.Validate(Priority, Usertask.Priority::High);
         UserTask.Validate("Object Type", Usertask."Object Type"::Page);
@@ -5745,6 +5823,7 @@ codeunit 7001148 GTask
             Usertask."Start DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 080000T);
             Usertask."Due DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 130000T);
         end;
+        User.Get(UserSecurityId());
         Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, Categoria, EmailResponsable, EmailSupervisor, User, UserTask, ListadeCorreos);
         UserTask.Validate(Priority, Usertask.Priority::High);
         UserTask.Validate("Object Type", Usertask."Object Type"::Page);
@@ -6273,8 +6352,15 @@ codeunit 7001148 GTask
         JsonTarea.Add('zonaLimpieza', Emplazamientos."Zona Limpieza");
         JsonTarea.Add('categoria', UserTask."User Task Group Assigned To");
         JsonTarea.Add('departamento', UserTask.Departamento);
+        //qr
+        JsonTarea.Add('qr', UserTask.IdQr);
         JsonTarea.Add('servicio', UserTask.Servicio);
         JsonTarea.Add('estado', Format(UserTask.Estado));
+        JsonTarea.Add('puntoX', Emplazamientos.PuntoX);
+        JsonTarea.Add('puntoY', Emplazamientos.PuntoY);
+        JsonTarea.Add('emplazamiento', Emplazamientos."Nº Emplazamiento");
+        JsonTarea.Add('emplazamientoDescripcion', Emplazamientos."Descripción");
+
         case UserTask.Priority of
             UserTask.Priority::Low:
                 JsonTarea.Add('prioridad', 'Baja');
@@ -6323,6 +6409,213 @@ codeunit 7001148 GTask
             if UserGtask.FindFirst() then
                 JsonTarea.Add('supervisorIdGtask', UserGtask."Id Gtask");
         end;
+
+        JsonArray.Add(JsonTarea);
+    end;
+
+    /// <summary>
+    /// Endpoint para obtener las tareas de un usuario con coordenadas (puntoX, puntoY) del recurso/emplazamiento.
+    /// Filtros opcionales en el JSON de petición:
+    /// - usuario: Id Gtask del usuario o GUID (filtra por Assigned To)
+    /// - fecha: una fecha "YYYY-MM-DD" o objeto con fechaDesde/fechaHasta (filtra por Start DateTime)
+    /// - categoria: código de categoría (User Task Group Assigned To)
+    /// Si solo viene usuario, se filtra por usuario; si usuario y fecha, por ambos; si los tres, por usuario, fecha y categoría.
+    /// </summary>
+    /// <param name="JsonText">JSON con filtros opcionales: {"usuario": "...", "fecha": "2024-01-15", "categoria": "COD"}</param>
+    /// <returns>JSON array con tareas que incluyen puntoX y puntoY del recurso/emplazamiento</returns>
+    [ServiceEnabled]
+    procedure GetTareasUsuario(JsonText: Text): Text
+    var
+        JsonObject: JsonObject;
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonResult: Text;
+        UserTask: Record "User Task";
+        UserGtask: Record UsuariosGtask;
+        UsuarioGuid: Guid;
+        UsuarioTexto: Text;
+        FechaTexto: Text;
+        FechaDesde: Date;
+        FechaHasta: Date;
+        FechaDesdeDT: DateTime;
+        FechaHastaDT: DateTime;
+        Categoria: Code[20];
+        TieneUsuario: Boolean;
+        TieneFecha: Boolean;
+        TieneCategoria: Boolean;
+    begin
+        if not JsonObject.ReadFrom(JsonText) then
+            Error('JSON inválido');
+
+        UsuarioGuid := CreateGuid();
+        UsuarioTexto := '';
+        FechaDesde := 0D;
+        FechaHasta := 0D;
+        Categoria := '';
+        TieneUsuario := false;
+        TieneFecha := false;
+        TieneCategoria := false;
+
+        // Usuario (opcional): puede ser Id Gtask o GUID en texto
+        if JsonObject.Get('usuario', JsonToken) then begin
+            UsuarioTexto := JsonToken.AsValue().AsText();
+            if UsuarioTexto <> '' then begin
+                UserGtask.ChangeCompany('Malla Publicidad');
+                UserGtask.SetRange("Id Gtask", CopyStr(UsuarioTexto, 1, MaxStrLen(UserGtask."Id Gtask")));
+                if UserGtask.FindFirst() then
+                    UsuarioGuid := UserGtask."Id Usuario"
+                else
+                    if Evaluate(UsuarioGuid, UsuarioTexto) then
+                        UsuarioGuid := UsuarioGuid
+                    else
+                        exit('[]'); // Usuario no encontrado, devolver vacío
+                TieneUsuario := true;
+            end;
+        end;
+
+        // Fecha (opcional): una fecha o objeto con fechaDesde/fechaHasta
+        if JsonObject.Get('fecha', JsonToken) then begin
+            FechaTexto := JsonToken.AsValue().AsText();
+            if (FechaTexto <> '') and Evaluate(FechaDesde, FechaTexto) then begin
+                FechaHasta := FechaDesde;
+                FechaDesdeDT := CreateDateTime(FechaDesde, 0T);
+                FechaHastaDT := CreateDateTime(FechaHasta, 235959T);
+                TieneFecha := true;
+            end;
+        end;
+        if not TieneFecha and JsonObject.Get('fechaDesde', JsonToken) then begin
+            FechaTexto := JsonToken.AsValue().AsText();
+            if (FechaTexto <> '') and Evaluate(FechaDesde, FechaTexto) then
+                FechaDesdeDT := CreateDateTime(FechaDesde, 0T);
+        end;
+        if JsonObject.Get('fechaHasta', JsonToken) then begin
+            FechaTexto := JsonToken.AsValue().AsText();
+            if (FechaTexto <> '') and Evaluate(FechaHasta, FechaTexto) then begin
+                FechaHastaDT := CreateDateTime(FechaHasta, 235959T);
+                TieneFecha := true;
+            end;
+        end;
+
+        // Categoría (opcional)
+        if JsonObject.Get('categoria', JsonToken) then begin
+            Categoria := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Categoria));
+            if Categoria <> '' then
+                TieneCategoria := true;
+        end;
+
+        // Aplicar filtros y recorrer tareas
+        UserTask.Reset();
+        if TieneUsuario then
+            UserTask.SetRange("Assigned To", UsuarioGuid);
+        if TieneFecha then
+            UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+        if TieneCategoria then
+            UserTask.SetFilter("User Task Group Assigned To", Categoria);
+
+        if UserTask.FindSet() then
+            repeat
+                AgregarTareaUsuarioAlJson(UserTask, JsonArray);
+            until UserTask.Next() = 0;
+
+        JsonArray.WriteTo(JsonResult);
+        exit(JsonResult);
+    end;
+
+    /// <summary>
+    /// Añade una tarea al array JSON de resultados incluyendo puntoX y puntoY del recurso/emplazamiento.
+    /// </summary>
+    local procedure AgregarTareaUsuarioAlJson(var UserTask: Record "User Task"; var JsonArray: JsonArray)
+    var
+        JsonTarea: JsonObject;
+        User: Record User;
+        UserGtask: Record UsuariosGtask;
+        Resource: Record Resource;
+        Emplazamientos: Record Emplazamientos;
+        FechaInicio: Date;
+        HoraInicio: Time;
+        Reserva: Record Reserva;
+    begin
+        Clear(JsonTarea);
+        JsonTarea.Add('id', UserTask.ID);
+        JsonTarea.Add('idQr', UserTask.IdQr);
+        JsonTarea.Add('no', UserTask."No.");
+        JsonTarea.Add('title', UserTask.Title);
+        JsonTarea.Add('description', UserTask.GetDescription());
+        JsonTarea.Add('categoria', UserTask."User Task Group Assigned To");
+        JsonTarea.Add('departamento', UserTask.Departamento);
+        JsonTarea.Add('servicio', UserTask.Servicio);
+        JsonTarea.Add('estado', Format(UserTask.Estado));
+        case UserTask.Priority of
+            UserTask.Priority::Low:
+                JsonTarea.Add('prioridad', 'Baja');
+            UserTask.Priority::Normal:
+                JsonTarea.Add('prioridad', 'Normal');
+            UserTask.Priority::High:
+                JsonTarea.Add('prioridad', 'Alta');
+        end;
+
+        if UserTask."Start DateTime" <> 0DT then begin
+            FechaInicio := DT2Date(UserTask."Start DateTime");
+            HoraInicio := DT2Time(UserTask."Start DateTime");
+            JsonTarea.Add('fechaInicio', Format(FechaInicio, 0, '<Year4>-<Month,2>-<Day,2>'));
+            JsonTarea.Add('horaInicio', Format(HoraInicio, 0, '<Hours24,2>:<Minutes,2>:<Seconds,2>'));
+        end;
+        if UserTask."Due DateTime" <> 0DT then
+            JsonTarea.Add('fechaVencimiento', Format(DT2Date(UserTask."Due DateTime"), 0, '<Year4>-<Month,2>-<Day,2>'));
+
+        if not IsNullGuid(UserTask."Assigned To") then begin
+            User.SetRange("User Security ID", UserTask."Assigned To");
+            if User.FindFirst() then begin
+                if User."Full Name" <> '' then
+                    JsonTarea.Add('responsable', User."Full Name")
+                else
+                    JsonTarea.Add('responsable', User."User Name");
+            end;
+            UserGtask.ChangeCompany('Malla Publicidad');
+            UserGtask.SetRange("Id Usuario", UserTask."Assigned To");
+            if UserGtask.FindFirst() then
+                JsonTarea.Add('responsableIdGtask', UserGtask."Id Gtask");
+        end;
+        if UserTask.Resource <> '' then begin
+            if Resource.Get(UserTask.Resource) then begin
+                JsonTarea.Add('puntoX', Resource.PuntoX);
+                JsonTarea.Add('puntoY', Resource.PuntoY);
+                JsonTarea.Add('recurso', Resource."No.");
+                JsonTarea.Add('recursoNombre', Resource.Name);
+            end;
+        end;
+
+        // Coordenadas del recurso/emplazamiento (puntoX, puntoY)
+        if UserTask.Id_record.TableNo = Database::Resource then begin
+            if Resource.Get(UserTask.Id_record) then begin
+                JsonTarea.Add('puntoX', Resource.PuntoX);
+                JsonTarea.Add('puntoY', Resource.PuntoY);
+                JsonTarea.Add('recurso', Resource."No.");
+                JsonTarea.Add('recursoNombre', Resource.Name);
+            end;
+        end;
+        if UserTask.Id_record.TableNo = Database::Emplazamientos then begin
+            Emplazamientos.Get(UserTask.Id_record);
+            JsonTarea.Add('puntoX', Emplazamientos.PuntoX);
+            JsonTarea.Add('puntoY', Emplazamientos.PuntoY);
+            JsonTarea.Add('emplazamiento', Emplazamientos."Nº Emplazamiento");
+            JsonTarea.Add('emplazamientoDescripcion', Emplazamientos."Descripción");
+            JsonTarea.Add('recurso', Emplazamientos."Nº Emplazamiento");
+            JsonTarea.Add('recursoNombre', Emplazamientos."Descripción");
+
+        end;
+        // si no es emplazamiento ni recurso, pero tiene reserrva, desde la reserva se puede obtener el recurso
+        if UserTask.Id_record.TableNo = Database::Reserva then begin
+            if Reserva.Get(UserTask.Reserva) then begin
+                if Resource.Get(Reserva."Nº Recurso") then begin
+                    JsonTarea.Add('puntoX', Resource.PuntoX);
+                    JsonTarea.Add('puntoY', Resource.PuntoY);
+                    JsonTarea.Add('recurso', Resource."No.");
+                    JsonTarea.Add('recursoNombre', Resource.Name);
+                end;
+            end;
+        end;
+
 
         JsonArray.Add(JsonTarea);
     end;
@@ -6529,6 +6822,7 @@ codeunit 7001148 GTask
         UserTask.Validate("Created DateTime", CurrentDateTime);
         Usertask."Start DateTime" := CreateDateTime(Fecha, Hora);
         Usertask."Due DateTime" := CreateDateTime(Fecha, Hora);
+        User.Get(UserSecurityId());
         Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, Categoria, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
         UserTask.Validate(Priority, Usertask.Priority::High);
         UserTask.Validate("Object Type", Usertask."Object Type"::Page);
@@ -7172,8 +7466,8 @@ codeunit 7001148 GTask
             UserGtaskMalla.SetRange("Id Usuario", Responsable);
             If not UserGtaskMalla.FindFirst() then Error('Usuario %1 no encontrado en Gtask', Responsable);
         end;
-        UserGtaskMalla.SetRange("Id Usuario", UserSecurityId());
-        If not UserGtaskMalla.FindFirst() then Error('Usuario %1 no encontrado en Gtask', UserId());
+        UserGtaskMalla.SetRange("Id Usuario", User."User Security Id");
+        If not UserGtaskMalla.FindFirst() then Error('Usuario %1 no encontrado en Gtask', User."User Name");
         If IsnullGuid(Responsable) then begin
             UserGtaskMalla.Reset();
             UserxbyCategory.ChangeCompany('Malla Publicidad');
@@ -7248,7 +7542,7 @@ codeunit 7001148 GTask
         // If not IsNullGuid(UserTask.Supervisor) then
         //     UserTask."Created By" := Supervisor
         // else
-        UserTask.Validate("Created By", UserSecurityId());
+        UserTask.Validate("Created By", User."User Security Id");
         // UserxbyCategory.Reset();
         // UserxbyCategory.SetRange(Departamento, Servicio);
         // UserxbyCategory.SetRange("User Task Group Code", Categoria);
@@ -8759,6 +9053,8 @@ codeunit 7001148 GTask
             UserTask.IdQr := rDet.Id_Gtask;
             UserTask.TestField(IdQr);
             UserTask."Created By" := UserTask."Supervisor";
+            if rdet.Estado = rdet.Estado::Cerrada then
+                UserTask.Estado := UserTask.Estado::Finalizado;
             UserTask.Modify();
         end;
         UpdateTaskGtask(UserTask.Id_Tarea, UserTask.ID);
@@ -9058,6 +9354,112 @@ codeunit 7001148 GTask
             end;
         end else
             Error('JSON inválido');
+    end;
+
+    /// <summary>
+    /// Endpoint para asignar (impostar) la zona de limpieza a emplazamientos paradas bus.
+    /// Acepta un objeto con una parada o un array de paradas.
+    /// Formato objeto: {"id": "P123", "zonaLimpieza": 1}
+    /// Formato array: [{"id": "P1", "zonaLimpieza": 1}, {"id": "P2", "zonaLimpieza": 2}]
+    /// </summary>
+    /// <param name="JsonText">JSON con id (código parada) y zonaLimpieza (entero)</param>
+    /// <returns>JSON con actualizados y errores: {"actualizados": 2, "errores": [{"id": "P99", "mensaje": "Parada no encontrada"}]}</returns>
+    [ServiceEnabled]
+    procedure ImportarZonaLimpiezaParadasBus(JsonText: Text): Text
+    var
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonObject: JsonObject;
+        JsonTarea: JsonObject;
+        JsonResult: JsonObject;
+        JsonErrores: JsonArray;
+        Emplazamientos: Record "Emplazamientos";
+        Actualizados: Integer;
+        ResponseText: Text;
+    begin
+        Actualizados := 0;
+        Clear(JsonResult);
+        Clear(JsonErrores);
+
+        // Puede ser un objeto único o un array
+        if JsonArray.ReadFrom(JsonText) then begin
+            // Es un array: [{"id": "P1", "zonaLimpieza": 1}, ...]
+            foreach JsonToken in JsonArray do begin
+                JsonTarea := JsonToken.AsObject();
+                if ProcesarZonaLimpiezaParada(JsonTarea, Emplazamientos, JsonErrores) then
+                    Actualizados += 1;
+            end;
+        end else
+            if JsonObject.ReadFrom(JsonText) then begin
+                // Es un objeto único: {"id": "P123", "zonaLimpieza": "plaza españa"}
+                if ProcesarZonaLimpiezaParada(JsonObject, Emplazamientos, JsonErrores) then
+                    Actualizados += 1;
+            end else
+                Error('JSON inválido. Se espera un objeto {"id": "...", "zonaLimpieza": n} o un array de objetos.');
+
+        JsonResult.Add('actualizados', Actualizados);
+        JsonResult.Add('errores', JsonErrores);
+        JsonResult.WriteTo(ResponseText);
+        exit(ResponseText);
+    end;
+
+    local procedure ProcesarZonaLimpiezaParada(var JsonTarea: JsonObject; var Emplazamientos: Record "Emplazamientos"; var JsonErrores: JsonArray): Boolean
+    var
+        JsonCampo: JsonToken;
+        JsonError: JsonObject;
+        IdParada: Code[20];
+        ZonaLimpieza: Text;
+        ZonasLimpieza: Record "Zonas Limpieza";
+        Id: Integer;
+    begin
+        if not JsonTarea.Get('id', JsonCampo) then begin
+            Clear(JsonError);
+            JsonError.Add('mensaje', 'Falta el campo id');
+            JsonErrores.Add(JsonError);
+            exit(false);
+        end;
+        IdParada := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(IdParada));
+        if IdParada = '' then begin
+            Clear(JsonError);
+            JsonError.Add('mensaje', 'El campo id está vacío');
+            JsonErrores.Add(JsonError);
+            exit(false);
+        end;
+
+        if not JsonTarea.Get('zonaLimpieza', JsonCampo) then begin
+            Clear(JsonError);
+            JsonError.Add('id', IdParada);
+            JsonError.Add('mensaje', 'Falta el campo zonaLimpieza');
+            JsonErrores.Add(JsonError);
+            exit(false);
+        end;
+        // if not Evaluate(ZonaLimpieza, JsonCampo.AsValue().AsText()) then begin
+        //     Clear(JsonError);
+        //     JsonError.Add('id', IdParada);
+        //     JsonError.Add('mensaje', 'zonaLimpieza debe ser un número entero');
+        //     JsonErrores.Add(JsonError);
+        //     exit(false);
+        // end;
+
+        if not Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, IdParada) then begin
+            Clear(JsonError);
+            JsonError.Add('id', IdParada);
+            JsonError.Add('mensaje', 'Parada no encontrada');
+            JsonErrores.Add(JsonError);
+            exit(false);
+        end;
+        ZonasLimpieza.SetRange("Descripción", ZonaLimpieza);
+        if not ZonasLimpieza.FindFirst() then begin
+            ZonasLimpieza.reset;
+            If ZonasLimpieza.findlast then Id := ZonasLimpieza.Id;
+            ZonasLimpieza.Init;
+            ZonasLimpieza.Id := Id + 1;
+            ZonasLimpieza.Validate("Descripción", ZonaLimpieza);
+            ZonasLimpieza.Insert;
+        end;
+        Emplazamientos.Validate("Zona Limpieza", ZonasLimpieza.Id);
+        Emplazamientos.Modify(true);
+        exit(true);
     end;
 
     /// <summary>

@@ -172,11 +172,11 @@ page 50112 "Incidencias Taller"
                 end;
 
             }
-            action("Cerrar Incidencia")
+            action("Crear Incidencia")
             {
                 ApplicationArea = All;
-                Caption = 'Cerrar Incidencia Gtask';
-                Image = Close;
+                Caption = 'Crear Incidencia Gtask';
+                Image = Create;
                 trigger OnAction()
                 var
                     rDet: Record "Incidencias";
@@ -342,7 +342,7 @@ page 50112 "Incidencias Taller"
             {
 
             }
-            actionref(CerrarIncidencia; "Cerrar Incidencia") { }
+            actionref(CrearIncidencia; "Crear Incidencia") { }
         }
     }
     trigger OnOpenPage()

@@ -1,4 +1,4 @@
-page 50101 "Ordenes Fijación QR"
+page 50102 "Ordenes Fijación QR"
 {
     PageType = List;
     ApplicationArea = All;
