@@ -2076,36 +2076,30 @@ codeunit 7001148 GTask
                     Tareas.ChangeCompany(Empresas.Name);
                     Tareas.Reset();
                     Tareas.SetRange(IdQr, IdQrTxt);
-                    if Tareas.FindSet() then
-                        repeat
-                            if Tareas.Estado <> Tareas.Estado::Finalizado then begin
-                                clear(JsonTareaOutPut);
-                                JsonTareaOutPut.Add('idnavision', Tareas.Id);
-                                JsonTareaOutPut.Add('empresa', Empresas.Name);
-                                JsonTareaOutPut.Add('descripcion', Tareas.Title);
-                                JsonOutPutArrayItem.Add(JsonTareaOutPut);
-                                CuentaTareas += 1;
-                            end;
-                        until Tareas.Next() = 0;
-                until Empresas.Next() = 0;
-                if CuentaTareas = 0 Then begin
-                    Empresas.FindFirst();
-                    repeat
-                        Tareas.ChangeCompany(Empresas.Name);
-                        Tareas.Reset();
-                        Tareas.SetRange(IdQr, IdQrTxt);
-                        if Tareas.Findlast() then begin
+                    if Tareas.FindLast() then begin
+                        //repeat
 
+                        clear(JsonTareaOutPut);
+                        JsonTareaOutPut.Add('idnavision', Tareas.Id);
+                        JsonTareaOutPut.Add('empresa', Empresas.Name);
+                        JsonTareaOutPut.Add('descripcion', Tareas.Title);
+                        JsonOutPutArrayItem.Add(JsonTareaOutPut);
+                        CuentaTareas += 1;
+
+                        Tareas.SetFilter(ID, '<>%1', Tareas.ID);
+                        Tareas.SetFilter(Estado, '<>%1', Tareas.Estado::Finalizado);
+                        if Tareas.FindLast() then begin
                             clear(JsonTareaOutPut);
                             JsonTareaOutPut.Add('idnavision', Tareas.Id);
                             JsonTareaOutPut.Add('empresa', Empresas.Name);
                             JsonTareaOutPut.Add('descripcion', Tareas.Title);
                             JsonOutPutArrayItem.Add(JsonTareaOutPut);
                             CuentaTareas += 1;
-
                         end;
-                    until Empresas.Next() = 0;
-                end;
+
+                    end;
+                until Empresas.Next() = 0;
+
                 JsonOutPutItem.Add('tareas', JsonOutPutArrayItem);
                 JsonOutPutArray.Add(JsonOutPutItem);
             end;
@@ -2184,6 +2178,7 @@ codeunit 7001148 GTask
         IdImagen: Integer;
         IdTarea: Text;
         Response: HttpResponseMessage;
+
     begin
         //{
         //"id":"65b5c4c3d4e5f6789012335"
@@ -2305,13 +2300,13 @@ codeunit 7001148 GTask
         If IdIncidencia = '' then
             rDet.Init()
         else begin
-            if rDet.Get(Copystr(IdIncidencia, 1, 20)) then
-                IdIncidencia := rDet.Id_Gtask;
-            rDet.SetRange("Id_Gtask", IdIncidencia);
-            if Not rDet.FindFirst() then
-                rDet.Init()
-            else
-                NuevaIncidencia := false;
+            if not rDet.Get(Copystr(IdIncidencia, 1, 20)) then begin
+                rDet.SetRange("Id_Gtask", IdIncidencia);
+                if not rDet.FindFirst() then Error('Incidencia no encontrada');
+            end;
+            NuevaIncidencia := false;
+
+            if rDet.Id_Gtask = '' Then NuevaIncidencia := true
         end;
         rDet.Recurso := Resource;
         if Parada then
@@ -2353,7 +2348,7 @@ codeunit 7001148 GTask
 
         if NuevaIncidencia then begin
             rDet."Enviar Correo" := true;
-            rDet.Insert(true);
+            If IdIncidencia = '' Then rDet.Insert(true);
         end;
         If ImpagenesTemp.FindSet() then
             repeat
@@ -2391,7 +2386,7 @@ codeunit 7001148 GTask
             wRecordRef.Close();
             if Empresa = '' Then Empresa := CompanyName;
             Recurso.ChangeCompany(Empresa);
-            If Not Recurso.Get(Resource) then begin
+            If Recurso.Get(Resource) then begin
                 wRecordRef.Open(Database::Resource, false, Empresa);
                 wRecordRef.Get(Recurso.RecordId);
                 resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, Empresa);
@@ -2399,7 +2394,8 @@ codeunit 7001148 GTask
                     CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
                     resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, Empresa);
                 end;
-            end;
+            end else
+                resource := '';
         end else begin
             //TODO: Añadir Paradas en Gtask
 
@@ -2412,8 +2408,8 @@ codeunit 7001148 GTask
             Resource := '';
         end;
 
-        if resource <> '' then
-            JsonFormater.WriteStringProperty('resource', resource);
+        //if resource <> '' then
+        //  JsonFormater.WriteStringProperty('resource', resource);
         //else
         //  JsonFormater.WriteStringProperty('resource', '');
         if rDet.Id_Gtask = '' then NuevaIncidencia := true;
@@ -2433,7 +2429,6 @@ codeunit 7001148 GTask
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         Clear(RestApi);
-
         If NuevaIncidencia then
             Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'incidence', Token(), RequestType::post, Json)
 
@@ -2448,15 +2443,18 @@ codeunit 7001148 GTask
         end;
         rDet.SetWorkTextDescription(Description + ' ' + Observation);
         rDet.Get(rDet."No.");
-        if NuevaIncidencia then
-            rDet.Id_Gtask := Id;
+        rDet.Id_Gtask := Id;
         rDet.Modify();
+        Commit();
+
+        If IdIncidencia <> '' then NuevaIncidencia := false;
         rDet.Get(rDet."No.");
         If rDet."Id Tarea Gtask" <> '' then begin
             ModifyTareaIncidencia(rDet);
 
         end;
         If not NuevaIncidencia then begin
+
             If rDet.Estado <> rDet.Estado::Cerrada then begin
                 If (rDet."Id Tarea Gtask" = '') then begin
                     IdTarea := CrearTareaIncidencia(rDet);
@@ -6134,6 +6132,7 @@ codeunit 7001148 GTask
         // if not IsNullGuid(UserTask.Supervisor) then begin
         //     UserTask."Created By" := Supervisor;
         UserTask."No." := Format(UserTask.ID);
+        UserTask.IdQr := 'L_' + UserTask."No.";
         UserTask.Modify();
         //end;
         Commit();
@@ -6217,6 +6216,8 @@ codeunit 7001148 GTask
         CategoriasLimpieza: Text;
         JsonResult: Text;
         RecordIdEmplazamiento: RecordId;
+        IdResponsabel: Text;
+        UserGtask: Record UsuariosGtask;
     begin
         // Leer JSON de entrada
         if not JsonObject.ReadFrom(JsonText) then
@@ -6267,6 +6268,8 @@ codeunit 7001148 GTask
                 CategoriasLimpieza := CategoriasLimpieza + UserTaskGroup.Code;
             until UserTaskGroup.Next() = 0;
         end;
+        if JsonObject.Get('Usuario', JsonToken) then
+            IdResponsabel := JsonToken.AsValue().AsText();
 
         // Inicializar array de resultados
 
@@ -6280,6 +6283,11 @@ codeunit 7001148 GTask
                     UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
                 if FechaDesde <> 0D then
                     UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                if IdResponsabel <> '' then begin
+                    UserGtask.SetRange("Id Gtask", IdResponsabel);
+                    if UserGtask.FindFirst() then
+                        UserTask.SetRange("Assigned To", UserGtask."Id Usuario");
+                end;
                 if UserTask.FindSet() then begin
                     repeat
                         AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
@@ -6344,6 +6352,7 @@ codeunit 7001148 GTask
     begin
         Clear(JsonTarea);
         JsonTarea.Add('id', UserTask.ID);
+        JsonTarea.Add('idTarea', UserTask.Id_Tarea);
         JsonTarea.Add('no', UserTask."No.");
         JsonTarea.Add('title', UserTask.Title);
         JsonTarea.Add('description', UserTask.GetDescription());
@@ -6353,7 +6362,7 @@ codeunit 7001148 GTask
         JsonTarea.Add('categoria', UserTask."User Task Group Assigned To");
         JsonTarea.Add('departamento', UserTask.Departamento);
         //qr
-        JsonTarea.Add('qr', UserTask.IdQr);
+        JsonTarea.Add('idQr', UserTask.IdQr);
         JsonTarea.Add('servicio', UserTask.Servicio);
         JsonTarea.Add('estado', Format(UserTask.Estado));
         JsonTarea.Add('puntoX', Emplazamientos.PuntoX);
@@ -8712,19 +8721,27 @@ codeunit 7001148 GTask
         UserTask.Validate(Priority, Usertask.Priority::High);
         UserTask.Validate("Object Type", Usertask."Object Type"::Page);
         If rDet."Tipo Elemento" = rDet."Tipo Elemento"::Recurso then begin
-            Resource.Get(rDet.Recurso);
-            UserTask.Validate("Object ID", Page::"Resource Card");
-            UserTask.Id_record := Resource.RecordId;
-            Resource.SetRange("No.", Resource."No.");
-            RecRef.GetTable(Resource);
-            RecRef.Get(Resource.RecordId);
+            If Resource.Get(rDet.Recurso) then begin
+                UserTask.Validate("Object ID", Page::"Resource Card");
+                UserTask.Id_record := Resource.RecordId;
+                Resource.SetRange("No.", Resource."No.");
+                RecRef.GetTable(Resource);
+                RecRef.Get(Resource.RecordId);
+            end else begin
+                rDet."Tipo Elemento" := rDet."Tipo Elemento"::Parada;
+                rDet.Recurso := '';
+            end;
         end else begin
-            Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, rDet.Recurso);
-            UserTask.Validate("Object ID", Page::"Ficha Parada Bus");
-            UserTask.Id_record := Emplazamientos.RecordId;
-            Resource.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
-            RecRef.GetTable(Emplazamientos);
-            RecRef.Get(Emplazamientos.RecordId);
+            If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, rDet.Recurso) then begin
+                UserTask.Validate("Object ID", Page::"Ficha Parada Bus");
+                UserTask.Id_record := Emplazamientos.RecordId;
+                Resource.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
+                RecRef.GetTable(Emplazamientos);
+                RecRef.Get(Emplazamientos.RecordId);
+            end else begin
+                rDet."Tipo Elemento" := rDet."Tipo Elemento"::Recurso;
+                rDet.Recurso := '';
+            end;
         end;
 
 
