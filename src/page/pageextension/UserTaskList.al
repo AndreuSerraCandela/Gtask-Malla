@@ -111,6 +111,19 @@ pageextension 92157 "UserTaskList" extends "User Task List"
     {
         addafter("Delete User Tasks")
         {
+            //hABILITAR pARA CREAR PARTE DE TRABAJO
+            action(CreateParte)
+            {
+                ApplicationArea = All;
+                Caption = 'Permitir Parte de Trabajo';
+                Image = Create;
+                trigger OnAction()
+                begin
+                    Rec.CrearParte := true;
+                    Rec.Modify();
+                end;
+            }
+
             action("Avanzar Nueva Tarea")
             {
                 ApplicationArea = All;
@@ -284,6 +297,7 @@ pageextension 92157 "UserTaskList" extends "User Task List"
             actionref("Tareas_Supervisadas_ref"; "Tareas Supervisadas") { }
             actionref("Tareas_Asignadas_ref"; "Tareas Asignadas") { }
             actionref("Tareas_Creadas_ref"; "Tareas creadas") { }
+            actionref(CreateParte_Ref; CreateParte) { }
         }
     }
     trigger OnOpenPage()

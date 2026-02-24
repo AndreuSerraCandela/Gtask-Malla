@@ -365,6 +365,7 @@ page 50113 "Lineas Enviadas Taller"
                     LineCount: Integer;
                     Control: Codeunit "Controlprocesos";
                     Gtask: Codeunit GTask;
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     Contrato: Record "Sales Header";
                     PurchaseHeader: Record "Purchase Header";
                 begin
@@ -390,7 +391,7 @@ page 50113 "Lineas Enviadas Taller"
                                             Contrato.ChangeCompany(Rec."Empresa");
                                             Contrato.SetRange("Nº Proyecto", PurchaseHeader."Nº Proyecto");
                                             if Contrato.FindFirst() then begin
-                                                Gtask.EnviaCorreoComercial('Mercancía Recibida', Contrato, Contrato."Salesperson Code", true, 'Mercancía Recibida', '');
+                                                Procesos_GTask.EnviaCorreoComercial('Mercancía Recibida', Contrato, Contrato."Salesperson Code", true, 'Mercancía Recibida', '');
                                             end;
                                         end;
                                         // Marcar como enviado

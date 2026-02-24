@@ -37,7 +37,7 @@ pageextension 92168 "DocumentAttachmentDetailsExt" extends "Document Attachment 
         IsRecursoVisible: Boolean;
         RecursoNo: Text;
 
-    local procedure GetRecursoNo(): Text
+    internal procedure GetRecursoNo(): Text
     var
         DocumentAttachment: Record "Document Attachment";
         Reserva: Record Reserva;

@@ -91,8 +91,13 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
             var
                 ProductoServicio: Record "Resource";
             begin
-                if ProductoServicio.Get("Producto Servicio") then
-                    "Descripción producto" := ProductoServicio.Name;
+                if "Producto Servicio" = '' then
+                    "Descripción producto" := ''
+                else
+                    if ProductoServicio.Get("Producto Servicio") then
+                        "Descripción producto" := ProductoServicio.Name
+                    else
+                        "Descripción producto" := '';
             end;
         }
         field(80012; "Descripción producto"; Text[80])
@@ -102,6 +107,18 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
         field(80013; "Fecha último Envío"; Date)
         {
             Caption = 'Fecha último Envío';
+            DataClassification = ToBeClassified;
+        }
+        field(80018; "Id Gtask"; Text[50])
+        {
+            Caption = 'Id Gtask';
+            DataClassification = ToBeClassified;
+        }
+        //Añadir estados Abierto, Cerrado, Facturado
+        field(80019; Estado; Option)
+        {
+            OptionMembers = Abierto,Cerrado,Facturado;
+            Caption = 'Estado';
             DataClassification = ToBeClassified;
         }
     }

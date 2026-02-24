@@ -15,8 +15,8 @@
             "launchBrowser": true,
             "enableLongRunningSqlStatements": true,
             "enableSqlInformationDebugger": true,
-            "port": 8049,
-            "debugServer": 8049
+            "port": 7049,
+            "debugServer": 7049
         },
         {
             "type": "al",

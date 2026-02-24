@@ -67,6 +67,7 @@ table 7001209 "UsuariosGtask"
         field(50006; "Id Usuario Limpieza EMT"; Integer)
         {
             DataClassification = ToBeClassified;
+            ObsoleteState = Removed;
         }
     }
 

@@ -22,5 +22,21 @@ tableextension 92500 "Tab_ExtensionTaskSetup2" extends "Jobs Setup"
             TableRelation = "No. Series";
             DataClassification = CustomerContent;
         }
+        field(50112; "Periodicidad Zona Crítica"; DateFormula)
+        {
+            Caption = 'Periodicidad Zona Crítica';
+            DataClassification = CustomerContent;
+        }
+        field(50113; "Periodicidad Zona No Crítica"; DateFormula)
+        {
+            Caption = 'Periodicidad Zona No Crítica';
+            DataClassification = CustomerContent;
+        }
+        // Es debug
+        field(50114; "Es Debug"; Boolean)
+        {
+            Caption = 'Es Debug';
+            DataClassification = CustomerContent;
+        }
     }
 }

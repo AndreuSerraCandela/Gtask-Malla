@@ -8,6 +8,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 533938541 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Comunicado por EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Comunicado por EMT - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 2615446671 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Descripción</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -22,6 +27,11 @@
           <source>Enviar Correo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Enviar Correo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 2892832855 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Es Peticion</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Es Peticion - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 3042810774 - Field 2950845476 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Estado</source>
@@ -38,10 +48,20 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Fecha - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 358846916 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha Actuacion</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Fecha Actuacion - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 1484954735 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>FechaHora</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field FechaHora - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 89990961 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Frecuencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Frecuencia - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 3042810774 - Field 213386160 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>ID Tarea Gtask</source>
@@ -103,6 +123,41 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Work Description - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3406607782 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Periodicidad Zona Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3406607782 - Field 2890218026 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día del mes (1-31)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Field Día del mes - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3406607782 - Field 3747026759 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día de la semana</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Field Día Semana - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3406607782 - Field 548909652 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Id Zona Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Field Id Zona Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3406607782 - Field 3241763117 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Línea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Field Línea - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3406607782 - Field 3155183847 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Temporada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Field Temporada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 3406607782 - Field 2684098607 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Tipo periodicidad</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Periodicidad Zona Limpieza - Field Tipo Periodicidad - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 91669665 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>UsuariosGtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -132,11 +187,6 @@
           <source>Id Usuario</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Id Usuario - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="Table 91669665 - Field 1565443108 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Id Usuario Limpieza EMT</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Id Usuario Limpieza EMT - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 91669665 - Field 814966011 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Nombre</source>
@@ -662,6 +712,46 @@
           <source>Nuevo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Create Chat - Action Category_New - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ficha Zona Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Control 2445482498 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>General</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Control General - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Control 415504711 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Id de la zona.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Control Id - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Control 2369587993 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Frecuencia limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Control Periodicidad - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Control 2442933156 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Días de limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Control PeriodicidadPart - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Action 3154651828 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Importa un archivo Excel con números de emplazamiento en la columna A y asigna la zona de limpieza actual a cada uno.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Action ImportarParadasZona - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Action 3154651828 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Importar paradas zona</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Action ImportarParadasZona - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1561396197 - Action 3383493608 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Procesar</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ficha Zonas Limpieza - Action Category_Process - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2755427284 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Incidencias Taller</source>
@@ -1433,6 +1523,31 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Partes de Trabajo y cartelería - Action Ver - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3406607782 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Periodicidad limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Periodicidad Zona Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3406607782 - Control 2890218026 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día del mes (1-31). Puede haber varias líneas para varios días, ej. 1 y 15.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Periodicidad Zona Limpieza - Control Día del mes - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3406607782 - Control 3747026759 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cuando el tipo es Día semanal, indica el día de la semana (solo laborables L-V).</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Periodicidad Zona Limpieza - Control Día Semana - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3406607782 - Control 3155183847 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Todas = todo el año. Verano = abr-oct. Invierno = nov-mar.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Periodicidad Zona Limpieza - Control Temporada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3406607782 - Control 2684098607 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día semanal: ej. todos los lunes y viernes. Día del mes: ej. día 1 y 15.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Periodicidad Zona Limpieza - Control Tipo Periodicidad - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="Page 91669665 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Usuarios Gtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1748,6 +1863,21 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Imagenes Orden fijacion ext - Control Url - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2299342583 - Control 3861172337 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2556642749">
+          <source>Tareas Limpieza Paradas Bus</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension JobSetupTask - Control Tareas Limpieza Paradas Bus - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2299342583 - Control 4179166770 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2556642749">
+          <source>Periodicidad de las tareas de limpieza en zona crítica (ej: 1D, 1W).</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension JobSetupTask - Control Periodicidad Zona Crítica - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2299342583 - Control 3299004105 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2556642749">
+          <source>Periodicidad de las tareas de limpieza en zona no crítica.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension JobSetupTask - Control Periodicidad Zona No Crítica - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="PageExtension 4228244613 - Action 1288086261 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 685777706">
           <source>Comunicar a Jurídico</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1933,6 +2063,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension TaskList - Action Crear Tarea CMT - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Action 4179691570 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Permitir Parte de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Action CreateParte - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 301352800 - Action 2477294019 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
           <source>Borra la tarea.</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2018,6 +2153,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Avanzar Nueva Tarea - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 4179691570 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Permitir Parte de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action CreateParte - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2984827402 - Action 1770992317 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
           <source>Recuperar IdQR</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2078,15 +2218,30 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Usuarios x Categoría - Control Usuario - Property ToolTip</note>
         </trans-unit>
+        <trans-unit id="PageExtension 50910241 - Action 564287857 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
+          <source>Abre la ficha de la zona de limpieza para editar datos y frecuencia.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action AbrirFicha - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 50910241 - Action 564287857 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
+          <source>Abrir ficha</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action AbrirFicha - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 50910241 - Action 3154651828 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
+          <source>Importa un archivo Excel con números de emplazamiento en la columna A y asigna la zona de limpieza actual a cada uno.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action ImportarParadasZona - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 50910241 - Action 3154651828 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
+          <source>Importar paradas zona</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action ImportarParadasZona - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 3377152574 - Field 2852855596 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2618634653">
           <source>Material Fijación</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Categorias - Field Material Fijación - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="TableExtension 3377152574 - Field 11378988 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2618634653">
-          <source>Tipo de Tarea</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Categorias - Field Tipo de Tarea - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 1302225088 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
           <source>Hoja de Trabajo</source>
@@ -2118,6 +2273,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Dirección Envio - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 1302225088 - Field 2950845476 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
+          <source>Estado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Estado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 1302225088 - Field 2950845476 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
+          <source>Abierto,Cerrado,Facturado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Estado - Property OptionCaption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 1302225088 - Field 1071181892 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
           <source>Fecha Fin</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2132,6 +2297,11 @@
           <source>Fecha último Envío</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Fecha último Envío - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 1302225088 - Field 3824700489 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
+          <source>Id Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Hoja de Trabajo - Field Id Gtask - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 1302225088 - Field 3612309607 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1867541023">
           <source>Nombre Cliente</source>
@@ -2378,10 +2548,25 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension ServCue - Field Tareas Pendientes - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 1554482435 - Field 3685852049 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2556642749">
+          <source>Es Debug</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tab_ExtensionTaskSetup2 - Field Es Debug - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 1554482435 - Field 1471875482 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2556642749">
           <source>Incidencias Nos.</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tab_ExtensionTaskSetup2 - Field Incidencias Nos. - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 1554482435 - Field 4179166770 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2556642749">
+          <source>Periodicidad Zona Crítica</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tab_ExtensionTaskSetup2 - Field Periodicidad Zona Crítica - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 1554482435 - Field 3299004105 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2556642749">
+          <source>Periodicidad Zona No Crítica</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tab_ExtensionTaskSetup2 - Field Periodicidad Zona No Crítica - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2214873419 - Field 1607971347 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1837078383">
           <source>Categoría</source>
@@ -2408,6 +2593,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Categoría - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 3461366415 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Crear Parte de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field CrearParte - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 323353982 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Departamento</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2417,6 +2607,11 @@
           <source>Dependencia Creada</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field DependenciaCreada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 4218615076 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Es Periodica</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field EsPeriodica - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 2950845476 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Estado</source>
@@ -2437,11 +2632,6 @@
           <source>Fecha Comunicado Cambio</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Fecha Comunicado Cambio - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="TableExtension 2225073607 - Field 89990961 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
-          <source>Frecuencia</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Frecuencia - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 4082900970 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>IdQr</source>
@@ -2513,6 +2703,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Supervisor User Name - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 3890813981 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Tarea Anterior</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field TareaAnterior - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 3748575955 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Emplazamiento</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2548,20 +2743,90 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Supervisor - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 633429605 - Field 11378988 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 633429605">
+          <source>Tipo de Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Tipo de Tarea - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 633429605 - Field 1546832578 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 633429605">
           <source>Usuario</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Usuario - Property Caption</note>
         </trans-unit>
-        <trans-unit id="TableExtension 633429605 - Field 1123865071 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 633429605">
-          <source>Zona</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Zona Limpieza - Property Caption</note>
-        </trans-unit>
         <trans-unit id="TableExtension 4200194699 - Field 811435033 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2612617311">
           <source>Equipo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Zonas - Field Equipo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 1607971347 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Categoría</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Categoria - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 1077224227 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Correos en copia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Correos Copia - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 323353982 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Departamento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Departamento - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 870350816 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Responsable</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Responsable - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 4205920258 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Servicio</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Servicio - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 2594411452 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Supervisor</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Supervisor - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 50910241 - Field 832676011 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1048803034">
+          <source>Tipo de tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension ZonasLimpiezaExt - Field Tipo Tarea - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día de la semana</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - EnumValue 1698708158 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Jueves</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - EnumValue Jueves - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - EnumValue 1219465603 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Lunes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - EnumValue Lunes - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - EnumValue 3180509160 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Martes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - EnumValue Martes - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - EnumValue 1104446259 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Miércoles</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - EnumValue Miércoles - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - EnumValue 1222368710 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source> </source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - EnumValue Ninguno - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 2570427390 - EnumValue 808122924 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Viernes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Día Semana Limpieza - EnumValue Viernes - Property Caption</note>
         </trans-unit>
         <trans-unit id="Enum 1037327666 - EnumValue 3060217792 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Cancelado</source>
@@ -2582,6 +2847,41 @@
           <source>Pendiente</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Enum Task Enum - EnumValue Pendiente - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1145502366 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Temporada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Temporada Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1145502366 - EnumValue 930093322 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Invierno</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Temporada Limpieza - EnumValue Invierno - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1145502366 - EnumValue 3686302775 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Todas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Temporada Limpieza - EnumValue Todas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1145502366 - EnumValue 3847528859 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Verano</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Temporada Limpieza - EnumValue Verano - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1437760470 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Tipo periodicidad</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Periodicidad Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1437760470 - EnumValue 2890218026 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día del mes (ej. día 1 y 15)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Periodicidad Limpieza - EnumValue Día del mes - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 1437760470 - EnumValue 4291412643 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Día semanal (ej. todos los lunes)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Periodicidad Limpieza - EnumValue Día semanal - Property Caption</note>
         </trans-unit>
       </group>
     </body>

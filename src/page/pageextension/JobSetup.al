@@ -23,6 +23,27 @@ pageextension 92150 JobSetupTask extends "Jobs Setup"
                 }
 
             }
+            group("Tareas Limpieza Paradas Bus")
+            {
+                Caption = 'Tareas Limpieza Paradas Bus';
+                field("Periodicidad Zona Crítica"; Rec."Periodicidad Zona Crítica")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Periodicidad de las tareas de limpieza en zona crítica (ej: 1D, 1W).';
+                }
+                field("Periodicidad Zona No Crítica"; Rec."Periodicidad Zona No Crítica")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Periodicidad de las tareas de limpieza en zona no crítica.';
+                }
+            }
+            group("Debug")
+            {
+                field("Es Debug"; Rec."Es Debug")
+                {
+                    ApplicationArea = All;
+                }
+            }
         }
     }
 }

@@ -59,6 +59,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Proyecto: Record "Job";
                     TipoIncidencia: Record "User Task Group";
                     Gtask: Codeunit "Gtask";
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     TM: Record "Tenant Media";
                     DoccAttach: Record "Document Attachment";
                     DoccAttachTask: Record "Document Attachment";
@@ -188,7 +189,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         end;
                     end;
                     User.Get(UserSecurityId());
-                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
+                    Procesos_Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserSetups.Reset();
                     //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
                     UserTask.Validate(Priority, Usertask.Priority::High);
@@ -560,7 +561,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     //If Opcion <> Opcion::Opi then
                     DoccAttach.DeleteAll(true);
                     DoccAttach.Reset();
-                    Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                    Procesos_Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
                     DoccAttach.Reset();
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", UserTask."No.");
@@ -739,6 +740,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Proyecto: Record "Job";
                     TipoIncidencia: Record "User Task Group";
                     Gtask: Codeunit "Gtask";
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     TM: Record "Tenant Media";
                     DoccAttach: Record "Document Attachment";
                     DoccAttachTask: Record "Document Attachment";
@@ -855,7 +857,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         end;
                     end;
                     User.Get(UserSecurityId());
-                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
+                    Procesos_Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserSetups.Reset();
                     //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
                     UserTask.Validate(Priority, Usertask.Priority::High);
@@ -1091,7 +1093,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         tm.Delete();
                     end;
                     DoccAttach.Reset();
-                    Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                    Procesos_Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
                     ficheros.SetRange("Table ID", Database::"User Task");
                     ficheros.SetRange("No.", UserTask."No.");
                     if not ficheros.FindFirst() then begin
@@ -1189,7 +1191,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                 trigger OnAction()
                 var
                     Usertask: Record "User Task";
-                    Gtask: Codeunit Gtask;
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     Responsable: Text;
                     Supervisor: Text;
                     EmailResponsable: Text;
@@ -1203,7 +1205,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     If Usertask.FindFirst() then
                         repeat
                             user.get(Usertask."Created By");
-                            Gtask.DevuelveSupervisoryResponsable(Usertask."Assigned To", Usertask.Supervisor, 'TALLER', 'TALLER', Usertask."User Task Group Assigned To", EmailResponsable, EmailSupervisor, User, Usertask, ListaCorreos);
+                            Procesos_Gtask.DevuelveSupervisoryResponsable(Usertask."Assigned To", Usertask.Supervisor, 'TALLER', 'TALLER', Usertask."User Task Group Assigned To", EmailResponsable, EmailSupervisor, User, Usertask, ListaCorreos);
                             EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, ListaCorreos, 'julian@malla.es;xcastell@malla.es;lllompart@malla.es;andreuserra@malla.es', User."Full Name");
                         until Usertask.Next() = 0;
                 end;

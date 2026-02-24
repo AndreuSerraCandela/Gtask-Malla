@@ -121,6 +121,19 @@ pageextension 92154 "UserTask" extends "User Task card"
     {
         addafter("Go To Task Item")
         {
+            //hABILITAR pARA CREAR PARTE DE TRABAJO
+            action(CreateParte)
+            {
+                ApplicationArea = All;
+                Caption = 'Permitir Parte de Trabajo';
+                Image = Create;
+                trigger OnAction()
+                begin
+                    Rec.CrearParte := true;
+                    Rec.Modify();
+                end;
+            }
+
             action(Finish)
             {
                 ApplicationArea = RelationshipMgmt;
@@ -174,12 +187,12 @@ pageextension 92154 "UserTask" extends "User Task card"
                 Caption = 'Enviar Correo';
                 trigger OnAction()
                 var
-                    Gtask: Codeunit Gtask;
+                    Procesos_GTask: Codeunit Procesos_GTask;
                 begin
-                    Gtask.Email(Rec, EmailResponsable, EmailSupervisor);
+                    Procesos_GTask.Email(Rec, EmailResponsable, EmailSupervisor);
                     User.SetRange("User Security ID", Rec."Assigned To");
                     User.FindFirst();
-                    Gtask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false);
+                    Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false);
                 end;
             }
 
@@ -227,6 +240,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         addbefore(Recurrence_Promoted)
         {
             actionref(Visitas_Ref; Visitas) { }
+            actionref(CreateParte_Ref; CreateParte) { }
 
             actionref(Finish_Promoted; Finish) { }
             actionref(Delete_Promoted; Delete) { }
@@ -239,7 +253,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         NullFrecuencia: DateFormula;
     begin
         If Rec.Estado = Rec.Estado::Pendiente then
-            If Rec.Frecuencia = NullFrecuencia then
+            If not Rec.EsPeriodica then
                 Rec.Estado := Rec.Estado::Cancelado;
         if Rec."No." = '' then begin
             Rec."No." := Format(Rec.ID);
@@ -249,7 +263,7 @@ pageextension 92154 "UserTask" extends "User Task card"
 
     Procedure Eventos(pCategoria: Code[20])
     var
-        Gtask: Codeunit Gtask;
+        Procesos_GTask: Codeunit Procesos_GTask;
 
         RecRef: RecordRef;
         Resource: Record "Resource";
@@ -267,7 +281,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         UserxbyCategory.SetRange("User Task Group Code", pCategoria);
         If UserxbyCategory.FindFirst() Then Servicio := UserxbyCategory.Departamento;
         User.Get(UserSecurityId());
-        Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, pCategoria, EmailResponsable,
+        Procesos_GTask.DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, pCategoria, EmailResponsable,
         EmailSupervisor, User, Rec, ListadeCorreos);
         CurrPage.UPDATE(false);
 

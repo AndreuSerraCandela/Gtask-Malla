@@ -10,10 +10,10 @@ pageextension 92163 Categorias extends "User Task Group"
             {
                 ApplicationArea = All;
             }
-            field("Tipo de Tarea"; Rec."Tipo de Tarea")
-            {
-                ApplicationArea = All;
-            }
+            // field("Tipo de Tarea"; Rec."Tipo de Tarea")
+            // {
+            //     ApplicationArea = All;
+            // }
         }
         // modify(Control4)
         // {
@@ -44,16 +44,16 @@ pageextension 92165 CategoriasList extends "User Task Groups"
 {
     Caption = 'Categorías';
     AdditionalSearchTerms = 'Categorías';
-    layout
-    {
-        addafter("Description")
-        {
-            field("Tipo de Tarea"; Rec."Tipo de Tarea")
-            {
-                ApplicationArea = All;
-            }
-        }
-    }
+    // layout
+    // {
+    //     addafter("Description")
+    //     {
+    //         field("Tipo de Tarea"; Rec."Tipo de Tarea")
+    //         {
+    //             ApplicationArea = All;
+    //         }
+    //     }
+    // }
     actions
     {
         addlast(navigation)

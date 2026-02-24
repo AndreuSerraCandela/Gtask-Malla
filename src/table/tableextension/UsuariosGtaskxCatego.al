@@ -11,11 +11,17 @@ tableextension 92404 "User Task Group Member" extends "User Task Group Member"
         }
         field(62001; "Zona Limpieza"; Integer)
         {
+            ObsoleteState = Removed;
             Caption = 'Zona';
             DataClassification = ToBeClassified;
             TableRelation = "Zonas Limpieza".Id;
         }
         //Tipo de Tarea --Texto
+        field(62002; "Tipo de Tarea"; Text[50])
+        {
+            Caption = 'Tipo de Tarea';
+            DataClassification = ToBeClassified;
+        }
 
         field(50000; "Responsable"; Boolean)
         {

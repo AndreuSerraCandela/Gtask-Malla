@@ -43,11 +43,15 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     ZonaSeleccionada := ZonasLimpieza.Id;
 
                     // Verificar que hay un operario de limpieza asignado
-                    UsuariosGtask.ChangeCompany('Malla Publicidad');
-                    UsuariosGtask.SetFilter("Id Usuario Limpieza EMT", '<>%1', 0);
+                    // UsuariosGtask.ChangeCompany('Malla Publicidad');
+                    // UsuariosGtask.SetFilter("Id Usuario Limpieza EMT", '<>%1', 0);
+                    // if not UsuariosGtask.FindFirst() then
+                    //     Error('No se encontró ningún operario de limpieza');
+                    if IsNullGuid(ZonasLimpieza.Responsable) then
+                        Error('No se encontró ningún responsable de limpieza');
+                    UsuariosGtask.SetRange("Id Usuario", ZonasLimpieza.Responsable);
                     if not UsuariosGtask.FindFirst() then
-                        Error('No se encontró ningún operario de limpieza');
-
+                        Error('No se encontró ningún responsable de limpieza');
                     //OperarioLimpieza := UsuariosGtask."Id Usuario";
 
                     // Calcular próximo día marcado para esta zona de limpieza
@@ -61,11 +65,11 @@ pageextension 92169 BusExtension extends "Paradas Bus"
 
                     // Buscar emplazamientos en esta zona de limpieza que tengan recursos OPI
                     Emplazamientos.SetRange("Zona Limpieza", ZonaSeleccionada);
-                    Emplazamientos.SetFilter(Operario, '<>%1', 0);
+                    //Emplazamientos.SetFilter(Operario, '<>%1', 0);
                     if Emplazamientos.FindSet() then begin
                         repeat
                             UsuariosGtask.ChangeCompany('Malla Publicidad');
-                            UsuariosGtask.SetRange("Id Usuario Limpieza EMT", Emplazamientos.Operario);
+                            UsuariosGtask.SetRange("Id Usuario", ZonasLimpieza.Responsable);
 
                             if UsuariosGtask.FindFirst() then begin
                                 // Crear tarea de limpieza para esta Parada Bus
@@ -79,7 +83,7 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                                     If Gtask.CrearTareaLimpieza('LIMPIEZA', RecRef, 'Limpieza Parada ' + Emplazamientos."Nº Emplazamiento", Emplazamientos."Zona Limpieza",
                                     'Tarea de limpieza para la Parada ' + Emplazamientos."Nº Emplazamiento" +
                                                         ' - ' + Emplazamientos."Descripción" + ' en la zona de limpieza ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada"
-                                     , false, '', FechaInicio, UserTask.CalcularPeriodicidad(ZonasLimpieza, WorkDate())) then
+                                     , false, '', FechaInicio, true, 0) then
                                         ContadorTareas += 1;
                                 end;
                             end;
@@ -140,7 +144,7 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                                 Gtask.CrearTareaLimpieza('PuestaApunto', RecRef, Categorias.Description + ' ' + Emplazamientos."Nº Emplazamiento", 0,
                                 'Tarea de ' + Categorias.Description + ' para la Parada Bus ' + Emplazamientos."Nº Emplazamiento" +
                                 ' - ' + Emplazamientos."Descripción" + ' en la zona de limpieza ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada"
-                                + Emplazamientos."Nº Emplazamiento", false, '', FechaInicio, Periodicidad);
+                                + Emplazamientos."Nº Emplazamiento", false, '', FechaInicio, true, 0);
                             end;
                         until Emplazamientos.Next() = 0;
                     end else

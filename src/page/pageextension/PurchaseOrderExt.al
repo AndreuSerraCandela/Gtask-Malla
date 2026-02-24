@@ -65,7 +65,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                     PurchaseLine: Record "Purchase Line";
                     LineCount: Integer;
                     Control: Codeunit "Controlprocesos";
-                    Gtask: Codeunit GTask;
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     Job: Record Job;
                     EmailSubject: Text;
                     EmailBody: Text;
@@ -100,7 +100,7 @@ pageextension 92170 "Purchase Order Ext" extends "Purchase Order"
                                 if Rec."Nº Proyecto" <> '' then begin
                                     Contrato.SetRange("Nº Proyecto", Rec."Nº Proyecto");
                                     if Contrato.FindFirst() then begin
-                                        Gtask.EnviaCorreoComercial('Mercancía Recibida', Contrato, Contrato."Salesperson Code", true, 'Mercancía Recibida', '');
+                                        Procesos_GTask.EnviaCorreoComercial('Mercancía Recibida', Contrato, Contrato."Salesperson Code", true, 'Mercancía Recibida', '');
                                     end;
                                 end;
                                 // Marcar como enviado

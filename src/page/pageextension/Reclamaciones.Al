@@ -11,6 +11,7 @@ pageextension 92158 ReclamacionesExt extends "Ficha Reclamaciones"
                 trigger OnAction()
                 var
                     Gtask: Codeunit GTask;
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     UserTask: Record "User Task";
                     User: Record User;
                     EmailResponsable: Text[250];
@@ -40,7 +41,7 @@ pageextension 92158 ReclamacionesExt extends "Ficha Reclamaciones"
                         Usertask."Due DateTime" := CreateDateTime(CalcDate('1D', WorkDate()), 130000T);
                     end;
                     User.Get(UserSecurityId());
-                    Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'JURIDICO', 'JURIDICO', 'Reclamacion', EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
+                    Procesos_GTask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'JURIDICO', 'JURIDICO', 'Reclamacion', EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
                     UserTask.Validate(Priority, Usertask.Priority::High);
                     UserTask.Validate("Object Type", Usertask."Object Type"::Page);
                     UserTask.Validate("Object ID", Page::"Ficha Reclamaciones");
@@ -106,7 +107,7 @@ pageextension 92158 ReclamacionesExt extends "Ficha Reclamaciones"
 
 
                     Gtask.CrearTareaTecnico('', UserTask, UserTask.Departamento, UserTask.Servicio, false);
-                    Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                    Procesos_Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
                     EnviaCorreo(Usertask, true, '', false, Format(Rec."Motivo Reclamacion"), EmailResponsable, EmailSupervisor, '', User."Full Name");
 
                 end;

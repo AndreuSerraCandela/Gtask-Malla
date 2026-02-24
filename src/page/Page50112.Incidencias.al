@@ -41,6 +41,14 @@ page 50112 "Incidencias Taller"
                 field("Tipo Incidencia"; Rec."Tipo Incidencia") { ApplicationArea = All; }
                 field("Fecha Hora"; Rec."FechaHora") { ApplicationArea = All; }
                 field("Estado"; Rec."Estado") { ApplicationArea = All; }
+                //comunicado por EMT
+                field("Comunicado por EMT"; Rec."Comunicado por EMT") { ApplicationArea = All; }
+                //fecha de actuacion
+                field("Fecha Actuacion"; Rec."Fecha Actuacion") { ApplicationArea = All; }
+                //frecuencia
+                field("Frecuencia"; Rec."Frecuencia") { ApplicationArea = All; }
+                //es peticion
+                field("Es Peticion"; Rec."Es Peticion") { ApplicationArea = All; }
                 field("Usuario"; NombreUsuario)
                 {
                     Caption = 'Usuario';
@@ -198,6 +206,7 @@ page 50112 "Incidencias Taller"
                 var
                     rImagenesOrdenFijacion: Record "Imagenes Orden fijación";
                     Gtask: Codeunit GTask;
+                    Procesos_GTask: Codeunit Procesos_GTask;
                     ImageBase64: Text;
                     ResponseJson: Text;
                     JsonResponse: JsonObject;
@@ -244,7 +253,7 @@ page 50112 "Incidencias Taller"
                     end;
 
                     // Llamar a la función de LM Studio
-                    ResponseJson := Gtask.ProcessImageWithLMStudio(ImageBase64);
+                    ResponseJson := Procesos_GTask.ProcessImageWithLMStudio(ImageBase64);
 
                     // Procesar la respuesta
                     Clear(JsonResponse);

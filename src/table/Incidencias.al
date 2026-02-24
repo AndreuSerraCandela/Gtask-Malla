@@ -77,6 +77,26 @@ table 7001250 "Incidencias"
         {
             DataClassification = CustomerContent;
         }
+        //Fecuencia tipo Text
+        field(19; "Frecuencia"; Text[50])
+        {
+            DataClassification = CustomerContent;
+        }
+        //Es Peticion
+        field(20; "Es Peticion"; Boolean)
+        {
+            DataClassification = CustomerContent;
+        }
+        //Comunicado por EMT
+        field(21; "Comunicado por EMT"; Boolean)
+        {
+            DataClassification = CustomerContent;
+        }
+        //fecha de actuacion
+        field(22; "Fecha Actuacion"; DateTime)
+        {
+            DataClassification = CustomerContent;
+        }
     }
     keys
     {
@@ -133,20 +153,20 @@ table 7001250 "Incidencias"
         OutStream: OutStream;
     begin
         Clear("Work Description");
-        "Work Description".CreateOutStream(OutStream);
+        "Work Description".CreateOutStream(OutStream, TEXTENCODING::UTF8);
         OutStream.Write(WorkDescription);
         Modify();
     end;
 
-    procedure SetWorkTextDescription(WorkDescription: Text)
-    var
-        OutStream: OutStream;
-    begin
-        Clear("Work Description");
-        "Work Description".CreateOutStream(OutStream);
-        OutStream.WriteText(WorkDescription);
-        Modify();
-    end;
+    // procedure SetWorkTextDescription(WorkDescription: Text)
+    // var
+    //     OutStream: OutStream;
+    // begin
+    //     Clear("Work Description");
+    //     "Work Description".CreateOutStream(OutStream);
+    //     OutStream.WriteText(WorkDescription);
+    //     Modify();
+    // end;
 
     [TryFunction]
     local procedure TryGetWorkDescription(var workDescription: Text)
@@ -204,10 +224,18 @@ table 7001250 "Incidencias"
     var
         Emplazamientos: Record "Emplazamientos";
         Resource: Record Resource;
+        Empresas: Record "Company";
     begin
         if "Tipo Elemento" = "Tipo Elemento"::Recurso then begin
             if Resource.Get(Rec.Recurso) then
                 exit(Resource.Name);
+            If Empresas.FindFirst() then begin
+                repeat
+                    Resource.ChangeCompany(Empresas.Name);
+                    if Resource.Get(Rec.Recurso) then
+                        exit(Resource.Name);
+                until Empresas.Next() = 0;
+            end;
         end;
         If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Rec.Recurso) then
             exit(Emplazamientos."Descripción");

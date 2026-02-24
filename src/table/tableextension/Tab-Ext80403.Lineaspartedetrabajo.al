@@ -31,10 +31,13 @@ tableextension 92403 "Lineas parte de trabajo" extends "Time Sheet Line"
                 Item: Record Item;
                 Resource: Record Resource;
             begin
+                if No = '' then
+                    exit;
                 if Item.Get(No) then
-                    Descripcion := Item.Description;
-                if Resource.Get(No) then
-                    Descripcion := Resource.Name;
+                    Descripcion := Item.Description
+                else
+                    if Resource.Get(No) then
+                        Descripcion := Resource.Name;
             end;
         }
         field(80005; Descripcion; Text[80])
