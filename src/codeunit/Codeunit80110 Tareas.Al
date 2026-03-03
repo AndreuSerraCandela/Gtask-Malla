@@ -4589,7 +4589,7 @@ codeunit 7001148 GTask
                 EmailResponsable := 'villena@malla.es';
                 ListadeCorreos := 'javier@malla.es;lllompart@malla.es;andreuserra@malla.es';
                 If Incidencias."Tipo Incidencia" = Incidencias."Tipo Incidencia"::"Incidencias EMT" then
-                    ListadeCorreos += ';aitorrodriguez@malla.es;juamecuart@malla.es';
+                    ListadeCorreos += ';aitorrodriguez@malla.es;jaumecuart@malla.es';
                 If Incidencias."Tipo Elemento" = Incidencias."Tipo Elemento"::Recurso then begin
                     If Recurso.Get(Incidencias.Recurso) Then
                         Desc := Recurso.Name else
