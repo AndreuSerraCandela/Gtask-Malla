@@ -118,6 +118,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Usuario - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 3000305522 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario Asignado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Usuario Asignado - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 22244033 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Work Description</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1118,6 +1123,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 3402404909 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si la incidencia fue comunicada por EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Comunicado_por_EMT - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 3402404909 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Comunicado por EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Comunicado_por_EMT - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 2811520765 - Control 3640233012 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>ID de la incidencia en Gtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1148,6 +1163,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Id_Uduario_Gtask - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 1071160179 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que asignó la incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Id_Uduario_Gtask_Asignado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 1071160179 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID Usuario Gtask Asignado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Id_Uduario_Gtask_Asignado - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 2811520765 - Control 2821462494 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>URL de la primera imagen asociada a esta incidencia</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1167,6 +1192,16 @@
           <source>Usuario</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 3000305522 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que asignó la incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Asignado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 3000305522 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Asignado - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2811520765 - Action 280434384 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Cerrar Incidencia Gtask</source>

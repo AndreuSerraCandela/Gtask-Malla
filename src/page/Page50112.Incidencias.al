@@ -442,6 +442,43 @@ page 50117 "Lista Incidencias Taller"
                     Editable = false;
                     Enabled = false;
                 }
+                field("Usuario Asignado"; NombreUsuarioAsignado)
+                {
+                    Caption = 'Usuario';
+                    ApplicationArea = All;
+                    ToolTip = 'ID del usuario que asignó la incidencia';
+                    trigger OnLookup(var Text: Text): Boolean
+                    var
+                        Usuario: Record UsuariosGtask;
+                    begin
+                        If Page.RunModal(Page::UsuariosGtask, Usuario) = Action::LookupOK then begin
+                            NombreUsuarioAsignado := Usuario.Nombre;
+                            Rec."Usuario Asignado" := Usuario."Id Usuario";
+                            Rec.Modify();
+                            exit(true);
+                        end;
+                    end;
+
+                    trigger OnValidate()
+                    var
+                        Usuario: Record UsuariosGtask;
+                    begin
+                        Usuario.SetRange(Nombre, NombreUsuario);
+                        If Usuario.FindFirst() then begin
+                            NombreUsuarioAsignado := Usuario.Nombre;
+                            Rec."Usuario Asignado" := Usuario."Id Usuario";
+                            Rec.Modify();
+                        end;
+                    end;
+                }
+                field(Id_Uduario_Gtask_Asignado; Rec.ID_UsuarioGtask(Rec."Usuario Asignado"))
+                {
+                    Caption = 'ID Usuario Gtask Asignado';
+                    ApplicationArea = All;
+                    ToolTip = 'ID del usuario que asignó la incidencia';
+                    Editable = false;
+                    Enabled = false;
+                }
                 field(Id_Gtask; Rec.Id_Gtask)
                 {
                     Caption = 'ID Gtask';
@@ -455,6 +492,14 @@ page 50117 "Lista Incidencias Taller"
                     Caption = 'ID Tarea Gtask';
                     ApplicationArea = All;
                     ToolTip = 'ID de la tarea en Gtask';
+                    Editable = false;
+                    Enabled = false;
+                }
+                field("Comunicado_por_EMT"; Rec."Comunicado por EMT")
+                {
+                    Caption = 'Comunicado por EMT';
+                    ApplicationArea = All;
+                    ToolTip = 'Indica si la incidencia fue comunicada por EMT';
                     Editable = false;
                     Enabled = false;
                 }
@@ -498,6 +543,7 @@ page 50117 "Lista Incidencias Taller"
     }
     var
         NombreUsuario: Text;
+        NombreUsuarioAsignado: Text;
         UrlPrimeraImagen: Text;
 
 
@@ -506,10 +552,18 @@ page 50117 "Lista Incidencias Taller"
     var
         UsuarioGtask: Record UsuariosGtask;
     begin
+        NombreUsuario := '';
         If not IsNullGuid(Rec.Usuario) then begin
             UsuarioGtask.SetRange("Id Usuario", Rec.Usuario);
             If UsuarioGtask.FindFirst() then begin
                 NombreUsuario := UsuarioGtask.Nombre;
+            end;
+        end;
+        NombreUsuarioAsignado := '';
+        If not IsNullGuid(Rec."Usuario Asignado") then begin
+            UsuarioGtask.SetRange("Id Usuario", Rec."Usuario Asignado");
+            If UsuarioGtask.FindFirst() then begin
+                NombreUsuarioAsignado := UsuarioGtask.Nombre;
             end;
         end;
         UrlPrimeraImagen := GetUrlPrimeraImagen();

@@ -9,6 +9,10 @@ codeunit 7001149 Procesos_GTask
         LToken: Text;
         Gtask: Codeunit Gtask;
 
+    trigger OnRun()
+    begin
+        CrearTareasLimpiezaTodasParadasSemana();
+    end;
 
     #region eventos
     [EventSubscriber(ObjectType::Table, Database::"Time Sheet Header", 'OnValidateResourceNoOnBeforeTestFields', '', false, false)]
@@ -624,15 +628,16 @@ codeunit 7001149 Procesos_GTask
             if Tareas.Estado in [Tareas.Estado::Finalizado, Tareas.Estado::"En Proceso"] then begin
                 rIncidencia.SetRange("Id Tarea Gtask", Tareas.Id_Tarea);
                 if rIncidencia.FindFirst() then begin
-                    if rIncidencia."Comunicado por EMT" then
+                    if rIncidencia."Comunicado por EMT" then begin
                         If rIncidencia."Fecha Actuacion" = 0DT Then
                             rIncidencia."Fecha Actuacion" := CurrentDateTime();
-                    if rIncidencia."Fecha Actuacion" > CurrentDateTime() then
+                        if rIncidencia."Fecha Actuacion" > CurrentDateTime() then
+                            rIncidencia."Fecha Actuacion" := CurrentDateTime();
+                        rIncidencia.Modify();
+                    end else begin
                         rIncidencia."Fecha Actuacion" := CurrentDateTime();
-                    rIncidencia.Modify();
-                end else begin
-                    rIncidencia."Fecha Actuacion" := CurrentDateTime();
-                    rIncidencia.Modify();
+                        rIncidencia.Modify();
+                    end;
                 end;
             end;
         End;
@@ -1048,15 +1053,17 @@ codeunit 7001149 Procesos_GTask
     /// <summary>
     /// Procedimiento auxiliar para agregar una tarea al JSON array de resultados
     /// </summary>
-    internal procedure AgregarTareaAlJson(var UserTask: Record "User Task"; var Emplazamientos: Record Emplazamientos; var JsonArray: JsonArray)
+    internal procedure AgregarTareaAlJson(var UserTask: Record "User Task"; EmplazamientoRecorid: RecordId; var JsonArray: JsonArray; var UseerTaskTemp: Record "User Task")
     var
         JsonTarea: JsonObject;
         User: Record User;
         UserGtask: Record UsuariosGtask;
         FechaInicio: Date;
         HoraInicio: Time;
+        Emplazamientos: Record Emplazamientos;
 
     begin
+        Emplazamientos.Get(EmplazamientoRecorid);
         Clear(JsonTarea);
         JsonTarea.Add('id', UserTask.ID);
         JsonTarea.Add('idTarea', UserTask.Id_Tarea);
@@ -1075,6 +1082,8 @@ codeunit 7001149 Procesos_GTask
         JsonTarea.Add('puntoX', Emplazamientos.PuntoX);
         JsonTarea.Add('puntoY', Emplazamientos.PuntoY);
         JsonTarea.Add('emplazamiento', Emplazamientos."Nº Emplazamiento");
+        //direccion del emplazamiento
+        JsonTarea.Add('direccion', Emplazamientos."Ubicación");
         JsonTarea.Add('emplazamientoDescripcion', Emplazamientos."Descripción");
 
         case UserTask.Priority of
@@ -1147,6 +1156,7 @@ codeunit 7001149 Procesos_GTask
         Clear(JsonTarea);
         JsonTarea.Add('id', UserTask.ID);
         JsonTarea.Add('idQr', UserTask.IdQr);
+        JsonTarea.Add('idTarea', UserTask.Id_Tarea);
         JsonTarea.Add('no', UserTask."No.");
         JsonTarea.Add('title', UserTask.Title);
         JsonTarea.Add('description', UserTask.GetDescription());
@@ -2314,6 +2324,59 @@ codeunit 7001149 Procesos_GTask
         end;
         exit('');
 
+    end;
+
+    /// <summary>
+    /// Crea tareas de limpieza parada a parada. Para cada parada con zona de limpieza:
+    /// - Si tiene alguna tarea no finalizada (Pendiente o En Proceso), no se crea nada.
+    /// - Si no tiene ninguna tarea pendiente, se crea la próxima según la periodicidad de su zona.
+    /// Pensado para ejecutarse cada día de madrugada desde la cola de trabajos.
+    /// </summary>
+    /// <returns>Número de tareas de limpieza creadas.</returns>
+    procedure CrearTareasLimpiezaTodasParadasSemana(): Integer
+    var
+        ZonasLimpieza: Record "Zonas Limpieza";
+        Emplazamientos: Record Emplazamientos;
+        UserTask: Record "User Task";
+        RecRef: RecordRef;
+        ProximoDiaLimpieza: Date;
+        ContadorTareas: Integer;
+        Descripcion: Text;
+    begin
+        Emplazamientos.SetFilter("Zona Limpieza", '<>%1', 0);
+        if not Emplazamientos.FindSet() then
+            exit(0);
+
+        repeat
+            // ¿Tiene esta parada alguna tarea no finalizada?
+            UserTask.Reset();
+            UserTask.SetRange(Id_record, Emplazamientos.RecordId);
+            UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
+            if UserTask.FindFirst() then
+                continue; // Ya tiene tarea pendiente, no crear nada
+
+            // Obtener zona y comprobar que esté configurada para limpieza
+            if not ZonasLimpieza.Get(Emplazamientos."Zona Limpieza") then
+                continue;
+            if ZonasLimpieza."Tipo Tarea" <> 'LIMPIEZA' then
+                continue;
+            if IsNullGuid(ZonasLimpieza.Responsable) then
+                continue;
+
+            // Próximo día de limpieza para esta zona
+            ProximoDiaLimpieza := UserTask.CalcularProximoDiaLimpieza(ZonasLimpieza, WorkDate());
+            if ProximoDiaLimpieza = 0D then
+                continue;
+
+            RecRef.GetTable(Emplazamientos);
+            Descripcion := 'Tarea de limpieza para la Parada ' + Emplazamientos."Nº Emplazamiento" +
+                ' - ' + Emplazamientos."Descripción" + ' en la zona de limpieza ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada";
+            if Gtask.CrearTareaLimpieza('LIMPIEZA', RecRef, 'Limpieza Parada ' + Emplazamientos."Nº Emplazamiento",
+                Emplazamientos."Zona Limpieza", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
+                ContadorTareas += 1;
+        until Emplazamientos.Next() = 0;
+
+        exit(ContadorTareas);
     end;
 
 

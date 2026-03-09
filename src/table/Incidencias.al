@@ -97,6 +97,11 @@ table 7001250 "Incidencias"
         {
             DataClassification = CustomerContent;
         }
+        field(23; "Usuario Asignado"; Guid)
+        {
+            TableRelation = UsuariosGtask."Id Usuario";
+            DataClassification = CustomerContent;
+        }
     }
     keys
     {
@@ -194,12 +199,12 @@ table 7001250 "Incidencias"
         exit('');
     end;
 
-    procedure ID_UsuarioGtask(Usuario: Guid): Text
+    procedure ID_UsuarioGtask(pUsuario: Guid): Text
     var
         UsuarioGtask: Record UsuariosGtask;
     begin
-        If not IsNullGuid(Rec.Usuario) then begin
-            UsuarioGtask.SetRange("Id Usuario", Rec.Usuario);
+        If not IsNullGuid(pUsuario) then begin
+            UsuarioGtask.SetRange("Id Usuario", Usuario);
             If UsuarioGtask.FindFirst() then begin
                 Exit(UsuarioGtask."Id Gtask");
             end;
@@ -207,18 +212,20 @@ table 7001250 "Incidencias"
         Exit('');
     end;
 
-    internal procedure NombreUsuario(): Text
+    internal procedure NombreUsuario(pUsuario: Guid): Text
     var
         UsuarioGtask: Record UsuariosGtask;
     begin
-        If not IsNullGuid(Rec.Usuario) then begin
-            UsuarioGtask.SetRange("Id Usuario", Rec.Usuario);
+        If not IsNullGuid(pUsuario) then begin
+            UsuarioGtask.SetRange("Id Usuario", pUsuario);
             If UsuarioGtask.FindFirst() then begin
                 Exit(UsuarioGtask.Nombre);
             end;
         end;
         Exit('');
     end;
+
+
 
     internal procedure NombreElemento(): Variant
     var

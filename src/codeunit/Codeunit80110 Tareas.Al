@@ -8,6 +8,7 @@ codeunit 7001148 GTask
         Qwark: Option Ocr,Qwark;
         LToken: Text;
         Procesos_GTask: Codeunit Procesos_GTask;
+        UserTaskTemp: Record "User Task" temporary;
 
     trigger OnRun()
     begin
@@ -4145,7 +4146,10 @@ codeunit 7001148 GTask
         // y no es el usuario de Odata por defecto, vamos a suponer que es el mismo que el supervisor
 
         //UserTask."Created By" := UserSecurityId();
-        UserTask."Assigned To" := rDet.Usuario;
+        if IsNullGuid(rDet."Usuario Asignado") = false then
+            UserTask."Assigned To" := rDet."Usuario Asignado"
+        else
+            UserTask."Assigned To" := rDet.Usuario;
         //Supervisor será de la Categoría MTO, el supervidor
         UserTaskGroup.SetRange("User Task Group Code", 'MTO');
         UserTaskGroup.SetRange(Supervisor, true);
@@ -4154,7 +4158,8 @@ codeunit 7001148 GTask
             UserTask."Supervisor" := UserTaskGroup."User Security ID";
             UserTask.Departamento := UserTaskGroup.Departamento;
 
-        end;
+        end else
+            UserTask."Supervisor" := rDet."Usuario";
         UserTask."Created By" := UserTask."Supervisor";
         UserTask.Validate("Created DateTime", CurrentDateTime);
         Usertask."Start DateTime" := rDet.FechaHora;
@@ -4221,7 +4226,10 @@ codeunit 7001148 GTask
 
         end;
         UserTask."User Task Group Assigned To" := 'MTO';
-        Empleado := rDet.Usuario;
+        if IsNullGuid(rDet."Usuario Asignado") = false then
+            Empleado := rDet."Usuario Asignado"
+        else
+            Empleado := rDet.Usuario;
         UserTask."Assigned To" := Empleado;
 
         UserTask.Modify();
@@ -4510,6 +4518,10 @@ codeunit 7001148 GTask
             UserTask.IdQr := rDet.Id_Gtask;
             UserTask.TestField(IdQr);
             UserTask."Created By" := UserTask."Supervisor";
+            if IsNullGuid(rDet."Usuario Asignado") = false then
+                UserTask."Assigned To" := rDet."Usuario Asignado"
+            else
+                UserTask."Assigned To" := rDet.Usuario;
             if rdet.Estado = rdet.Estado::Cerrada then
                 UserTask.Estado := UserTask.Estado::Finalizado;
             UserTask.Modify();
@@ -4598,7 +4610,7 @@ codeunit 7001148 GTask
                     Desc := 'Parada nº ' + Incidencias.Recurso;
                 end;
                 Procesos_GTask.EnviaCorreo(Incidencias."No.", Desc + ' - ' + Incidencias.GetWorkDescription(), true, '', false, Incidencias."Descripción",
-                EmailResponsable, ListadeCorreos, EmailSupervisor, '', Incidencias.NombreUsuario(), false, '', true);
+                EmailResponsable, ListadeCorreos, EmailSupervisor, '', Incidencias.NombreUsuario(Incidencias.Usuario), false, '', true);
             until Incidencias.Next() = 0;
             Incidencias.ModifyAll("Enviar Correo", false);
         end;
@@ -6295,6 +6307,7 @@ codeunit 7001148 GTask
         document: JsonObject;
         Usuario: Record UsuariosGtask;
         UsuarioId: Guid;
+        UsuarioAsignadoId: Guid;
         IdIncidencia: Text;
         NuevaIncidencia: Boolean;
         Fecha: DateTime;
@@ -6332,6 +6345,9 @@ codeunit 7001148 GTask
         If JsonIncidencia.Get('user', JsonCampo) Then
             If Usuario.Get(JsonCampo.AsValue().AsText()) then
                 UsuarioId := Usuario."Id Usuario";
+        If JsonIncidencia.Get('user_assigned', JsonCampo) Then
+            If Usuario.Get(JsonCampo.AsValue().AsText()) then
+                UsuarioAsignadoId := Usuario."Id Usuario";
         If JsonIncidencia.Get('incidenceType', JsonCampo) Then
             IncidenceType := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('observation', JsonCampo) Then
@@ -6451,6 +6467,8 @@ codeunit 7001148 GTask
         //rDet. := Observation;
         if IsNullGuid(UsuarioId) = false then
             rDet.Usuario := UsuarioId;
+        if IsNullGuid(UsuarioAsignadoId) = false then
+            rDet."Usuario Asignado" := UsuarioAsignadoId;
 
         case IncidenceType of
 
@@ -6458,13 +6476,13 @@ codeunit 7001148 GTask
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
             'VILLENA':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
-            'TALLER':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Taller";
-            'MTO':
+            'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
+                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+            'MTO', 'Mobiliario Urbano':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
-            'TAREA TALLER':
+            'TAREA TALLER', 'Grupo Taller':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
-            'PODA':
+            'PODA', 'Poda':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
 
         end;
@@ -6853,13 +6871,13 @@ codeunit 7001148 GTask
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
             'VILLENA':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
-            'TALLER':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Taller";
-            'MTO':
+            'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
+                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+            'MTO', 'Mobiliario Urbano':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
-            'TAREA TALLER':
+            'TAREA TALLER', 'Grupo Taller':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
-            'PODA':
+            'PODA', 'Poda':
                 rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
 
         end;
@@ -7001,8 +7019,11 @@ codeunit 7001148 GTask
         //Nombre del Recurso
         JsonFormater.WriteStringProperty('resource_name', Incidencias.NombreElemento());
         JsonFormater.WriteStringProperty('fecha', Format(Incidencias.FechaHora, 0, '<Year4>-<Month,2>-<Day,2>T<Hour,2>:<Minute,2>:<Second,2>Z'));
-        JsonFormater.WriteStringProperty('user', Incidencias.NombreUsuario());
+        JsonFormater.WriteStringProperty('user', Incidencias.NombreUsuario(Incidencias.Usuario));
         JsonFormater.WriteStringProperty('user_name', Incidencias.ID_UsuarioGtask(Incidencias.Usuario));
+        JsonFormater.WriteStringProperty('user_assigned', Incidencias.ID_UsuarioGtask(Incidencias."Usuario Asignado"));
+        JsonFormater.WriteStringProperty('user_assigned_name', Incidencias.NombreUsuario(Incidencias."Usuario Asignado"));
+        JsonFormater.WriteStringProperty('comunicado_por_emt', Incidencias."Comunicado por EMT");
         //JsonFormater.WriteStringProperty('id_task', Incidencias."ID Tarea Gtask");
         //Añadir geplocañlización PuntoX yPuntoY del emplazamiento o recurso
         If Incidencias."Tipo Elemento" = Incidencias."Tipo Elemento"::Recurso then begin
@@ -7387,6 +7408,7 @@ codeunit 7001148 GTask
         IdResponsabel: Text;
         UserGtask: Record UsuariosGtask;
         ZonasLimpieza: Record "Zonas Limpieza";
+
     begin
         // Leer JSON de entrada
         if not JsonObject.ReadFrom(JsonText) then
@@ -7469,7 +7491,9 @@ codeunit 7001148 GTask
                 end;
                 if UserTask.FindSet() then begin
                     repeat
-                        Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                        UserTaskTemp := UserTask;
+                        If UserTaskTemp.insert Then
+                            Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
                     until UserTask.Next() = 0;
                 end;
                 // Si se ha proporcionado Fecha desde, añadir todas las tareas con fecha antgerior a desde y estado pendiente
@@ -7478,7 +7502,9 @@ codeunit 7001148 GTask
                     UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
                     if UserTask.FindSet() then begin
                         repeat
-                            Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                            UserTaskTemp := UserTask;
+                            If UserTaskTemp.insert Then
+                                Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
                         until UserTask.Next() = 0;
                     end;
                 end;
@@ -7499,7 +7525,9 @@ codeunit 7001148 GTask
                         // Buscar todas las tareas que cumplan los filtros
                         if UserTask.FindSet() then begin
                             repeat
-                                Procesos_GTask.AgregarTareaAlJson(UserTask, EmplazamientosFiltrados, JsonArray);
+                                UserTaskTemp := UserTask;
+                                If UserTaskTemp.insert Then
+                                    Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
                             until UserTask.Next() = 0;
                         end;
                         // Si se ha proporcionado Fecha desde, añadir todas las tareas con fecha antgerior a desde y estado pendiente
@@ -7508,7 +7536,9 @@ codeunit 7001148 GTask
                             UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
                             if UserTask.FindSet() then begin
                                 repeat
-                                    Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                                    UserTaskTemp := UserTask;
+                                    If UserTaskTemp.insert Then
+                                        Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
                                 until UserTask.Next() = 0;
                             end;
                         end;
@@ -7526,7 +7556,9 @@ codeunit 7001148 GTask
                         // Intentar obtener el emplazamiento desde Id_record
                         if UserTask.Id_record.TableNo = Database::Emplazamientos then begin
                             if Emplazamientos.Get(UserTask.Id_record) then
-                                Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                                UserTaskTemp := UserTask;
+                            If UserTaskTemp.insert Then
+                                Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos.RecordId, JsonArray, UserTaskTemp);
                         end;
                     until UserTask.Next() = 0;
                 end;
@@ -7536,7 +7568,9 @@ codeunit 7001148 GTask
                     UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
                     if UserTask.FindSet() then begin
                         repeat
-                            Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos, JsonArray);
+                            UserTaskTemp := UserTask;
+                            If UserTaskTemp.insert Then
+                                Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
                         until UserTask.Next() = 0;
                     end;
                 end;

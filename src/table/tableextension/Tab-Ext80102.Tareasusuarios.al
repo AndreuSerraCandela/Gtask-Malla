@@ -366,6 +366,9 @@ tableextension 92103 Tareasusuarios extends "User Task"
 
         Descripcion := Rec.GetDescription();
         FechaInicio := Rec.CalcularProximoDiaLimpieza(ZonaLimpieza, WorkDate());
+        //Si la proxima fechainicio es igual que la fecha de la tAREA ACTUAL, crear LA DEPENDENCIA, CON WORKDATE + 1 DIA
+        iF FechaInicio = DT2Date(Rec."Start DateTime") then
+            FechaInicio := Rec.CalcularProximoDiaLimpieza(ZonaLimpieza, Calcdate('+1D', WorkDate()));
         If Gtask.CrearTareaLimpieza(Rec.TipoTarea, RecRef, Rec.Title, Rec.ZonaLimpieza, Descripcion
                                      , false, '', FechaInicio, true, Rec.Id) then begin
             Rec.Get(Rec.Id);
