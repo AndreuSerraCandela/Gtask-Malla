@@ -50,7 +50,21 @@ pageextension 92168 "DocumentAttachmentDetailsExt" extends "Document Attachment 
                 DocumentAttachment.SetRange("ID_Doc", Rec."ID_Doc")
             else
                 DocumentAttachment.SetFilter("Line No.", '>%1', 10000);
-            DocumentAttachment.SetRange("File Name", Rec."File Name");
+            //DocumentAttachment.SetRange("File Name", Rec."File Name");
+            If Rec.ID_Url <> 0 Then begin
+                DocumentAttachment.SetRange("ID_Url", Rec."ID_Url");
+                if not DocumentAttachment.FindFirst() then
+                    DocumentAttachment.SetRange("ID_Url", Rec."ID_Url_Bak");
+            end else If Rec.ID_Url_Bak <> 0 Then
+                    DocumentAttachment.SetRange("ID_Url", Rec."ID_Url_Bak");
+            If ((Rec.ID_Url = 0) and (Rec.ID_Url_Bak = 0)) Or (not DocumentAttachment.FindFirst()) then begin
+                DocumentAttachment.SetRange("ID_Url");
+                DocumentAttachment.SetRange("ID_Url_Bak");
+                If Rec.Url <> '' Then
+                    DocumentAttachment.SetRange("URL", Rec.Url)
+                else
+                    DocumentAttachment.SetRange("URL_Bak", Rec.Url_Bak);
+            end;
             if DocumentAttachment.FindFirst() then begin
                 if (Rec."File Extension" = '') or (Rec."Attached Date" = 0DT) Then Begin
                     if Rec."Attached Date" = 0DT Then Rec."Attached Date" := Rec.SystemCreatedAt;
@@ -96,7 +110,9 @@ pageextension 92168 "DocumentAttachmentDetailsExt" extends "Document Attachment 
     trigger OnAfterGetRecord()
     begin
         IsRecursoVisible := ((Rec."Table ID" = Database::Job) or (Rec."Table ID" = Database::"User Task"));
-        If IsRecursoVisible then
+        If IsRecursoVisible then begin
             RecursoNo := GetRecursoNo();
+
+        end;
     end;
 }

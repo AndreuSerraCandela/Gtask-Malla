@@ -56,8 +56,11 @@ pageextension 92152 "Usuarios x Categoría" extends "User Task Group Members"
             {
                 ApplicationArea = All;
             }
-
-
+            field("Enviar Whatsapp"; Rec."Enviar Whatsapp")
+            {
+                ApplicationArea = All;
+                Caption = 'Enviar Whatsapp';
+            }
 
         }
     }

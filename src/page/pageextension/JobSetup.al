@@ -11,6 +11,11 @@ pageextension 92150 JobSetupTask extends "Jobs Setup"
             {
                 ApplicationArea = All;
             }
+            field("Peticiones Nos."; Rec."Peticiones Nos.")
+            {
+                ApplicationArea = All;
+                ToolTip = 'Serie numérica para órdenes de trabajo. Las incidencias normales usan Incidencias Nos.';
+            }
         }
         addlast(content)
         {

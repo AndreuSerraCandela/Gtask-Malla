@@ -48,6 +48,11 @@ tableextension 92404 "User Task Group Member" extends "User Task Group Member"
         {
 
         }
+        //Enviar whatsapp
+        field(50005; "Enviar Whatsapp"; Boolean)
+        {
+            DataClassification = ToBeClassified;
+        }
 
 
     }

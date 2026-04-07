@@ -63,6 +63,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Frecuencia - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 27041052 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID último mensaje WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Id Mensaje WA - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 213386160 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>ID Tarea Gtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -113,6 +118,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Tipo Incidencia - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 2618634653 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>User Task Group</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field User Task Group - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 1546832578 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Usuario</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -127,6 +137,66 @@
           <source>Work Description</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Work Description - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensaje WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 2855137781 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha creación</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Fecha creación - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 2018003553 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID mensaje original</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Id Mensaje Original - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 27041052 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID mensaje WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Id Mensaje WA - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 4036766165 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Id Usuario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 2430366863 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nº enlace documentos adjuntos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field No. doc. adjuntos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 4110412397 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nº registro adjuntos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Nº registro adjuntos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 1667091258 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Origen registro</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Origen Registro ID - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 100673457 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Origen tabla ID</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Origen Tabla ID - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 1992525590 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Respuesta / cuerpo completo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Respuesta JSON - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 3364085384 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Teléfono</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Teléfono - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 363729491 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Texto del mensaje</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Texto mensaje - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 3406607782 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Periodicidad Zona Limpieza</source>
@@ -212,6 +282,11 @@
           <source>Tecnico</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Tecnico - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 91669665 - Field 3364085384 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Teléfono</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Teléfono - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2323889025 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Lineas Cartelería Nacional</source>
@@ -778,6 +853,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Control Description - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2755427284 - Control 27041052 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Identificador del último mensaje de WhatsApp registrado para esta incidencia.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Control Id Mensaje WA - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="Page 2755427284 - Control 1546832578 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>ID del usuario que creó la incidencia</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -812,6 +892,16 @@
           <source>Desasignar Imagen de la Incidencia</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Action Desasignar Imagen de la Incidencia - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2755427284 - Action 1911439588 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abre los mensajes de WhatsApp vinculados a esta incidencia (mismo origen de registro).</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Action MensajesWhatsApp - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2755427284 - Action 1911439588 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensajes WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Action MensajesWhatsApp - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2755427284 - Action 4288093475 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Analiza la imagen seleccionada con LM Studio para extraer número de parada y descripción de la incidencia</source>
@@ -1208,6 +1298,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Action Cerrar Incidencia - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2811520765 - Action 3694851421 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abre los mensajes de WhatsApp vinculados a la incidencia seleccionada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Action MensajesWhatsAppLista - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Action 3694851421 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensajes WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Action MensajesWhatsAppLista - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 2539053734 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Líneas Parte de Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1317,6 +1417,56 @@
           <source>Ver Adjuntos</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Líneas Parte de Trabajo - Action Ver Adjuntos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1624674161 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensaje WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensaje WhatsApp Card - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1624674161 - Control 2387353448 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Documentos adjuntos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensaje WhatsApp Card - Control Adjuntos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1624674161 - Action 3277327354 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Copia documentos adjuntos del mensaje WhatsApp citado (Id mensaje original) si ese registro ya existe en BC con adjuntos.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensaje WhatsApp Card - Action DescargarMedioMensajeOriginal - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1624674161 - Action 3277327354 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descargar imagen del mensaje original</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensaje WhatsApp Card - Action DescargarMedioMensajeOriginal - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensajes WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Control 1546832578 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que creó el mensaje</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Control Usuario - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Control 1546832578 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Control Usuario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Control 2387353448 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Documentos adjuntos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Control Adjuntos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Action 3277327354 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Copia documentos adjuntos del mensaje WhatsApp citado (Id mensaje original) si ese registro ya existe en BC con adjuntos.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Action DescargarMedioMensajeOriginal - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Action 3277327354 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descargar imagen del mensaje original</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Action DescargarMedioMensajeOriginal - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3735471608 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Estado de las Ordenes de Fijación</source>
@@ -1593,6 +1743,41 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Action Crear Usuarios BC - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Change 1047507950 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Check CERTIFICACIONES</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Change ABA - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1230573612 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Limpieza - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1230573612 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar Tareas Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Limpieza - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 2813304876 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar tareas de puesta apunto para los emplazamientos OPI de las zonas de limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Puesta Apunto - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 2813304876 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar Tareas Puesta Apunto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Puesta Apunto - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1915239495 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Abre las incidencias de esta parada (sin órdenes de trabajo)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action ConsultarIncidencias - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1915239495 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar incidencias</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action ConsultarIncidencias - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 2568060100 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Crear tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1612,6 +1797,31 @@
           <source>Crear Trabajos de Puesta Apunto</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Trabajos de Puesta Apunto - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 3998804535 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Abre las órdenes de trabajo (incidencias tipo petición) de esta parada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action OrdenesTrabajo - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 3998804535 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Órdenes de trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action OrdenesTrabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Control 3588888820 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Matrícula</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Control Matricula - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Change 435373057 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Estado TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Change Estado Parada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Change 3380427369 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Change SAE - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 3377152574 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2618634653">
           <source>Categorías</source>
@@ -1833,6 +2043,46 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension EmplazaExt - Action Ver Tareas - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Change 1047507950 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Check CERTIFICACIONES</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Change ABA - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Action 1915239495 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Abre las incidencias de esta parada (sin órdenes de trabajo)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Action ConsultarIncidencias - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Action 1915239495 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Consultar incidencias</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Action ConsultarIncidencias - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Action 3998804535 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Abre las órdenes de trabajo (incidencias tipo petición) de esta parada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Action OrdenesTrabajo - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Action 3998804535 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Órdenes de trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Action OrdenesTrabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Control 435373057 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Estado TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control Estado Parada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Control 3588888820 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Matrícula</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control Matricula - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Change 3380427369 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Change SAE - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2683253905 - Action 864427735 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 4074072132">
           <source>Borrar Tarea</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1897,6 +2147,11 @@
           <source>Url</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Imagenes Orden fijacion ext - Control Url - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2299342583 - Control 2593413843 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2556642749">
+          <source>Serie numérica para órdenes de trabajo. Las incidencias normales usan Incidencias Nos.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension JobSetupTask - Control Peticiones Nos. - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="PageExtension 2299342583 - Control 3861172337 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2556642749">
           <source>Tareas Limpieza Paradas Bus</source>
@@ -2193,6 +2448,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action CreateParte - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 3842264601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Finalizar Todas las Tareas de Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Finalizar Todas las Tareas - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2984827402 - Action 1770992317 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
           <source>Recuperar IdQR</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2247,6 +2507,11 @@
           <source>Categoría</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Change User Task Group Assigned To - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2520884420 - Control 1423317769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2102368412">
+          <source>Enviar Whatsapp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Usuarios x Categoría - Control Enviar Whatsapp - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2520884420 - Control 1546832578 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2102368412">
           <source>Specifies a user that is a member of the group.</source>
@@ -2603,6 +2868,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tab_ExtensionTaskSetup2 - Field Periodicidad Zona No Crítica - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 1554482435 - Field 2593413843 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 2556642749">
+          <source>Nº Órdenes trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tab_ExtensionTaskSetup2 - Field Peticiones Nos. - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2214873419 - Field 1607971347 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1837078383">
           <source>Categoría</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2642,6 +2912,11 @@
           <source>Dependencia Creada</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field DependenciaCreada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 1260617698 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Empresa Linea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field EmpresaTarea - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 4218615076 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Es Periodica</source>
@@ -2767,6 +3042,11 @@
           <source>Departamento</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Departamento - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 633429605 - Field 1423317769 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 633429605">
+          <source>Enviar Whatsapp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension User Task Group Member - Field Enviar Whatsapp - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 633429605 - Field 870350816 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 633429605">
           <source>Responsable</source>

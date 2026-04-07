@@ -24,6 +24,10 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                 }
+                field("Teléfono"; Rec."Teléfono")
+                {
+                    ApplicationArea = All;
+                }
                 field("Id Gtask"; Rec."Id Gtask")
                 {
                     ApplicationArea = All;

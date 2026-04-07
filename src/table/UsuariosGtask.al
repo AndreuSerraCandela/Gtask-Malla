@@ -69,6 +69,11 @@ table 7001209 "UsuariosGtask"
             DataClassification = ToBeClassified;
             ObsoleteState = Removed;
         }
+        field(50007; "Teléfono"; Text[30])
+        {
+            Caption = 'Teléfono';
+            DataClassification = EndUserIdentifiableInformation;
+        }
     }
 
     keys

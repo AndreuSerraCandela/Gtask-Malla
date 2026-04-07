@@ -260,6 +260,24 @@ pageextension 92157 "UserTaskList" extends "User Task List"
                         until Task.Next() = 0;
                 end;
             }
+            action("Finalizar Todas las Tareas")
+            {
+                ApplicationArea = All;
+                Caption = 'Finalizar Todas las Tareas de Limpieza';
+                Image = ClosePeriod;
+                trigger OnAction()
+                var
+                    UserTask: Record "User Task";
+                begin
+                    CurrPage.SetSelectionFilter(UserTask);
+                    UserTask.SetRange("User Task Group Assigned To", 'LIMPIEZA');
+                    if UserTask.FindSet() then
+                        repeat
+                            UserTask.Validate(Estado, UserTask.Estado::Finalizado);
+                            UserTask.Modify();
+                        until UserTask.Next() = 0;
+                end;
+            }
             // action("Actualizar Documentos Adjuntos")
             // {
             //     ApplicationArea = All;

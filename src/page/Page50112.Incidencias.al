@@ -43,6 +43,12 @@ page 50112 "Incidencias Taller"
                 field("Estado"; Rec."Estado") { ApplicationArea = All; }
                 //comunicado por EMT
                 field("Comunicado por EMT"; Rec."Comunicado por EMT") { ApplicationArea = All; }
+                field("Id Mensaje WA"; Rec."Id Mensaje WA")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Identificador del último mensaje de WhatsApp registrado para esta incidencia.';
+                    Editable = false;
+                }
                 //fecha de actuacion
                 field("Fecha Actuacion"; Rec."Fecha Actuacion") { ApplicationArea = All; }
                 //frecuencia
@@ -194,6 +200,19 @@ page 50112 "Incidencias Taller"
                     Gtask.CreateIncidencia(rDet);
                 end;
 
+            }
+            action(MensajesWhatsApp)
+            {
+                ApplicationArea = All;
+                Caption = 'Mensajes WhatsApp';
+                Image = SendTo;
+                ToolTip = 'Abre los mensajes de WhatsApp vinculados a esta incidencia (mismo origen de registro).';
+                trigger OnAction()
+                var
+                    Procesos_GTask: Codeunit Procesos_GTask;
+                begin
+                    Procesos_GTask.AbrirListaMensajesWhatsAppIncidencia(Rec);
+                end;
             }
             action("Procesar Imagen con LM Studio")
             {
@@ -352,6 +371,7 @@ page 50112 "Incidencias Taller"
 
             }
             actionref(CrearIncidencia; "Crear Incidencia") { }
+            actionref(MensajesWhatsAppPromoted; MensajesWhatsApp) { }
         }
     }
     trigger OnOpenPage()
@@ -529,6 +549,19 @@ page 50117 "Lista Incidencias Taller"
                 end;
 
             }
+            action(MensajesWhatsAppLista)
+            {
+                ApplicationArea = All;
+                Caption = 'Mensajes WhatsApp';
+                Image = SendTo;
+                ToolTip = 'Abre los mensajes de WhatsApp vinculados a la incidencia seleccionada.';
+                trigger OnAction()
+                var
+                    Procesos_GTask: Codeunit Procesos_GTask;
+                begin
+                    Procesos_GTask.AbrirListaMensajesWhatsAppIncidencia(Rec);
+                end;
+            }
 
 
         }
@@ -539,6 +572,7 @@ page 50117 "Lista Incidencias Taller"
 
 
             actionref(CerrarIncidencia; "Cerrar Incidencia") { }
+            actionref(MensajesWhatsAppListaPromoted; MensajesWhatsAppLista) { }
         }
     }
     var

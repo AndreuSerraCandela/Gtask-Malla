@@ -102,6 +102,17 @@ table 7001250 "Incidencias"
             TableRelation = UsuariosGtask."Id Usuario";
             DataClassification = CustomerContent;
         }
+        //Userr Task Group
+        field(24; "User Task Group"; Code[20])
+        {
+            TableRelation = "User Task Group";
+            DataClassification = CustomerContent;
+        }
+        field(25; "Id Mensaje WA"; Text[200])
+        {
+            Caption = 'ID último mensaje WhatsApp';
+            DataClassification = CustomerContent;
+        }
     }
     keys
     {
@@ -121,6 +132,7 @@ table 7001250 "Incidencias"
         Orden: Integer;
 
     begin
+        // Nº Orden único en toda la tabla (incidencias y peticiones): las imágenes se enlazan por este valor.
         rSelf.SetCurrentKey("Nº Orden");
         if rSelf.FindLast() then
             Orden := rSelf."Nº Orden" + 1
@@ -129,7 +141,13 @@ table 7001250 "Incidencias"
         "Nº Orden" := Orden;
         if "No." = '' then begin
             JobsSetup.Get();
-            "No. Series" := JobsSetup."Incidencias Nos.";
+            if "Es Peticion" then begin
+                if JobsSetup."Peticiones Nos." <> '' then
+                    "No. Series" := JobsSetup."Peticiones Nos."
+                else
+                    "No. Series" := JobsSetup."Incidencias Nos.";
+            end else
+                "No. Series" := JobsSetup."Incidencias Nos.";
             if NoSeries.AreRelated("No. Series", xRec."No. Series") then
                 "No. Series" := xRec."No. Series";
             "No." := NoSeries.GetNextNo("No. Series");

@@ -12,6 +12,7 @@ codeunit 7001149 Procesos_GTask
     trigger OnRun()
     begin
         CrearTareasLimpiezaTodasParadasSemana();
+        Gtask.CrearTareasSinId();
     end;
 
     #region eventos
@@ -253,6 +254,7 @@ codeunit 7001149 Procesos_GTask
     var
         "Task": Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        MsgWA: Record "Mensaje WhatsApp";
 
     begin
 
@@ -270,6 +272,12 @@ codeunit 7001149 Procesos_GTask
             If TimeSheetLine.FindFirst() then
                 RecRef.GetTable(TimeSheetLine);
         end;
+        If DocumentAttachment."Table ID" = Database::"Mensaje WhatsApp" then begin
+            RecRef.Open(Database::"Mensaje WhatsApp");
+            MsgWA.SetRange("No. doc. adjuntos", DocumentAttachment."No.");
+            If MsgWA.FindFirst() then
+                RecRef.GetTable(MsgWA);
+        end;
 
 
     end;
@@ -279,6 +287,7 @@ codeunit 7001149 Procesos_GTask
     var
         "Task": Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        MsgWA: Record "Mensaje WhatsApp";
 
     begin
 
@@ -298,6 +307,7 @@ codeunit 7001149 Procesos_GTask
         end;
 
 
+
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterValidateEvent', 'Id', false, false)]
@@ -311,6 +321,8 @@ codeunit 7001149 Procesos_GTask
     var
         "Task": Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        MsgWA: Record "Mensaje WhatsApp";
+        NroAdj: Integer;
 
     begin
         If DocumentAttachment."Table ID" = Database::"User Task" then begin
@@ -326,6 +338,13 @@ codeunit 7001149 Procesos_GTask
             If TimeSheetLine.FindFirst() then
                 RecRef.GetTable(TimeSheetLine);
         end;
+        If DocumentAttachment."Table ID" = Database::"Mensaje WhatsApp" then begin
+            if Evaluate(NroAdj, DocumentAttachment."No.") then begin
+                MsgWA.SetRange("Nº registro adjuntos", NroAdj);
+                If MsgWA.FindFirst() then
+                    RecRef.GetTable(MsgWA);
+            end;
+        end;
 
     end;
 
@@ -337,6 +356,7 @@ codeunit 7001149 Procesos_GTask
         LineNo: Integer;
         UserTask: Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        MensajeWA: Record "Mensaje WhatsApp";
     begin
         If RecordRef.Number = Database::"User Task" then begin
             FieldRef := RecordRef.Field(UserTask.FieldNo("No."));
@@ -352,6 +372,10 @@ codeunit 7001149 Procesos_GTask
             if LineNo > 0 then
                 DocumentAttachment.SetRange("Line No.", LineNo);
         end;
+        If RecordRef.Number = Database::"Mensaje WhatsApp" then begin
+            FieldRef := RecordRef.Field(MensajeWA.FieldNo("Nº registro adjuntos"));
+            DocumentAttachment.SetRange("No.", Format(FieldRef.Value()));
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document Attachment Mgmt", 'OnAfterTableHasNumberFieldPrimaryKey', '', false, false)]
@@ -359,6 +383,7 @@ codeunit 7001149 Procesos_GTask
     var
         UserTask: Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        MensajeWA: Record "Mensaje WhatsApp";
     begin
         If TableNo = Database::"User Task" then begin
             Result := true;
@@ -367,6 +392,10 @@ codeunit 7001149 Procesos_GTask
         If TableNo = Database::"Time Sheet Line" then begin
             Result := true;
             FieldNo := TimeSheetLine.FieldNo("Job No.");
+        end;
+        If TableNo = Database::"Mensaje WhatsApp" then begin
+            Result := true;
+            FieldNo := MensajeWA.FieldNo("Nº registro adjuntos");
         end;
     end;
 
@@ -2358,7 +2387,7 @@ codeunit 7001149 Procesos_GTask
             // Obtener zona y comprobar que esté configurada para limpieza
             if not ZonasLimpieza.Get(Emplazamientos."Zona Limpieza") then
                 continue;
-            if ZonasLimpieza."Tipo Tarea" <> 'LIMPIEZA' then
+            if (ZonasLimpieza."Tipo Tarea" <> 'LIMPIEZA') and (ZonasLimpieza."Tipo Tarea" <> 'REVISION') then
                 continue;
             if IsNullGuid(ZonasLimpieza.Responsable) then
                 continue;
@@ -2369,9 +2398,9 @@ codeunit 7001149 Procesos_GTask
                 continue;
 
             RecRef.GetTable(Emplazamientos);
-            Descripcion := 'Tarea de limpieza para la Parada ' + Emplazamientos."Nº Emplazamiento" +
+            Descripcion := 'Tarea de ' + LowerCase(ZonasLimpieza."Tipo Tarea") + ' para la Parada ' + Emplazamientos."Nº Emplazamiento" +
                 ' - ' + Emplazamientos."Descripción" + ' en la zona de limpieza ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada";
-            if Gtask.CrearTareaLimpieza('LIMPIEZA', RecRef, 'Limpieza Parada ' + Emplazamientos."Nº Emplazamiento",
+            if Gtask.CrearTareaLimpieza(ZonasLimpieza."Tipo Tarea", RecRef, ZonasLimpieza."Tipo Tarea" + ' Parada ' + Emplazamientos."Nº Emplazamiento",
                 Emplazamientos."Zona Limpieza", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
                 ContadorTareas += 1;
         until Emplazamientos.Next() = 0;
@@ -2379,5 +2408,662 @@ codeunit 7001149 Procesos_GTask
         exit(ContadorTareas);
     end;
 
+
+
+    /// <summary>
+    /// Igual que el envío simple, pero registra la respuesta en "Mensaje WhatsApp" y actualiza Incidencias."Id Mensaje WA" si el origen es una incidencia.
+    /// </summary>
+    internal procedure EnviarMetaWhatsAppIncidenciaEmt(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; ContextOrigen: RecordId; IdUsuarioBC: Guid; IdMensajeOriginalWa: Text): Boolean
+    var
+        CuerpoRespuesta: Text;
+    begin
+        if not TryHttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, CuerpoRespuesta) then
+            exit(false); // TryFunction devolvió error
+        if (ContextOrigen.TableNo <> 0) and (CuerpoRespuesta <> '') then
+            RegistrarMensajeWhatsAppDesdeRespuesta(CuerpoRespuesta, IdMensajeOriginalWa, IdUsuarioBC, ContextOrigen, Mensaje);
+        exit(true);
+    end;
+
+    [TryFunction]
+    local procedure TryHttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; var ResponseBody: Text)
+    var
+        HttpClient: HttpClient;
+        HttpContent: HttpContent;
+        HttpRequestMessage: HttpRequestMessage;
+        HttpResponseMessage: HttpResponseMessage;
+        HttpHeaders: HttpHeaders;
+        JsonBody: JsonObject;
+        RequestBody: Text;
+        MetaUrl: Text;
+    begin
+        Clear(ResponseBody);
+        MetaUrl := 'https://meta.malla.es/enviar';
+        if TelefonoDestino = '' then
+            Error('Teléfono destino vacío.');
+        Clear(JsonBody);
+        JsonBody.Add('TelefonoDestino', TelefonoDestino);
+        JsonBody.Add('Mensaje', Mensaje);
+        JsonBody.Add('AppEmisora', AppEmisora);
+        JsonBody.Add('Usuario', UsuarioDesdePost);
+        JsonBody.Add('Empresa', 'Malla');
+        JsonBody.Add('PreviewUrl', true);
+        JsonBody.WriteTo(RequestBody);
+
+        HttpContent.WriteFrom(RequestBody);
+        HttpContent.GetHeaders(HttpHeaders);
+        HttpHeaders.Clear();
+        HttpHeaders.Add('Content-Type', 'application/json');
+        HttpRequestMessage.Method('POST');
+        HttpRequestMessage.SetRequestUri(MetaUrl);
+        HttpRequestMessage.Content(HttpContent);
+        HttpClient.Timeout(30000);
+        if not HttpClient.Send(HttpRequestMessage, HttpResponseMessage) then
+            Error('No se pudo enviar la petición HTTP a meta.malla.es.');
+        HttpResponseMessage.Content().ReadAs(ResponseBody);
+    end;
+
+    local procedure ExtraerWamIdMetaMessages(ResponseJson: Text): Text
+    var
+        JRoot: JsonObject;
+        T: JsonToken;
+        MetaObj: JsonObject;
+        Arr: JsonArray;
+        MsgTok: JsonToken;
+        MsgObj: JsonObject;
+    begin
+        if ResponseJson = '' then
+            exit('');
+        if not JRoot.ReadFrom(ResponseJson) then
+            exit('');
+        if not JRoot.Get('meta', T) then
+            exit('');
+        if not T.IsObject() then
+            exit('');
+        MetaObj := T.AsObject();
+        if not MetaObj.Get('messages', T) then
+            exit('');
+        if not T.IsArray() then
+            exit('');
+        Arr := T.AsArray();
+        foreach MsgTok in Arr do begin
+            if MsgTok.IsObject() then begin
+                MsgObj := MsgTok.AsObject();
+                if MsgObj.Get('id', T) then
+                    if T.IsValue() then
+                        exit(CopyStr(T.AsValue().AsText(), 1, 200));
+            end;
+        end;
+        exit('');
+    end;
+
+    local procedure TryExtraerTextoDesdeRespuestaMeta(ResponseJson: Text): Text
+    var
+        JRoot: JsonObject;
+        T: JsonToken;
+        MetaObj: JsonObject;
+        Arr: JsonArray;
+        MsgTok: JsonToken;
+        MsgObj: JsonObject;
+        TextObj: JsonObject;
+    begin
+        if ResponseJson = '' then
+            exit('');
+        if not JRoot.ReadFrom(ResponseJson) then
+            exit('');
+        if not JRoot.Get('meta', T) or not T.IsObject() then
+            exit('');
+        MetaObj := T.AsObject();
+        if not MetaObj.Get('messages', T) or not T.IsArray() then
+            exit('');
+        Arr := T.AsArray();
+        if Arr.Count() = 0 then
+            exit('');
+        if not Arr.Get(0, MsgTok) or not MsgTok.IsObject() then
+            exit('');
+        MsgObj := MsgTok.AsObject();
+        if MsgObj.Get('text', T) and T.IsObject() then begin
+            TextObj := T.AsObject();
+            if TextObj.Get('body', T) and T.IsValue() then
+                exit(CopyStr(T.AsValue().AsText(), 1, 2048));
+        end;
+        if MsgObj.Get('body', T) and T.IsValue() then
+            exit(CopyStr(T.AsValue().AsText(), 1, 2048));
+        exit('');
+    end;
+
+    local procedure ExtraerTextoMensajeDesdeWebhookJson(J: JsonObject): Text
+    var
+        L1: Text;
+    begin
+        L1 := LeerTextoJsonPrimerValor(J, 'texto', 'text', 'body', 'mensaje', 'message');
+        if L1 <> '' then
+            exit(L1);
+        exit(LeerTextoJsonPrimerValor(J, 'content', 'caption', 'msg', '', ''));
+    end;
+
+    local procedure RegistrarMensajeWhatsAppDesdeRespuesta(ResponseJson: Text; IdMensajeOriginalWa: Text; IdUsuarioBC: Guid; OrigenRecordId: RecordId; TextoMensajeEnviado: Text)
+    var
+        MsgWA: Record "Mensaje WhatsApp";
+        Inc: Record Incidencias;
+        WamId: Text;
+        Texto: Text;
+    begin
+        WamId := ExtraerWamIdMetaMessages(ResponseJson);
+        if WamId = '' then
+            exit;
+        if MsgWA.Get(WamId) then
+            exit;
+        MsgWA.Init();
+        MsgWA."Id Mensaje WA" := CopyStr(WamId, 1, MaxStrLen(MsgWA."Id Mensaje WA"));
+        MsgWA."Id Mensaje Original" := CopyStr(IdMensajeOriginalWa, 1, MaxStrLen(MsgWA."Id Mensaje Original"));
+        MsgWA."Id Usuario" := IdUsuarioBC;
+        MsgWA."Origen Tabla ID" := OrigenRecordId.TableNo;
+        MsgWA."Origen Registro ID" := OrigenRecordId;
+        MsgWA."Fecha creación" := CurrentDateTime;
+        Texto := CopyStr(TextoMensajeEnviado, 1, MaxStrLen(MsgWA."Texto mensaje"));
+        if Texto = '' then
+            Texto := CopyStr(TryExtraerTextoDesdeRespuestaMeta(ResponseJson), 1, MaxStrLen(MsgWA."Texto mensaje"));
+        MsgWA."Texto mensaje" := Texto;
+        MsgWA.Insert(true);
+        if MsgWA.Get(WamId) then
+            AdjuntarTextoComoDocumentoMensajeWhatsApp(MsgWA, ResponseJson, 'WhatsApp_respuesta.json');
+
+        if OrigenRecordId.TableNo = Database::Incidencias then
+            if Inc.Get(OrigenRecordId) then begin
+                Inc."Id Mensaje WA" := MsgWA."Id Mensaje WA";
+                Inc.Modify(false);
+            end;
+    end;
+
+    procedure AbrirListaMensajesWhatsAppIncidencia(var Inc: Record Incidencias)
+    var
+        MensajeWA: Record "Mensaje WhatsApp";
+    begin
+        Inc.TestField("No.");
+        MensajeWA.Reset();
+        MensajeWA.SetCurrentKey("Origen Tabla ID", "Origen Registro ID");
+        MensajeWA.SetRange("Origen Tabla ID", Database::Incidencias);
+        MensajeWA.SetRange("Origen Registro ID", Inc.RecordId);
+        Page.Run(Page::"Mensajes WhatsApp", MensajeWA);
+    end;
+
+    /// <summary>
+    /// Copia documentos adjuntos del registro «Mensaje WhatsApp» cuyo id coincide con Id Mensaje Original, si existe en BC.
+    /// </summary>
+    procedure DescargarMediosMensajeOrigen(var MsgWA: Record "Mensaje WhatsApp")
+    begin
+        MsgWA.TestField("Id Mensaje Original");
+        if CopiarMediosDesdeRegistroMensajeOrigen(MsgWA) then
+            exit;
+        Error('No hay documentos adjuntos en el mensaje original en BC. El mensaje citado (Id Mensaje Original) debe existir ya con adjuntos (p. ej. notificado antes por el webhook con medios_base64).');
+    end;
+
+    /// <summary>
+    /// Registra una respuesta entrante enviada por la aplicación intermedia (webhook WhatsApp ya normalizado).
+    /// Claves admitidas para el id del mensaje nuevo: id_mensaje, message_id, id, wamid.
+    /// Contexto / mensaje al que responde: id_contexto, context_id, id_mensaje_original, replied_to.
+    /// Teléfono remitente: telefono, from, wa_id (opcional, para enlazar usuario Gtask).
+    /// Texto del mensaje: texto, text, body, mensaje, message, content, caption, msg (también se devuelve en la respuesta como "texto").
+    /// Opcional: medios_base64 (o data:…;base64,…) se guarda como adjunto; extensión según medios_mime_type, mime_type o tipo_mensaje.
+    /// Si el texto indica cierre (p. ej. finalizado, resuelto, terminado o variantes) y el mensaje está ligado a una incidencia, la incidencia pasa a Cerrada y el medio se copia a Imagenes Orden fijación (Nº Orden de la incidencia).
+    /// </summary>
+    internal procedure ProcesarWebhookRespuestaWhatsApp(JsonText: Text): Text
+    var
+        J: JsonObject;
+        JOut: JsonObject;
+        T: JsonToken;
+        WamId: Text;
+        ContextId: Text;
+        Telefono: Text;
+        MsgWA: Record "Mensaje WhatsApp";
+        MsgOrigen: Record "Mensaje WhatsApp";
+        UserG: Record UsuariosGtask;
+        GuidUsuario: Guid;
+        ResultTxt: Text;
+        TempMedios: Codeunit "Temp Blob";
+        HayMedios: Boolean;
+        TxtWebhook: Text;
+        Incidencia: Record Incidencias;
+        IdIncidencia: Text;
+    begin
+        Clear(JOut);
+        if JsonText = '' then begin
+            JOut.Add('ok', false);
+            JOut.Add('error', 'Cuerpo vacío');
+            JOut.WriteTo(ResultTxt);
+            exit(ResultTxt);
+        end;
+        if not J.ReadFrom(JsonText) then begin
+            JOut.Add('ok', false);
+            JOut.Add('error', 'JSON inválido');
+            JOut.WriteTo(ResultTxt);
+            exit(ResultTxt);
+        end;
+        if J.Get('payload', T) and T.IsObject() then
+            J := T.AsObject();
+
+        WamId := LeerTextoJsonPrimerValor(J, 'id_mensaje', 'message_id', 'id', 'wamid', '');
+        if WamId = '' then begin
+            JOut.Add('ok', false);
+            JOut.Add('error', 'Falta id del mensaje (id_mensaje / message_id / id / wamid)');
+            JOut.WriteTo(ResultTxt);
+            exit(ResultTxt);
+        end;
+        WamId := CopyStr(WamId, 1, 200);
+
+        Telefono := DelChr(LeerTextoJsonPrimerValor(J, 'telefono', 'from', 'wa_id', 'phone', ''), '<>', ' ');
+        Clear(GuidUsuario);
+        if Telefono <> '' then begin
+            UserG.Reset();
+            UserG.SetRange("Teléfono", CopyStr(Telefono, 1, MaxStrLen(UserG."Teléfono")));
+            if UserG.FindFirst() then
+                GuidUsuario := UserG."Id Usuario";
+        end;
+
+        if MsgWA.Get(WamId) then begin
+            // Recarga del mismo id_mensaje: actualizar texto/teléfono y volver a adjuntar si viene medios_base64
+            TxtWebhook := ExtraerTextoMensajeDesdeWebhookJson(J);
+            if TxtWebhook <> '' then
+                MsgWA."Texto mensaje" := CopyStr(TxtWebhook, 1, MaxStrLen(MsgWA."Texto mensaje"));
+            if Telefono <> '' then
+                MsgWA.Validate("Teléfono", CopyStr(Telefono, 1, MaxStrLen(MsgWA."Teléfono")));
+            MsgWA.Modify(true);
+            MsgWA.Get(WamId);
+            HayMedios := TryRellenarTempBlobMediosBase64DesdeJson(J, TempMedios);
+            if HayMedios then
+                AdjuntarDesdeTempBlobMensajeWhatsApp(MsgWA, TempMedios, NombreAdjuntoMedioDesdeJson(J, 'WhatsApp_medio'));
+            TratarCierreIncidenciaSiMensajeWhatsApp(MsgWA, HayMedios, TempMedios, NombreAdjuntoMedioDesdeJson(J, 'WhatsApp_medio'));
+            Commit();
+
+            JOut.Add('ok', true);
+            JOut.Add('duplicado', true);
+            JOut.Add('id_mensaje', WamId);
+            JOut.Add('texto', MsgWA."Texto mensaje");
+            JOut.WriteTo(ResultTxt);
+            exit(ResultTxt);
+        end;
+
+        ContextId := CopyStr(LeerTextoJsonPrimerValor(J, 'id_contexto', 'context_id', 'id_mensaje_original', 'replied_to', 'parent_id'), 1, 200);
+        IdIncidencia := CopyStr(LeerTextoJsonPrimerValor(J, 'id_incidencia', '', '', '', ''), 1, 200);
+        MsgWA.Init();
+        MsgWA."Id Mensaje WA" := WamId;
+        MsgWA."Id Mensaje Original" := ContextId;
+        MsgWA."Fecha creación" := CurrentDateTime;
+        if ContextId <> '' then begin
+            if MsgOrigen.Get(ContextId) then begin
+                MsgWA."Origen Tabla ID" := MsgOrigen."Origen Tabla ID";
+                MsgWA."Origen Registro ID" := MsgOrigen."Origen Registro ID";
+                if IsNullGuid(GuidUsuario) then
+                    GuidUsuario := MsgOrigen."Id Usuario";
+            end;
+        end;
+        If IdIncidencia <> '' then begin
+            if Incidencia.Get(IdIncidencia) then begin
+                MsgWA."Origen Tabla ID" := Database::Incidencias;
+                MsgWA."Origen Registro ID" := Incidencia.RecordId;
+            end;
+        end;
+        MsgWA."Id Usuario" := GuidUsuario;
+        MsgWA."Texto mensaje" := CopyStr(ExtraerTextoMensajeDesdeWebhookJson(J), 1, MaxStrLen(MsgWA."Texto mensaje"));
+        if Telefono <> '' then
+            MsgWA.Validate("Teléfono", CopyStr(Telefono, 1, MaxStrLen(MsgWA."Teléfono")));
+        HayMedios := TryRellenarTempBlobMediosBase64DesdeJson(J, TempMedios);
+        MsgWA.Insert(true);
+        if MsgWA.Get(WamId) then begin
+            AdjuntarTextoComoDocumentoMensajeWhatsApp(MsgWA, JsonText, 'WhatsApp_respuesta.json');
+            if HayMedios then
+                AdjuntarDesdeTempBlobMensajeWhatsApp(MsgWA, TempMedios, NombreAdjuntoMedioDesdeJson(J, 'WhatsApp_medio'));
+            TratarCierreIncidenciaSiMensajeWhatsApp(MsgWA, HayMedios, TempMedios, NombreAdjuntoMedioDesdeJson(J, 'WhatsApp_medio'));
+        end;
+        Commit();
+
+        JOut.Add('ok', true);
+        JOut.Add('id_mensaje', WamId);
+        if ContextId <> '' then
+            JOut.Add('id_contexto', ContextId);
+        JOut.Add('texto', MsgWA."Texto mensaje");
+        JOut.WriteTo(ResultTxt);
+        exit(ResultTxt);
+    end;
+
+    local procedure CopiarMediosDesdeRegistroMensajeOrigen(var MsgWA: Record "Mensaje WhatsApp"): Boolean
+    var
+        MsgOrigen: Record "Mensaje WhatsApp";
+    begin
+        if not MsgOrigen.Get(MsgWA."Id Mensaje Original") then
+            exit(false);
+        exit(CopiarDocumentosAdjuntosMensajeWhatsApp(MsgOrigen, MsgWA));
+    end;
+
+    local procedure ExtraerMimeMediosDesdeWebhookJson(J: JsonObject): Text
+    begin
+        exit(LeerTextoJsonPrimerValor(J, 'medios_mime_type', 'mime_type', '', '', ''));
+    end;
+
+    local procedure ExtraerTipoMensajeDesdeWebhookJson(J: JsonObject): Text
+    begin
+        exit(LeerTextoJsonPrimerValor(J, 'tipo_mensaje', 'type', 'message_type', '', ''));
+    end;
+
+    local procedure NombreAdjuntoMedioDesdeJson(J: JsonObject; PrefijoBase: Text): Text
+    var
+        Ext: Text[10];
+    begin
+        Ext := ExtensionAdjuntoDesdeMimeYTipo(ExtraerMimeMediosDesdeWebhookJson(J), ExtraerTipoMensajeDesdeWebhookJson(J));
+        exit(CopyStr(PrefijoBase + Ext, 1, 250));
+    end;
+
+    local procedure ExtensionAdjuntoDesdeMimeYTipo(MimeCompleto: Text; TipoMensaje: Text): Text[10]
+    var
+        Mime: Text;
+        Tipo: Text;
+        P: Integer;
+    begin
+        Mime := LowerCase(DelChr(MimeCompleto, '<>', ' '));
+        P := StrPos(Mime, ';');
+        if P > 0 then
+            Mime := CopyStr(Mime, 1, P - 1);
+        Tipo := LowerCase(DelChr(TipoMensaje, '<>', ' '));
+
+        case Mime of
+            'image/jpeg',
+            'image/jpg':
+                exit('.jpg');
+            'image/png':
+                exit('.png');
+            'image/gif':
+                exit('.gif');
+            'image/webp':
+                exit('.webp');
+            'video/mp4':
+                exit('.mp4');
+            'video/3gpp':
+                exit('.3gp');
+            'audio/ogg',
+            'audio/opus',
+            'audio/webm':
+                exit('.ogg');
+            'audio/mpeg':
+                exit('.mp3');
+            'audio/mp4':
+                exit('.m4a');
+            'application/pdf':
+                exit('.pdf');
+        end;
+
+        case Tipo of
+            'image':
+                exit('.jpg');
+            'video':
+                exit('.mp4');
+            'audio':
+                exit('.ogg');
+            'document':
+                exit('.pdf');
+            'sticker':
+                exit('.webp');
+        end;
+        exit('.jpg');
+    end;
+
+    local procedure QuitarPrefijoDataUrlBase64(var B64: Text)
+    var
+        I: Integer;
+    begin
+        I := StrPos(B64, ';base64,');
+        if I > 0 then
+            B64 := CopyStr(B64, I + 8, StrLen(B64));
+    end;
+
+    local procedure TryRellenarTempBlobMediosBase64DesdeJson(J: JsonObject; var TempBlob: Codeunit "Temp Blob"): Boolean
+    var
+        T: JsonToken;
+        B64: Text;
+        Base64Convert: Codeunit "Base64 Convert";
+        OutS: OutStream;
+    begin
+        Clear(TempBlob);
+        if not J.Get('medios_base64', T) then
+            exit(false);
+        if not T.IsValue() then
+            exit(false);
+        B64 := T.AsValue().AsText();
+        if B64 = '' then
+            exit(false);
+        QuitarPrefijoDataUrlBase64(B64);
+        TempBlob.CreateOutStream(OutS);
+        Base64Convert.FromBase64(B64, OutS);
+        exit(true);
+    end;
+
+    local procedure AdjuntarTextoComoDocumentoMensajeWhatsApp(var MsgWA: Record "Mensaje WhatsApp"; Contenido: Text; NombreArchivo: Text)
+    var
+        RecRef: RecordRef;
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+        Doc: Record "Document Attachment";
+    begin
+        if Contenido = '' then
+            exit;
+        if not MsgWA.Get(MsgWA."Id Mensaje WA") then
+            exit;
+        if MsgWA."Nº registro adjuntos" = 0 then
+            MsgWA.AssignNroRegistroAdjuntos();
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutS, TEXTENCODING::UTF8);
+        OutS.WriteText(Contenido);
+        TempBlob.CreateInStream(InS, TEXTENCODING::UTF8);
+        RecRef.Open(Database::"Mensaje WhatsApp");
+        RecRef.Get(MsgWA.RecordId);
+        Doc.SaveAttachmentFromStream(InS, RecRef, NombreArchivo);
+        RecRef.Close();
+    end;
+
+    local procedure AdjuntarDesdeTempBlobMensajeWhatsApp(var MsgWA: Record "Mensaje WhatsApp"; var TempBlob: Codeunit "Temp Blob"; NombreArchivo: Text)
+    var
+        RecRef: RecordRef;
+        InS: InStream;
+        Doc: Record "Document Attachment";
+    begin
+        TempBlob.CreateInStream(InS);
+        if InS.Length = 0 then
+            exit;
+        if not MsgWA.Get(MsgWA."Id Mensaje WA") then
+            exit;
+        if MsgWA."Nº registro adjuntos" = 0 then
+            MsgWA.AssignNroRegistroAdjuntos();
+        RecRef.Open(Database::"Mensaje WhatsApp");
+        RecRef.Get(MsgWA.RecordId);
+        Doc.SaveAttachmentFromStream(InS, RecRef, NombreArchivo);
+        RecRef.Close();
+    end;
+
+
+
+    local procedure CopiarDocumentosAdjuntosMensajeWhatsApp(MsgOrigen: Record "Mensaje WhatsApp"; var MsgDest: Record "Mensaje WhatsApp"): Boolean
+    var
+        DocFrom: Record "Document Attachment";
+        RecRefDest: RecordRef;
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+        DocBl: Record "Document Attachment";
+        Nombre: Text;
+        Any: Boolean;
+    begin
+        Any := false;
+        if MsgOrigen."Nº registro adjuntos" = 0 then
+            exit(false);
+        if MsgDest."Nº registro adjuntos" = 0 then
+            MsgDest.AssignNroRegistroAdjuntos();
+        DocFrom.SetRange("Table ID", Database::"Mensaje WhatsApp");
+        if MsgOrigen."No. doc. adjuntos" <> '' then
+            DocFrom.SetRange("No.", MsgOrigen."No. doc. adjuntos")
+        else
+            DocFrom.SetRange("No.", CopyStr(Format(MsgOrigen."Nº registro adjuntos"), 1, MaxStrLen(DocFrom."No.")));
+        if not DocFrom.FindSet() then
+            exit(false);
+        RecRefDest.Open(Database::"Mensaje WhatsApp");
+        RecRefDest.Get(MsgDest.RecordId);
+        repeat
+            DocFrom.CalcFields("Document Reference ID");
+            if DocFrom."Document Reference ID".HasValue then begin
+                Clear(TempBlob);
+                TempBlob.CreateOutStream(OutS);
+                DocFrom."Document Reference ID".ExportStream(OutS);
+                TempBlob.CreateInStream(InS);
+                Nombre := DocFrom."File Name";
+                if Nombre = '' then
+                    Nombre := StrSubstNo('WhatsApp_adj_%1', DocFrom."Line No.");
+                DocBl.SaveAttachmentFromStream(InS, RecRefDest, Nombre);
+                Any := true;
+            end;
+        until DocFrom.Next() = 0;
+        RecRefDest.Close();
+        if Any then
+            MsgDest.Get(MsgDest."Id Mensaje WA");
+        exit(Any);
+    end;
+
+    /// <summary>
+    /// Si el texto contiene palabras de cierre (finalizado, resuelto, terminado, etc.) y el mensaje está ligado a una incidencia,
+    /// pasa la incidencia a Cerrada y, si hay medio en TempBlob, lo registra en Imagenes Orden fijación (Nº Orden de la incidencia, Es Incidencia).
+    /// </summary>
+    local procedure TratarCierreIncidenciaSiMensajeWhatsApp(var MsgWA: Record "Mensaje WhatsApp"; HayMedios: Boolean; var TempMedios: Codeunit "Temp Blob"; NombreArchivoMedio: Text)
+    var
+        Incidencia: Record Incidencias;
+        Imagenes: Record "Imagenes Orden fijación";
+        InS: InStream;
+        Control: Codeunit "ControlProcesos";
+        NextImg: Integer;
+        Nombre: Text;
+        UserG: Record UsuariosGtask;
+    begin
+        if not TextoIndicaCierreIncidenciaWhatsApp(MsgWA."Texto mensaje") then
+            exit;
+        if MsgWA."Origen Tabla ID" <> Database::Incidencias then
+            exit;
+        if not Incidencia.Get(MsgWA."Origen Registro ID") then
+            exit;
+
+        Incidencia.Estado := Incidencia.Estado::Cerrada;
+        //if Incidencia."Fecha Actuacion" = 0DT then
+        Incidencia."Fecha Actuacion" := CurrentDateTime;
+        // Busca usuario con nº de telefono del whatsapp y lo asigna a la incidencia
+        UserG.Reset();
+        UserG.SetRange("Teléfono", MsgWA."Teléfono");
+        if UserG.FindFirst() then
+            Incidencia."Usuario Asignado" := UserG."Id Usuario";
+        Incidencia.Modify(true);
+
+        if not HayMedios then
+            exit;
+        TempMedios.CreateInStream(InS);
+        if InS.Length = 0 then
+            exit;
+
+        Imagenes.SetRange("Nº Orden", Incidencia."Nº Orden");
+        Imagenes.SetRange("Es Incidencia", true);
+        if Imagenes.FindLast() then
+            NextImg := Imagenes."Nº Imagen" + 1
+        else
+            NextImg := 1;
+        Imagenes.Init();
+        Imagenes."Nº Orden" := Incidencia."Nº Orden";
+        Imagenes."Nº Imagen" := NextImg;
+        Imagenes."Es Incidencia" := true;
+        Nombre := CopyStr(NombreArchivoMedio, 1, MaxStrLen(Imagenes.Nombre));
+        if Nombre = '' then
+            Nombre := CopyStr(StrSubstNo('WhatsApp_cierre_%1', NextImg), 1, MaxStrLen(Imagenes.Nombre));
+        Imagenes.Nombre := Nombre;
+#if CLEAN27
+        Control.InsertAttachment(Imagenes, InS, Nombre, true);
+#else
+        Imagenes.InsertAttachment(InS, Nombre, true);
+#endif
+    end;
+
+    local procedure TextoIndicaCierreIncidenciaWhatsApp(Txt: Text): Boolean
+    var
+        LowerTxt: Text;
+        Len: Integer;
+        i: Integer;
+        j: Integer;
+        Word: Text;
+    begin
+        if Txt = '' then
+            exit(false);
+        LowerTxt := LowerCase(Txt);
+        Len := StrLen(LowerTxt);
+        i := 1;
+        while i <= Len do begin
+            while (i <= Len) and EsSeparadorPalabraWhatsApp(CopyStr(LowerTxt, i, 1)) do
+                i += 1;
+            if i > Len then
+                break;
+            j := i;
+            while (j <= Len) and not EsSeparadorPalabraWhatsApp(CopyStr(LowerTxt, j, 1)) do
+                j += 1;
+            Word := CopyStr(LowerTxt, i, j - i);
+            if PalabraIndicaCierreIncidenciaWhatsApp(Word) then
+                exit(true);
+            i := j;
+        end;
+        exit(false);
+    end;
+
+    local procedure EsSeparadorPalabraWhatsApp(Ch: Text): Boolean
+    begin
+        if Ch = '' then
+            exit(false);
+        exit((Ch = ' ') or (Ch = '.') or (Ch = ',') or (Ch = ';') or (Ch = ':') or
+          (Ch = '!') or (Ch = '?') or (Ch = '"') or (Ch = '''') or (Ch = '(') or (Ch = ')'));
+    end;
+
+    local procedure PalabraIndicaCierreIncidenciaWhatsApp(Word: Text): Boolean
+    var
+        W: Text;
+    begin
+        W := DelChr(Word, '<>', '');
+        if W = '' then
+            exit(false);
+        case W of
+            'finalizado', 'finalizada', 'resuelto', 'resuelta', 'terminado', 'terminada',
+            'cerrado', 'cerrada', 'completado', 'completada', 'solucionado', 'solucionada',
+            'listo', 'lista', 'hecho', 'hecha':
+                exit(true);
+        end;
+        if StrLen(W) >= 7 then
+            if CopyStr(W, 1, 7) = 'finaliz' then
+                exit(true);
+        if StrLen(W) >= 6 then
+            if CopyStr(W, 1, 6) = 'resuel' then
+                exit(true);
+        if StrLen(W) >= 6 then
+            if CopyStr(W, 1, 6) = 'cerrad' then
+                exit(true);
+        if StrLen(W) >= 7 then
+            if CopyStr(W, 1, 7) = 'complet' then
+                exit(true);
+        exit(false);
+    end;
+
+    local procedure LeerTextoJsonPrimerValor(J: JsonObject; K1: Text; K2: Text; K3: Text; K4: Text; K5: Text): Text
+    var
+        Tok: JsonToken;
+    begin
+        if (K1 <> '') and J.Get(K1, Tok) and Tok.IsValue() then
+            exit(Tok.AsValue().AsText());
+        if (K2 <> '') and J.Get(K2, Tok) and Tok.IsValue() then
+            exit(Tok.AsValue().AsText());
+        if (K3 <> '') and J.Get(K3, Tok) and Tok.IsValue() then
+            exit(Tok.AsValue().AsText());
+        if (K4 <> '') and J.Get(K4, Tok) and Tok.IsValue() then
+            exit(Tok.AsValue().AsText());
+        if (K5 <> '') and J.Get(K5, Tok) and Tok.IsValue() then
+            exit(Tok.AsValue().AsText());
+        exit('');
+    end;
 
 }

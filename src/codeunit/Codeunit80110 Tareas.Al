@@ -14,6 +14,7 @@ codeunit 7001148 GTask
     begin
         UpdateTasksFicheros();
         EnviarCorreoFicheros();
+        CrearTareasSinId();
         // GetTareas();
 
     end;
@@ -1029,8 +1030,13 @@ codeunit 7001148 GTask
         If Not UserGtaskMalla.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created By User Name");
         usuario := UserGtaskMalla."Id Gtask";
         wRecordRef.Close();
+        if Tarea.EmpresaTarea <> '' then
+            Job.ChangeCompany(Tarea.EmpresaTarea);
         Job.Get(Tarea."Job No.");
-        wRecordRef.Open(Database::Job);
+        If Tarea.EmpresaTarea <> '' then
+            wRecordRef.Open(Database::Job, false, Tarea.EmpresaTarea)
+        else
+            wRecordRef.Open(Database::Job);
         wRecordRef.Get(Job.RecordId);
         JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
         if JobNo = 'Error' then begin
@@ -1797,7 +1803,11 @@ codeunit 7001148 GTask
         supervisor := UserGtaskMalla."Id Gtask";
         UserGtaskMalla.SetRange("Id Usuario", Tarea."Created By");
         Tarea.CalcFields("Created by User Name");
-        If Not UserGtaskMalla.FindFirst() then Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created by User Name");
+        If Not UserGtaskMalla.FindFirst() then begin
+            UserGtaskMalla.SetRange("Id Usuario");
+            IF NOT UserGtaskMalla.FindFirst() THEN
+                Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created by User Name");
+        end;
         usuario := UserGtaskMalla."Id Gtask";
         //     {
         // "department": "604767e49fea4e001874b283",
@@ -3703,7 +3713,8 @@ codeunit 7001148 GTask
         // If not IsNullGuid(UserTask.Supervisor) then
         //     UserTask."Created By" := UserTask.Supervisor
         // else
-        UserTask."Created By" := UserSecurityId();
+        UserTask."Created By" := ResponsableOld;
+        ;
         if TareaAnterior <> 0 then begin
             // Dependencia: usar responsable/supervisor/categoría de la tarea anterior (evita Error si la zona no tiene categoría en Gtask)
             Responsable := ResponsableOld;
@@ -4151,7 +4162,12 @@ codeunit 7001148 GTask
         else
             UserTask."Assigned To" := rDet.Usuario;
         //Supervisor será de la Categoría MTO, el supervidor
-        UserTaskGroup.SetRange("User Task Group Code", 'MTO');
+        If rDet."User Task Group" <> '' then
+            UserTask."User Task Group Assigned To" := rDet."User Task Group"
+        else
+            UserTask."User Task Group Assigned To" := 'MTO';
+
+        UserTaskGroup.SetRange("User Task Group Code", UserTask."User Task Group Assigned To");
         UserTaskGroup.SetRange(Supervisor, true);
         UserTask.Servicio := 'TALLER';
         If UserTaskGroup.FindFirst() then begin
@@ -4225,7 +4241,12 @@ codeunit 7001148 GTask
             Imagenes.DeleteAll();
 
         end;
-        UserTask."User Task Group Assigned To" := 'MTO';
+        If rDet."User Task Group" <> '' then
+            UserTask."User Task Group Assigned To" := rDet."User Task Group"
+        else
+            UserTask."User Task Group Assigned To" := 'MTO';
+
+
         if IsNullGuid(rDet."Usuario Asignado") = false then
             Empleado := rDet."Usuario Asignado"
         else
@@ -6028,6 +6049,8 @@ codeunit 7001148 GTask
         userGtask: Text;
         Empresa: Text;
         Docuname2: Text;
+        Url: Text;
+        idUrl: Integer;
     begin
         JsonArray.ReadFrom(JsonText);
         foreach JsonToken in JsonArray do begin
@@ -6072,8 +6095,17 @@ codeunit 7001148 GTask
                         JsonDetalleCampo := JsonToken.AsObject();
                         If JsonDetalleCampo.Get('document', JsonCampo) then begin
                             JSonDocument := JsonCampo.AsObject();
-                            If jSonDocument.Get('url', JsonCampo) then begin
+                            if jSonDocument.Get('url', JsonCampo) then begin
                                 DocBase64 := JsonCampo.AsValue().AsText();
+                            end;
+                            if jSonDocument.Get('document_url', JsonCampo) then begin
+                                Url := JsonCampo.AsValue().AsText();
+                            end;
+                            //id
+                            if jSonDocument.Get('_id', JsonCampo) then begin
+                                idUrl := JsonCampo.AsValue().AsInteger();
+                            end;
+                            If (Url <> '') or (DocBase64 <> '') then begin
                                 DocuName := '';
                                 If jSonDocument.get('name', JsonCampo) then
                                     DocuName := JsonCampo.AsValue().AsText();
@@ -6101,11 +6133,15 @@ codeunit 7001148 GTask
                                         DocumentAtt."File Name" := DocuName2;
                                         DocumentAtt."File Extension" := FileManager.GetExtension(DocuName);
                                         DocumentAtt."Document Flow Service" := true;
-                                        if JsonDetalleCampo.Get('_id', JsonCampo) then
+                                        if idUrl <> 0 then
                                             DocumentAtt.ID_Url := JsonCampo.AsValue().AsInteger()
                                         else
                                             DocumentAtt.ID_Url := 0;
-                                        DocumentAtt."URL" := DocumentAtt.FormBase64ToUrl(DocBase64, DocuName2, Id);
+                                        if Url <> '' then
+                                            DocumentAtt."URL" := Url
+                                        else
+                                            DocumentAtt."URL" := DocumentAtt.FormBase64ToUrl(DocBase64, DocuName2, IdUrl);
+                                        If DocumentAtt.ID_Url = 0 then DocumentAtt.ID_Url := IdUrl;
                                         DocumentAtt."Attached Date" := CurrentDateTime;
                                         Repeat
                                             DocumentAtt.Id := Line;
@@ -6154,7 +6190,7 @@ codeunit 7001148 GTask
                 If userGtask <> '' then begin
                     UserGtaskMalla.SetRange("Id Gtask", userGtask);
                     If UserGtaskMalla.FindFirst() then begin
-                        Tareas.Estado := Tareas.Estado::"En Proceso";
+                        Tareas.Estado := Tareas.Estado::Finalizado;
                         Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
                         Tareas."Fecha Comunicado Cambio" := CurrentDateTime;
                         Tareas."Fecha Cambio" := DaTi2Variant(Calcdate('-1D', Today), Time);
@@ -6219,6 +6255,7 @@ codeunit 7001148 GTask
                         JsonTareaOutPut.Add('idnavision', Tareas.Id);
                         JsonTareaOutPut.Add('empresa', Empresas.Name);
                         JsonTareaOutPut.Add('descripcion', Tareas.Title);
+                        JsonTareaOutPut.Add('fecha', Format(Tareas."Start DateTime", 0, '<Year4>-<Month,2>-<Day,2>'));
                         JsonOutPutArrayItem.Add(JsonTareaOutPut);
                         CuentaTareas += 1;
 
@@ -6316,6 +6353,10 @@ codeunit 7001148 GTask
         IdTarea: Text;
         RecursoOriginal: Text;
         Response: HttpResponseMessage;
+        MensajeMeta: Text;
+        UsuariosGtaskxCatego: Record "User Task Group Member";
+        GuidEmt: Guid;
+        GuidEmt2: Guid;
 
     begin
         //{
@@ -6473,18 +6514,35 @@ codeunit 7001148 GTask
         case IncidenceType of
 
             'EMT':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+                    rDet."User Task Group" := 'EMT';
+                end;
             'VILLENA':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'MTO', 'Mobiliario Urbano':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'TAREA TALLER', 'Grupo Taller':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'PODA', 'Poda':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
-
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
+                    rDet."User Task Group" := 'PODA';
+                end;
         end;
         case Uppercase(State) of
             'PENDING', 'ABIERTA':
@@ -6630,6 +6688,48 @@ codeunit 7001148 GTask
             CabOrdenFijacion."Nº Orden" := rDet."Nº Orden";
             CabOrdenFijacion.Insert();
         end;
+        Clear(MensajeMeta);
+        if rDet."Es Peticion" then
+            MensajeMeta := StrSubstNo('Mira Orden de trabajo nº %1: %2', rDet."No.", rDet.Descripción)
+        else
+            MensajeMeta := StrSubstNo('Mira Incidencia nº %1: %2', rDet."No.", rDet.Descripción);
+        if Observation <> '' then
+            MensajeMeta += ' | Observación: ' + Observation;
+        if rDet.Recurso <> '' then begin
+            if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
+                MensajeMeta += ' | Parada: ' + rDet.Recurso;
+                if ParadasBus.Get(ParadasBus."Tipo Emplazamiento"::Opis, rDet.Recurso) then
+                    MensajeMeta += ' | Parada: ' + ParadasBus."Descripción";
+            end else begin
+                If not Recurso.Get(rDet.Recurso) then
+                    Recurso.Init();
+
+                MensajeMeta += ' | Recurso: ' + rDet.Recurso + ' ' + Recurso.Name;
+            end;
+        end;
+        MensajeMeta += ' — EMTGis https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
+        Usuario.Reset();
+        Usuario.SetRange("Id Usuario", rDet.Usuario);
+        If not Usuario.FindSet() then
+            Usuario.init;
+        //Para el usurio 34651049109 el guid es {6a7fff89-f519-4695-bc0b-4c414b6e0736}
+        //Para el usurio 34605264114 el guid es {ce35a5ab-f8f2-4634-8437-f83f4d99c820}
+        GuidEmt := CreateGuid();
+        GuidEmt2 := CreateGuid();
+        Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
+        Evaluate(GuidEmt2, '{ce35a5ab-f8f2-4634-8437-f83f4d99c820}');
+        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '');
+        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34605264114', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt2, '');
+        //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
+        UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
+        if UsuariosGtaskxCatego.FindSet() then
+            repeat
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.SetRange("Id Usuario", UsuariosGtaskxCatego."User Security ID");
+                if UserGtaskMalla.FindSet() then
+                    Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, UserGtaskMalla."Id Usuario", '');
+            until UsuariosGtaskxCatego.Next() = 0;
+
         exit('OK:' + Id + ' Id_Gtask:' + rDet."Id Tarea Gtask");
     end;
 
@@ -6683,6 +6783,17 @@ codeunit 7001148 GTask
 
         JsonArrayRespuesta.WriteTo(JsonText);
         exit(JsonText);
+    end;
+
+    /// <summary>
+    /// Recibe respuestas de WhatsApp desde la aplicación intermedia (webhook ya normalizado).
+    /// Crea un registro en "Mensaje WhatsApp" y enlaza con incidencia si id_contexto coincide con un envío previo.
+    /// Ejemplo: {"id_mensaje":"wamid...","id_contexto":"wamid...","telefono":"34651049109","texto":"Ok recibido"}
+    /// </summary>
+    [ServiceEnabled]
+    procedure postRespuestaWhatsApp(JsonText: Text): Text
+    begin
+        exit(Procesos_GTask.ProcesarWebhookRespuestaWhatsApp(JsonText));
     end;
 
     [ServiceEnabled]
@@ -6753,7 +6864,12 @@ codeunit 7001148 GTask
         IdTarea: Text;
         Response: HttpResponseMessage;
         Peticion: Boolean;
-
+        UsuarioPost: Text;
+        MensajeMeta: Text;
+        CodigoParadaStop: Code[20];
+        UsuariosGtaskxCatego: Record "User Task Group Member";
+        GuidEmt: Guid;
+        GuidEmt2: Guid;
     begin
         //        {
         //     "description": "Fijar y sustituir elementos que NO suponen riesgo para usuarios de zona no crítica con una frecuencia de 96h del departamento Técnico",
@@ -6780,9 +6896,11 @@ codeunit 7001148 GTask
         if JsonIncidencia.Get('_id', JsonCampo) Then IdIncidencia := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('state', JsonCampo) Then
             State := JsonCampo.AsValue().AsText();
-        If JsonIncidencia.Get('user', JsonCampo) Then
-            If Usuario.Get(JsonCampo.AsValue().AsText()) then
+        If JsonIncidencia.Get('user', JsonCampo) Then begin
+            UsuarioPost := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
+            If Usuario.Get(UsuarioPost) then
                 UsuarioId := Usuario."Id Usuario";
+        end;
         If JsonIncidencia.Get('incidenceType', JsonCampo) Then
             IncidenceType := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('observation', JsonCampo) Then
@@ -6793,8 +6911,10 @@ codeunit 7001148 GTask
             Peticion := JsonCampo.AsValue().AsBoolean();
         // If JsonIncidencia.Get('resource', JsonCampo) Then
         //     Resource := JsonCampo.AsValue().AsText();
+        Clear(Stop);
+        Clear(CodigoParadaStop);
         If JsonIncidencia.Get('stop', JsonCampo) Then
-            Stop := JsonCampo.AsValue().AsText();
+            ParsearStopPostIncidenciaEmt(JsonCampo, Stop, CodigoParadaStop);
         //If (Resource = '') and (Stop <> '') Then
         //    Resource := Stop;
         //RecursoOriginal := Resource;
@@ -6809,7 +6929,7 @@ codeunit 7001148 GTask
             Zone := JsonCampo.AsValue().AsText();
         // Si observation viene vacío y tenemos campos separados, construir como en Python: "Frecuencia: X | Departamento: Y | Zona: Z | Parada: W"
         if (Observation = '') and ((Frequency <> '') or (Departament <> '') or (Zone <> '') or (Stop <> '')) then
-            Observation := ConstruirObservationDesdePartes(Frequency, Departament, Zone, Stop);
+            Observation := ConstruirObservationDesdePartes(Observation, Frequency, Departament, Zone, Stop);
         //Fecha AAAA-MM-DD 2025-11-13 o formato ISO 2025-11-11T23:00:00Z
         // Priorizar fechaHora si existe, sino usar fecha
         If JsonIncidencia.Get('fechahora', JsonCampo) Then begin
@@ -6860,26 +6980,45 @@ codeunit 7001148 GTask
         rDet.FechaHora := Fecha;
         rDet.Descripción := CopyStr(Description, 1, MaxStrLen(rDet.Descripción));
         rDet."Frecuencia" := CopyStr(Frequency, 1, MaxStrLen(rDet."Frecuencia"));
-        if Stop <> '' then
-            rDet.Recurso := CopyStr(stop, 1, MaxStrLen(rDet.Recurso));
+        if CodigoParadaStop <> '' then
+            rDet.Recurso := CodigoParadaStop
+        else if Stop <> '' then
+            rDet.Recurso := CopyStr(Stop, 1, MaxStrLen(rDet.Recurso));
         if IsNullGuid(UsuarioId) = false then
             rDet.Usuario := UsuarioId;
 
         case IncidenceType of
 
             'EMT':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+                    rDet."User Task Group" := 'EMT';
+                end;
             'VILLENA':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'MTO', 'Mobiliario Urbano':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'TAREA TALLER', 'Grupo Taller':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
+                    rDet."User Task Group" := 'MTO';
+                end;
             'PODA', 'Poda':
-                rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
-
+                begin
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
+                    rDet."User Task Group" := 'PODA';
+                end;
         end;
         case Uppercase(State) of
             'PENDING', 'ABIERTA':
@@ -6932,8 +7071,10 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('incidenceType', GetTipoIncidencia(Format(rDet."Tipo Incidencia")));
         JsonFormater.WriteStringProperty('observation', Observation);
         JsonFormater.WriteStringProperty('description', Description);
-        if Stop <> '' then
-            JsonFormater.WriteStringProperty('stop', Stop);
+        if CodigoParadaStop <> '' then
+            JsonFormater.WriteStringProperty('stop', CodigoParadaStop) else
+            if Stop <> '' then
+                JsonFormater.WriteStringProperty('stop', Stop);
         if Frequency <> '' then
             JsonFormater.WriteStringProperty('frequency', Frequency);
         if Departament <> '' then
@@ -6974,6 +7115,36 @@ codeunit 7001148 GTask
             CabOrdenFijacion."Nº Orden" := rDet."Nº Orden";
             CabOrdenFijacion.Insert();
         end;
+        // si es peticion, El mensaje no es Incidencia, si no Orden de tabajo
+        if Peticion then
+            MensajeMeta := StrSubstNo('Mira Orden de trabajo EMT nº %1: %2', rDet."No.", Description)
+        else
+            MensajeMeta := StrSubstNo('Mira Incidencia EMT nº %1: %2', rDet."No.", Description);
+
+        if Observation <> '' then
+            MensajeMeta += ' | Observación: ' + Observation;
+        if CodigoParadaStop <> '' then
+            MensajeMeta += ' | Parada: ' + CodigoParadaStop
+        else
+            if Stop <> '' then
+                MensajeMeta += ' | Parada: ' + Stop;
+        GuidEmt := CreateGuid();
+        GuidEmt2 := CreateGuid();
+        Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
+        Evaluate(GuidEmt2, '{ce35a5ab-f8f2-4634-8437-f83f4d99c820}');
+        MensajeMeta += ' — EMTAlert https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
+        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt, '');
+        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34605264114', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt2, '');
+        //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
+        UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
+        if UsuariosGtaskxCatego.FindSet() then
+            repeat
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.SetRange("Id Usuario", UsuariosGtaskxCatego."User Security ID");
+                if UserGtaskMalla.FindFirst() then
+                    Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, UserGtaskMalla."Id Usuario", '');
+            until UsuariosGtaskxCatego.Next() = 0;
+
         exit('OK:' + Id);
     end;
 
@@ -8015,12 +8186,58 @@ codeunit 7001148 GTask
 
 
     #endregion Serivices
-    local procedure ConstruirObservationDesdePartes(Frequency: Text; Departament: Text; Zone: Text; StopName: Text): Text
+
+    /// <summary>
+    /// stop como texto (legado) o como objeto {"number":"25","name":"Dic de l'Oest"}.
+    /// StopText: texto para observaciones/Gtask; CodigoParada: Nº emplazamiento (p. ej. P25).
+    /// </summary>
+    local procedure ParsearStopPostIncidenciaEmt(StopToken: JsonToken; var StopText: Text; var CodigoParada: Code[20])
+    var
+        StopObj: JsonObject;
+        T: JsonToken;
+        NumTxt: Text;
+        NomTxt: Text;
+        NumTrim: Text;
+    begin
+        Clear(StopText);
+        Clear(CodigoParada);
+        if StopToken.IsObject() then begin
+            StopObj := StopToken.AsObject();
+            Clear(NumTxt);
+            Clear(NomTxt);
+            if StopObj.Get('number', T) then
+                NumTxt := T.AsValue().AsText();
+            if StopObj.Get('name', T) then
+                NomTxt := T.AsValue().AsText();
+            NumTrim := DelChr(NumTxt, '<>', ' ');
+            if (NumTrim <> '') and (NomTxt <> '') then
+                StopText := NumTrim + ' - ' + NomTxt
+            else if NumTrim <> '' then
+                StopText := NumTrim
+            else
+                StopText := NomTxt;
+            if NumTrim <> '' then begin
+                if (StrLen(NumTrim) < MaxStrLen(CodigoParada)) and (UpperCase(CopyStr(NumTrim, 1, 1)) <> 'P') then
+                    CodigoParada := CopyStr('P' + NumTrim, 1, MaxStrLen(CodigoParada))
+                else
+                    CodigoParada := CopyStr(NumTrim, 1, MaxStrLen(CodigoParada));
+            end else
+                if NomTxt <> '' then
+                    CodigoParada := CopyStr(NomTxt, 1, MaxStrLen(CodigoParada));
+        end else
+            if StopToken.IsValue() then begin
+                StopText := StopToken.AsValue().AsText();
+                CodigoParada := CopyStr(StopText, 1, MaxStrLen(CodigoParada));
+            end;
+    end;
+
+    local procedure ConstruirObservationDesdePartes(Observation: Text; Frequency: Text; Departament: Text; Zone: Text; StopName: Text): Text
     var
         Partes: List of [Text];
         Parte: Text;
         Resultado: Text;
     begin
+        Partes.Add(Observation);
         if Frequency <> '' then
             Partes.Add('Frecuencia: ' + Frequency);
         if Departament <> '' then
@@ -8037,6 +8254,28 @@ codeunit 7001148 GTask
         exit(Resultado);
     end;
 
+    procedure CrearTareasSinId()
+    var
+        UserTask: Record "User Task";
+        Gtask: Codeunit Gtask;
+        Resource: Record "Resource";
+        Emplazamientos: Record Emplazamientos;
+    begin
+        UserTask.SetRange(Id_Tarea, '');
+        UserTask.SetRange("User Task Group Assigned To", 'LIMPIEZA');
+        if UserTask.FindSet() then
+            repeat
+                UserTask.Get(UserTask.ID);
+                if Emplazamientos.get(UserTask.Id_record) then begin
+                    Resource.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
+                    if not Resource.FindFirst() then Resource.init;
+                end else
+                    Resource.init;
+                //UserTask.Id_Tarea := 
+                Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
+            //UserTask.Modify();
+            until UserTask.Next() = 0;
 
+    end;
 
 }

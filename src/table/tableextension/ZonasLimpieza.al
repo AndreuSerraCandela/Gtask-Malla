@@ -42,5 +42,6 @@ tableextension 92407 ZonasLimpiezaExt extends "Zonas Limpieza"
             Caption = 'Tipo de tarea';
             DataClassification = ToBeClassified;
         }
+
     }
 }

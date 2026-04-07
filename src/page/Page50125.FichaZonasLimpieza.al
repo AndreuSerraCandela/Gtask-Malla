@@ -50,6 +50,7 @@ page 50118 "Ficha Zonas Limpieza"
                 {
                     ApplicationArea = All;
                 }
+
             }
             group(Periodicidad)
             {

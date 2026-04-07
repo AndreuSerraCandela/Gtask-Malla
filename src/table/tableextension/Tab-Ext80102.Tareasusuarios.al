@@ -175,6 +175,12 @@ tableextension 92103 Tareasusuarios extends "User Task"
             Caption = 'Crear Parte de Trabajo';
             DataClassification = ToBeClassified;
         }
+        //Empresa Linea
+        field(50027; EmpresaTarea; Text[30])
+        {
+            Caption = 'Empresa Linea';
+            DataClassification = ToBeClassified;
+        }
     }
     trigger OnAfterDelete()
     var
