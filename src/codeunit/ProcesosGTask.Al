@@ -2413,19 +2413,19 @@ codeunit 7001149 Procesos_GTask
     /// <summary>
     /// Igual que el envío simple, pero registra la respuesta en "Mensaje WhatsApp" y actualiza Incidencias."Id Mensaje WA" si el origen es una incidencia.
     /// </summary>
-    internal procedure EnviarMetaWhatsAppIncidenciaEmt(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; ContextOrigen: RecordId; IdUsuarioBC: Guid; IdMensajeOriginalWa: Text): Boolean
+    internal procedure EnviarMetaWhatsAppIncidenciaEmt(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; ContextOrigen: RecordId; IdUsuarioBC: Guid; IdMensajeOriginalWa: Text; NombreParametroPlantillaCuerpo: Text): Boolean
     var
         CuerpoRespuesta: Text;
     begin
-        if not TryHttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, CuerpoRespuesta) then
+        if not TryHttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, NombreParametroPlantillaCuerpo, CuerpoRespuesta) then
             exit(false); // TryFunction devolvió error
         if (ContextOrigen.TableNo <> 0) and (CuerpoRespuesta <> '') then
-            RegistrarMensajeWhatsAppDesdeRespuesta(CuerpoRespuesta, IdMensajeOriginalWa, IdUsuarioBC, ContextOrigen, Mensaje);
+            RegistrarMensajeWhatsAppDesdeRespuesta(CuerpoRespuesta, IdMensajeOriginalWa, IdUsuarioBC, ContextOrigen, Mensaje, TelefonoDestino);
         exit(true);
     end;
 
     [TryFunction]
-    local procedure TryHttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; var ResponseBody: Text)
+    local procedure TryHttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; NombreParametroPlantillaCuerpo: Text; var ResponseBody: Text)
     var
         HttpClient: HttpClient;
         HttpContent: HttpContent;
@@ -2435,6 +2435,7 @@ codeunit 7001149 Procesos_GTask
         JsonBody: JsonObject;
         RequestBody: Text;
         MetaUrl: Text;
+        NombreTxt: Text;
     begin
         Clear(ResponseBody);
         MetaUrl := 'https://meta.malla.es/enviar';
@@ -2447,6 +2448,9 @@ codeunit 7001149 Procesos_GTask
         JsonBody.Add('Usuario', UsuarioDesdePost);
         JsonBody.Add('Empresa', 'Malla');
         JsonBody.Add('PreviewUrl', true);
+        NombreTxt := CopyStr(NombreParametroPlantillaCuerpo, 1, 1024);
+        if NombreTxt <> '' then
+            JsonBody.Add('NombreOperario', NombreTxt);
         JsonBody.WriteTo(RequestBody);
 
         HttpContent.WriteFrom(RequestBody);
@@ -2541,7 +2545,45 @@ codeunit 7001149 Procesos_GTask
         exit(LeerTextoJsonPrimerValor(J, 'content', 'caption', 'msg', '', ''));
     end;
 
-    local procedure RegistrarMensajeWhatsAppDesdeRespuesta(ResponseJson: Text; IdMensajeOriginalWa: Text; IdUsuarioBC: Guid; OrigenRecordId: RecordId; TextoMensajeEnviado: Text)
+
+
+    local procedure TelefonosWhatsAppMismoDestino(TelGuardado: Text; TelNuevo: Text): Boolean
+    var
+        A: Text;
+        B: Text;
+    begin
+        A := SoloDigitosTelefono(TelGuardado);
+        B := SoloDigitosTelefono(TelNuevo);
+        if (A = '') or (B = '') then
+            exit(false);
+        if A = B then
+            exit(true);
+        if (StrLen(A) >= 9) and (StrLen(B) >= 9) then
+            if CopyStr(A, StrLen(A) - 8, 9) = CopyStr(B, StrLen(B) - 8, 9) then
+                exit(true);
+        exit(false);
+    end;
+
+    local procedure SoloDigitosTelefono(Tel: Text): Text
+    var
+        i: Integer;
+        Ch: Text;
+        Digitos: Text;
+    begin
+        Tel := DelChr(Tel, '<>', ' ');
+        if CopyStr(Tel, 1, 1) = '+' then
+            Tel := CopyStr(Tel, 2, MaxStrLen(Tel));
+        for i := 1 to StrLen(Tel) do begin
+            Ch := CopyStr(Tel, i, 1);
+            case Ch of
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+                    Digitos += Ch;
+            end;
+        end;
+        exit(Digitos);
+    end;
+
+    local procedure RegistrarMensajeWhatsAppDesdeRespuesta(ResponseJson: Text; IdMensajeOriginalWa: Text; IdUsuarioBC: Guid; OrigenRecordId: RecordId; TextoMensajeEnviado: Text; TelefonoDestino: Text)
     var
         MsgWA: Record "Mensaje WhatsApp";
         Inc: Record Incidencias;
@@ -2564,6 +2606,8 @@ codeunit 7001149 Procesos_GTask
         if Texto = '' then
             Texto := CopyStr(TryExtraerTextoDesdeRespuestaMeta(ResponseJson), 1, MaxStrLen(MsgWA."Texto mensaje"));
         MsgWA."Texto mensaje" := Texto;
+        if TelefonoDestino <> '' then
+            MsgWA.Validate("Teléfono", CopyStr(TelefonoDestino, 1, MaxStrLen(MsgWA."Teléfono")));
         MsgWA.Insert(true);
         if MsgWA.Get(WamId) then
             AdjuntarTextoComoDocumentoMensajeWhatsApp(MsgWA, ResponseJson, 'WhatsApp_respuesta.json');
@@ -2936,6 +2980,7 @@ codeunit 7001149 Procesos_GTask
         Imagenes: Record "Imagenes Orden fijación";
         InS: InStream;
         Control: Codeunit "ControlProcesos";
+        Gtask: Codeunit Gtask;
         NextImg: Integer;
         Nombre: Text;
         UserG: Record UsuariosGtask;
@@ -2982,6 +3027,10 @@ codeunit 7001149 Procesos_GTask
 #else
         Imagenes.InsertAttachment(InS, Nombre, true);
 #endif
+        Gtask.ModifyTareaIncidencia(Incidencia);
+        //Nortificar a los usuarios comunicados por whtasApp, que la terea a finalizado
+        NotificarUsuariosComunicadosPorWhatsApp(Incidencia);
+
     end;
 
     local procedure TextoIndicaCierreIncidenciaWhatsApp(Txt: Text): Boolean
@@ -3065,5 +3114,64 @@ codeunit 7001149 Procesos_GTask
             exit(Tok.AsValue().AsText());
         exit('');
     end;
+
+    local procedure NotificarUsuariosComunicadosPorWhatsApp(rDet: Record Incidencias)
+    var
+        UserG: Record UsuariosGtask;
+        MensajeMeta: Text;
+        EnviadoASC: Boolean;
+        Usuario: Record UsuariosGtask;
+        UserGtaskMalla: Record UsuariosGtask;
+        UsuariosGtaskxCatego: Record "User Task Group Member";
+        Procesos_GTask: Codeunit Procesos_GTask;
+        GuidEmt: Guid;
+        ParadasBus: Record "Emplazamientos";
+        Recurso: Record Resource;
+    begin
+        EnviadoASC := false;
+        Clear(MensajeMeta);
+        if rDet."Es Peticion" then
+            MensajeMeta := StrSubstNo('Orden de trabajo nº %1: %2 finalizada', rDet."No.", rDet.Descripción)
+        else
+            MensajeMeta := StrSubstNo('Incidencia nº %1: %2 finalizada', rDet."No.", rDet.Descripción);
+        if rDet.Recurso <> '' then begin
+            if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
+                MensajeMeta += ' | Parada: ' + rDet.Recurso;
+                if ParadasBus.Get(ParadasBus."Tipo Emplazamiento"::Opis, rDet.Recurso) then
+                    MensajeMeta += ' | Parada: ' + ParadasBus."Descripción";
+            end else begin
+                If not Recurso.Get(rDet.Recurso) then
+                    Recurso.Init();
+
+                MensajeMeta += ' | Recurso: ' + rDet.Recurso + ' ' + Recurso.Name;
+            end;
+        end;
+        MensajeMeta += ' — EMTGis https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
+        Usuario.Reset();
+        Usuario.SetRange("Id Usuario", rDet.Usuario);
+        If not Usuario.FindSet() then
+            Usuario.init;
+        //Para el usurio 34651049109 el guid es {6a7fff89-f519-4695-bc0b-4c414b6e0736}
+        //Para el usurio 34605264114 el guid es {ce35a5ab-f8f2-4634-8437-f83f4d99c820}
+
+        //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
+        UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
+        if UsuariosGtaskxCatego.FindSet() then
+            repeat
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.SetRange("Id Usuario", UsuariosGtaskxCatego."User Security ID");
+                if UserGtaskMalla.FindSet() then
+                    Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, UserGtaskMalla."Id Usuario", '', UserGtaskMalla.Nombre);
+                if UserGtaskMalla."Teléfono" = '34651049109' then
+                    EnviadoASC := true;
+            until UsuariosGtaskxCatego.Next() = 0;
+        If not EnviadoASC then begin
+            GuidEmt := CreateGuid();
+            Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
+
+            Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '', Usuario.Nombre);
+        end;
+    end;
+
 
 }

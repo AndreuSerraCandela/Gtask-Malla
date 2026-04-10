@@ -34,11 +34,12 @@ page 50112 "Incidencias Taller"
                     ApplicationArea = All;
                     Caption = 'Descripción';
                     ToolTip = 'Descripción de la incidencia';
-                    Editable = false;
-                }
 
+                }
+                field("Tipo Elemento"; Rec."Tipo Elemento") { ApplicationArea = All; }
                 field("Recurso/Parada"; Rec.Recurso) { ApplicationArea = All; }
                 field("Tipo Incidencia"; Rec."Tipo Incidencia") { ApplicationArea = All; }
+                field("SubTipo Incidencia"; Rec."SubTipo Incidencia") { ApplicationArea = All; }
                 field("Fecha Hora"; Rec."FechaHora") { ApplicationArea = All; }
                 field("Estado"; Rec."Estado") { ApplicationArea = All; }
                 //comunicado por EMT
@@ -65,7 +66,7 @@ page 50112 "Incidencias Taller"
                         Usuario: Record UsuariosGtask;
                     begin
                         If Page.RunModal(Page::UsuariosGtask, Usuario) = Action::LookupOK then begin
-                            NombreUsuario := Usuario.Nombre;
+                            NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
                             exit(true);
                         end;
                     end;
@@ -388,7 +389,7 @@ page 50112 "Incidencias Taller"
         If not IsNullGuid(Rec.Usuario) then begin
             Usuario.SetRange("Id Usuario", Rec.Usuario);
             If Usuario.FindFirst() then begin
-                NombreUsuario := Usuario.Nombre;
+                NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
             end;
         end;
 
@@ -413,9 +414,16 @@ page 50117 "Lista Incidencias Taller"
             repeater(Detalle)
             {
                 field("No."; Rec."No.") { ApplicationArea = All; }
+
                 field("Descripción"; Rec."Descripción") { ApplicationArea = All; }
                 field(Recurso; Rec.Recurso) { ApplicationArea = All; }
+                field("Nombre Recurso"; Rec.NombreElemento()) { ApplicationArea = All; }
+                //direccion
+                field("Dirección"; Rec.Dirección) { ApplicationArea = All; }
+                field("PuntoX"; Rec.PuntoX) { ApplicationArea = All; }
+                field("PuntoY"; Rec.PuntoY) { ApplicationArea = All; }
                 field("Tipo Incidencia"; Rec."Tipo Incidencia") { ApplicationArea = All; }
+                field("SubTipo Incidencia"; Rec."SubTipo Incidencia") { ApplicationArea = All; }
                 field("Fecha Hora"; Rec."FechaHora") { ApplicationArea = All; }
                 field("Estado"; Rec."Estado") { ApplicationArea = All; }
                 field("URL Primera Imagen"; UrlPrimeraImagen)
@@ -435,7 +443,7 @@ page 50117 "Lista Incidencias Taller"
                         Usuario: Record UsuariosGtask;
                     begin
                         If Page.RunModal(Page::UsuariosGtask, Usuario) = Action::LookupOK then begin
-                            NombreUsuario := Usuario.Nombre;
+                            NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
                             Rec.Usuario := Usuario."Id Usuario";
                             Rec.Modify();
                             exit(true);
@@ -448,7 +456,7 @@ page 50117 "Lista Incidencias Taller"
                     begin
                         Usuario.SetRange(Nombre, NombreUsuario);
                         If Usuario.FindFirst() then begin
-                            NombreUsuario := Usuario.Nombre;
+                            NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
                             Rec.Usuario := Usuario."Id Usuario";
                             Rec.Modify();
                         end;
@@ -464,7 +472,7 @@ page 50117 "Lista Incidencias Taller"
                 }
                 field("Usuario Asignado"; NombreUsuarioAsignado)
                 {
-                    Caption = 'Usuario';
+                    Caption = 'Usuario Asignado';
                     ApplicationArea = All;
                     ToolTip = 'ID del usuario que asignó la incidencia';
                     trigger OnLookup(var Text: Text): Boolean
@@ -472,7 +480,7 @@ page 50117 "Lista Incidencias Taller"
                         Usuario: Record UsuariosGtask;
                     begin
                         If Page.RunModal(Page::UsuariosGtask, Usuario) = Action::LookupOK then begin
-                            NombreUsuarioAsignado := Usuario.Nombre;
+                            NombreUsuarioAsignado := Usuario.Nombre + ' ' + Usuario.Apellido;
                             Rec."Usuario Asignado" := Usuario."Id Usuario";
                             Rec.Modify();
                             exit(true);
@@ -485,7 +493,7 @@ page 50117 "Lista Incidencias Taller"
                     begin
                         Usuario.SetRange(Nombre, NombreUsuario);
                         If Usuario.FindFirst() then begin
-                            NombreUsuarioAsignado := Usuario.Nombre;
+                            NombreUsuarioAsignado := Usuario.Nombre + ' ' + Usuario.Apellido;
                             Rec."Usuario Asignado" := Usuario."Id Usuario";
                             Rec.Modify();
                         end;
@@ -523,6 +531,9 @@ page 50117 "Lista Incidencias Taller"
                     Editable = false;
                     Enabled = false;
                 }
+                //Añadir Recurso, nombre y Puntox y puntoy
+
+
 
 
             }
@@ -590,14 +601,14 @@ page 50117 "Lista Incidencias Taller"
         If not IsNullGuid(Rec.Usuario) then begin
             UsuarioGtask.SetRange("Id Usuario", Rec.Usuario);
             If UsuarioGtask.FindFirst() then begin
-                NombreUsuario := UsuarioGtask.Nombre;
+                NombreUsuario := UsuarioGtask.Nombre + ' ' + UsuarioGtask.Apellido;
             end;
         end;
         NombreUsuarioAsignado := '';
         If not IsNullGuid(Rec."Usuario Asignado") then begin
             UsuarioGtask.SetRange("Id Usuario", Rec."Usuario Asignado");
             If UsuarioGtask.FindFirst() then begin
-                NombreUsuarioAsignado := UsuarioGtask.Nombre;
+                NombreUsuarioAsignado := UsuarioGtask.Nombre + ' ' + UsuarioGtask.Apellido;
             end;
         end;
         UrlPrimeraImagen := GetUrlPrimeraImagen();

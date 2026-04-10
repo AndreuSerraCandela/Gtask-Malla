@@ -554,6 +554,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     a: Integer;
                     ficheros: Record "Document Attachment";
                     IdDocPadre: Integer;
+                    LineNoVallas: Integer;
                 begin
                     a := 1;
                     UserSetups.ChangeCompany('Malla Publicidad');
@@ -840,23 +841,21 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     DoccAttach.SetRange(DoccAttach."Document Type", DoccAttach."Document Type"::Order);
                     //If Opcion <> Opcion::Opi then
                     DoccAttach.DeleteAll(true);
+                    DoccAttach.Reset();
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Usertask."No.");
+                    DoccAttach.SetRange("Document Type", DoccAttach."Document Type"::Vallas);
                     DoccAttach.SetRange(Id, IdDocPadre);
                     If not DoccAttach.FindFirst() then begin
-                        DoccAttach.Init();
-                        DoccAttach."Table ID" := Database::"User Task";
-                        DoccAttach."No." := Usertask."No.";
-                        DoccAttach."Document Type" := DoccAttach."Document Type"::Vallas;
-                        DoccAttach.Id := IdDocPadre;
-                        DoccAttach."Line No." := 0;
-                        DoccAttach.Insert();
+                        // No recrear fila con el mismo Id (ya creada en SaveAttachment ~712): solo PDF + siguiente Nº línea Vallas
+                        LineNoVallas := ProximaLineaDocumentoAdjuntoVallasUserTask(Usertask."No.");
                         cAB.SetRange("Nº oRden", Rec."Nº Orden");
                         rep.SetTableView(Cab);
                         DoccAttach.Init();
                         DoccAttach."Table ID" := Database::"User Task";
-                        DoccAttach."No." := Format(Rec."Nº Orden");
-                        DoccAttach.Id := IdDocPadre;
-                        DoccAttach."Line No." := 0;
+                        DoccAttach."No." := Usertask."No.";
                         DoccAttach."Document Type" := DoccAttach."Document Type"::Vallas;
+                        DoccAttach."Line No." := LineNoVallas;
                         Clear(TM);
                         TM.Init();
                         TM.ID := CreateGuid();
@@ -880,20 +879,23 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         RecRef.GetTable(Usertask);
                         RecRef.Get(Usertask.RecordId);
                         DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
-                        //DoccAttach.Insert();
+                        IdDocPadre := DoccAttach.Id;
                         RecRef.Close();
                         tm.Delete();
                     end;
                     DoccAttach.Reset();
                     Procesos_Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                    ficheros.Reset();
                     ficheros.SetRange("Table ID", Database::"User Task");
+                    ficheros.SetRange("No.", UserTask."No.");
+                    ficheros.SetRange("Document Type", ficheros."Document Type"::Vallas);
                     ficheros.SetRange(Id, IdDocPadre);
                     if not ficheros.FindFirst() then begin
+                        LineNoVallas := ProximaLineaDocumentoAdjuntoVallasUserTask(UserTask."No.");
                         ficheros.Init();
                         ficheros."Table ID" := Database::"User Task";
                         ficheros."No." := UserTask."No.";
-                        ficheros.Id := IdDocPadre;
-                        ficheros."Line No." := 0;
+                        ficheros."Line No." := LineNoVallas;
                         ficheros."Document Type" := ficheros."Document Type"::Vallas;
 
                         Clear(TM);
@@ -920,7 +922,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         RecRef.GetTable(Usertask);
                         RecRef.Get(Usertask.RecordId);
                         ficheros.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '.pdf');
-                        //DoccAttach.Insert();
+                        IdDocPadre := ficheros.Id;
                         RecRef.Close();
                         tm.Delete();
                     end;
@@ -1305,6 +1307,22 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
         end;
     end;
 
+
+    /// <summary>
+    /// Siguiente Nº línea libre para adjuntos tipo Vallas en la tarea (evita duplicar clave con Line No.=0).
+    /// </summary>
+    local procedure ProximaLineaDocumentoAdjuntoVallasUserTask(TaskNo: Code[20]): Integer
+    var
+        DA: Record "Document Attachment";
+    begin
+        DA.Reset();
+        DA.SetRange("Table ID", Database::"User Task");
+        DA.SetRange("No.", TaskNo);
+        DA.SetRange("Document Type", DA."Document Type"::Vallas);
+        if DA.FindLast() then
+            exit(DA."Line No." + 1);
+        exit(0);
+    end;
 
     procedure Imprimir(Var Imagenes: Record "Imagenes Orden fijación";
     var IdDocPadre: Integer; Opcion: text; var Usertask: Record "User Task"; var rDet: Record "Orden fijación")

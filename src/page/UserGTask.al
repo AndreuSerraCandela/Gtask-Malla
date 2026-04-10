@@ -20,6 +20,10 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                 }
+                field("Apellido"; Rec."Apellido")
+                {
+                    ApplicationArea = All;
+                }
                 field("Email"; Rec."Email")
                 {
                     ApplicationArea = All;
@@ -74,7 +78,7 @@ page 7001184 "UsuariosGtask"
                             User.SetRange("Contact Email", UsuariosGtask."Email");
                             If (Not User.FindFirst()) And (not User.Get(UsuariosGtask."Id Usuario")) then begin
                                 User.Init();
-                                user.Validate("User Name", UsuariosGtask."Nombre");
+                                user.Validate("User Name", UsuariosGtask."Nombre" + ' ' + UsuariosGtask."Apellido");
                                 User."User Security ID" := CreateGuid();
                                 UsuariosGtask."Id Usuario" := User."User Security ID";
                                 User."License Type" := User."License Type"::"External User";

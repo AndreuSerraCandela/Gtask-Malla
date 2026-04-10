@@ -4022,7 +4022,8 @@ codeunit 7001148 GTask
                     Id := Value1;
             end;
         end;
-        rDet.Id_Gtask := Id;
+        if Id <> '' then
+            rDet.Id_Gtask := Id;
         rDet.Modify();
 
     end;
@@ -4485,7 +4486,7 @@ codeunit 7001148 GTask
 
 
 
-    local procedure ModifyTareaIncidencia(rDet: Record Incidencias)
+    procedure ModifyTareaIncidencia(rDet: Record Incidencias)
     var
         UserTask: Record "User Task";
         Gtask: Codeunit Gtask;
@@ -4506,6 +4507,7 @@ codeunit 7001148 GTask
             UserTask.SetRange(Id_Tarea, rDet."Id Tarea Gtask");
             If UserTask.FindFirst() then begin
                 rDet."Id_Tarea" := UserTask.ID;
+                If rDet.Id_Gtask = '' then rDet.Id_Gtask := UserTask.IdQr;
                 rDet.Modify();
             end;
         end;
@@ -4536,7 +4538,8 @@ codeunit 7001148 GTask
                 RecRef.Get(Emplazamientos.RecordId);
             end;
             UserTask."No." := Format(UserTask.ID);
-            UserTask.IdQr := rDet.Id_Gtask;
+            If rDet.Id_Gtask <> '' then
+                UserTask.IdQr := rDet.Id_Gtask;
             UserTask.TestField(IdQr);
             UserTask."Created By" := UserTask."Supervisor";
             if IsNullGuid(rDet."Usuario Asignado") = false then
@@ -6356,8 +6359,8 @@ codeunit 7001148 GTask
         MensajeMeta: Text;
         UsuariosGtaskxCatego: Record "User Task Group Member";
         GuidEmt: Guid;
-        GuidEmt2: Guid;
-
+        SubTipoIncidencia: Text;
+        EnviadoASC: Boolean;
     begin
         //{
         //"id":"65b5c4c3d4e5f6789012335"
@@ -6391,6 +6394,8 @@ codeunit 7001148 GTask
                 UsuarioAsignadoId := Usuario."Id Usuario";
         If JsonIncidencia.Get('incidenceType', JsonCampo) Then
             IncidenceType := JsonCampo.AsValue().AsText();
+        If JsonIncidencia.Get('subIncidenceType', JsonCampo) Then
+            SubTipoIncidencia := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('observation', JsonCampo) Then
             Observation := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('description', JsonCampo) Then
@@ -6516,33 +6521,55 @@ codeunit 7001148 GTask
             'EMT':
                 begin
                     rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
                     rDet."User Task Group" := 'EMT';
                 end;
-            'VILLENA':
+            'VILLENA', 'VALLAS', 'SOPORTES':
                 begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Soportes";
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
                     rDet."User Task Group" := 'MTO';
                 end;
             'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
                 begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica;
                     rDet."User Task Group" := 'MTO';
                 end;
             'MTO', 'Mobiliario Urbano':
                 begin
                     rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::"Mantenimiento";
                     rDet."User Task Group" := 'MTO';
                 end;
             'TAREA TALLER', 'Grupo Taller':
                 begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Soportes";
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::"Mantenimiento";
                     rDet."User Task Group" := 'MTO';
                 end;
             'PODA', 'Poda':
                 begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
+                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Soportes";
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::"Poda";
                     rDet."User Task Group" := 'PODA';
                 end;
+        end;
+        case Uppercase(SubTipoIncidencia) of
+            'LIMPIEZA':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
+            'ELECTRICA':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica;
+            'PODA':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Poda;
+            'MANTENIMIENTO':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
+            'OTRAS':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Otras;
+            'TIP':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica
+            else
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Otras;
         end;
         case Uppercase(State) of
             'PENDING', 'ABIERTA':
@@ -6637,7 +6664,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         Clear(RestApi);
-        If NuevaIncidencia then
+        If (NuevaIncidencia) or (rDet.Id_Gtask = '') then
             Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'incidence', Token(), RequestType::post, Json)
 
         else
@@ -6653,12 +6680,15 @@ codeunit 7001148 GTask
         commit;
         rDet.Get(rDet."No.");
         rDet.SetWorkDescription(Description + ' ' + Observation);
+        if rDet."Descripción" = '' then rDet."Descripción" := CopyStr(Observation, 1, MaxStrLen(rDet."Descripción"));
         commit;
         rDet.Get(rDet."No.");
         rDet.CalcFields("Work Description"); // Evitar que el Modify siguiente sobrescriba el BLOB
-        if StrLen(Id) > 30 then
-            exit(DevolverError404('Error al generar Incidencia: el id devuelto excede la longitud permitida (30). Valor: ' + CopyStr(Id, 1, 50)));
-        rDet.Id_Gtask := Id;
+        if Id <> '' then begin
+            if StrLen(Id) > 30 then
+                exit(DevolverError404('Error al generar Incidencia: el id devuelto excede la longitud permitida (30). Valor: ' + CopyStr(Id, 1, 50)));
+            rDet.Id_Gtask := Id;
+        end;
         If rDet.Recurso = '' Then rDet.Recurso := RecursoOriginal;
         rDet.Modify();
         Commit();
@@ -6688,47 +6718,53 @@ codeunit 7001148 GTask
             CabOrdenFijacion."Nº Orden" := rDet."Nº Orden";
             CabOrdenFijacion.Insert();
         end;
-        Clear(MensajeMeta);
-        if rDet."Es Peticion" then
-            MensajeMeta := StrSubstNo('Mira Orden de trabajo nº %1: %2', rDet."No.", rDet.Descripción)
-        else
-            MensajeMeta := StrSubstNo('Mira Incidencia nº %1: %2', rDet."No.", rDet.Descripción);
-        if Observation <> '' then
-            MensajeMeta += ' | Observación: ' + Observation;
-        if rDet.Recurso <> '' then begin
-            if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
-                MensajeMeta += ' | Parada: ' + rDet.Recurso;
-                if ParadasBus.Get(ParadasBus."Tipo Emplazamiento"::Opis, rDet.Recurso) then
-                    MensajeMeta += ' | Parada: ' + ParadasBus."Descripción";
-            end else begin
-                If not Recurso.Get(rDet.Recurso) then
-                    Recurso.Init();
+        If NuevaIncidencia Then begin
+            EnviadoASC := false;
+            Clear(MensajeMeta);
+            if rDet."Es Peticion" then
+                MensajeMeta := StrSubstNo('Mira Orden de trabajo nº %1: %2', rDet."No.", rDet.Descripción)
+            else
+                MensajeMeta := StrSubstNo('Mira Incidencia nº %1: %2', rDet."No.", rDet.Descripción);
+            if Observation <> '' then
+                MensajeMeta += ' | Observación: ' + Observation;
+            if rDet.Recurso <> '' then begin
+                if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
+                    MensajeMeta += ' | Parada: ' + rDet.Recurso;
+                    if ParadasBus.Get(ParadasBus."Tipo Emplazamiento"::Opis, rDet.Recurso) then
+                        MensajeMeta += ' | Parada: ' + ParadasBus."Descripción";
+                end else begin
+                    If not Recurso.Get(rDet.Recurso) then
+                        Recurso.Init();
 
-                MensajeMeta += ' | Recurso: ' + rDet.Recurso + ' ' + Recurso.Name;
+                    MensajeMeta += ' | Recurso: ' + rDet.Recurso + ' ' + Recurso.Name;
+                end;
+            end;
+            MensajeMeta += ' — EMTGis https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
+            Usuario.Reset();
+            Usuario.SetRange("Id Usuario", rDet.Usuario);
+            If not Usuario.FindSet() then
+                Usuario.init;
+            //Para el usurio 34651049109 el guid es {6a7fff89-f519-4695-bc0b-4c414b6e0736}
+            //Para el usurio 34605264114 el guid es {ce35a5ab-f8f2-4634-8437-f83f4d99c820}
+
+            //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
+            UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
+            if UsuariosGtaskxCatego.FindSet() then
+                repeat
+                    UserGtaskMalla.Reset();
+                    UserGtaskMalla.SetRange("Id Usuario", UsuariosGtaskxCatego."User Security ID");
+                    if UserGtaskMalla.FindSet() then
+                        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, UserGtaskMalla."Id Usuario", '', UserGtaskMalla.Nombre);
+                    if UserGtaskMalla."Teléfono" = '34651049109' then
+                        EnviadoASC := true;
+                until UsuariosGtaskxCatego.Next() = 0;
+            If not EnviadoASC then begin
+                GuidEmt := CreateGuid();
+                Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
+
+                Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '', Usuario.Nombre);
             end;
         end;
-        MensajeMeta += ' — EMTGis https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
-        Usuario.Reset();
-        Usuario.SetRange("Id Usuario", rDet.Usuario);
-        If not Usuario.FindSet() then
-            Usuario.init;
-        //Para el usurio 34651049109 el guid es {6a7fff89-f519-4695-bc0b-4c414b6e0736}
-        //Para el usurio 34605264114 el guid es {ce35a5ab-f8f2-4634-8437-f83f4d99c820}
-        GuidEmt := CreateGuid();
-        GuidEmt2 := CreateGuid();
-        Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
-        Evaluate(GuidEmt2, '{ce35a5ab-f8f2-4634-8437-f83f4d99c820}');
-        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '');
-        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34605264114', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt2, '');
-        //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
-        UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
-        if UsuariosGtaskxCatego.FindSet() then
-            repeat
-                UserGtaskMalla.Reset();
-                UserGtaskMalla.SetRange("Id Usuario", UsuariosGtaskxCatego."User Security ID");
-                if UserGtaskMalla.FindSet() then
-                    Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, UserGtaskMalla."Id Usuario", '');
-            until UsuariosGtaskxCatego.Next() = 0;
 
         exit('OK:' + Id + ' Id_Gtask:' + rDet."Id Tarea Gtask");
     end;
@@ -6869,7 +6905,8 @@ codeunit 7001148 GTask
         CodigoParadaStop: Code[20];
         UsuariosGtaskxCatego: Record "User Task Group Member";
         GuidEmt: Guid;
-        GuidEmt2: Guid;
+        EnviadoASC: Boolean;
+
     begin
         //        {
         //     "description": "Fijar y sustituir elementos que NO suponen riesgo para usuarios de zona no crítica con una frecuencia de 96h del departamento Técnico",
@@ -6892,6 +6929,15 @@ codeunit 7001148 GTask
         // }
         // ]
         // }
+        //100: Limpieza
+        //200: Limpieza
+        //300: Mantenimiento
+        //400: Mantenimiento
+        //500: Mantenimiento
+        //600: Mantenimiento
+        //700: Tip
+        //800: Electrica
+        //Ejemplo Descripcion 100: Neteja/101: Vicres Bruts
         JsonIncidencia.ReadFrom(JsonText);
         if JsonIncidencia.Get('_id', JsonCampo) Then IdIncidencia := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('state', JsonCampo) Then
@@ -6987,38 +7033,59 @@ codeunit 7001148 GTask
         if IsNullGuid(UsuarioId) = false then
             rDet.Usuario := UsuarioId;
 
-        case IncidenceType of
+        // case IncidenceType of
 
-            'EMT':
-                begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
-                    rDet."User Task Group" := 'EMT';
-                end;
-            'VILLENA':
-                begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
-                    rDet."User Task Group" := 'MTO';
-                end;
-            'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
-                begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
-                    rDet."User Task Group" := 'MTO';
-                end;
-            'MTO', 'Mobiliario Urbano':
-                begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
-                    rDet."User Task Group" := 'MTO';
-                end;
-            'TAREA TALLER', 'Grupo Taller':
-                begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
-                    rDet."User Task Group" := 'MTO';
-                end;
-            'PODA', 'Poda':
-                begin
-                    rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
-                    rDet."User Task Group" := 'PODA';
-                end;
+        //     'EMT':
+        //         begin
+        //             rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+        //             rDet."User Task Group" := 'EMT';
+        //         end;
+        //     'VILLENA':
+        //         begin
+        //             rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Villena";
+        //             rDet."User Task Group" := 'MTO';
+        //         end;
+        //     'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
+        //         begin
+        //             rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Electricas";
+        //             rDet."User Task Group" := 'MTO';
+        //         end;
+        //     'MTO', 'Mobiliario Urbano':
+        //         begin
+        //             rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
+        //             rDet."User Task Group" := 'MTO';
+        //         end;
+        //     'TAREA TALLER', 'Grupo Taller':
+        //         begin
+        //             rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Grupo Taller";
+        //             rDet."User Task Group" := 'MTO';
+        //         end;
+        //     'PODA', 'Poda':
+        //         begin
+        //             rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Poda";
+        //             rDet."User Task Group" := 'PODA';
+        //         end;
+        // end;
+        rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
+        case copystr(Description, 1, 3) of
+            '100':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
+            '200':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
+            '300':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
+            '400':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
+            '500':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
+            '600':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
+            '700':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Tip;
+            '800':
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica;
+            else
+                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Otras;
         end;
         case Uppercase(State) of
             'PENDING', 'ABIERTA':
@@ -7105,7 +7172,8 @@ codeunit 7001148 GTask
         end;
         rDet.Get(rDet."No.");
         rDet.CalcFields("Work Description"); // Evitar que el Modify siguiente sobrescriba el BLOB
-        rDet.Id_Gtask := Id;
+        if Id <> '' then
+            rDet.Id_Gtask := Id;
         rDet.Modify();
         Commit();
 
@@ -7128,22 +7196,25 @@ codeunit 7001148 GTask
         else
             if Stop <> '' then
                 MensajeMeta += ' | Parada: ' + Stop;
-        GuidEmt := CreateGuid();
-        GuidEmt2 := CreateGuid();
-        Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
-        Evaluate(GuidEmt2, '{ce35a5ab-f8f2-4634-8437-f83f4d99c820}');
-        MensajeMeta += ' — EMTAlert https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
-        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt, '');
-        Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34605264114', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt2, '');
+        //Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34605264114', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt2, '', WaNombreOperario);
         //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
+        EnviadoASC := false;
         UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
         if UsuariosGtaskxCatego.FindSet() then
             repeat
                 UserGtaskMalla.Reset();
                 UserGtaskMalla.SetRange("Id Usuario", UsuariosGtaskxCatego."User Security ID");
                 if UserGtaskMalla.FindFirst() then
-                    Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, UserGtaskMalla."Id Usuario", '');
+                    Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt(UserGtaskMalla."Teléfono", MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, UserGtaskMalla."Id Usuario", '', UserGtaskMalla.Nombre);
+                if UserGtaskMalla."Teléfono" = '34651049109' then
+                    EnviadoASC := true;
             until UsuariosGtaskxCatego.Next() = 0;
+        If not EnviadoASC then begin
+            GuidEmt := CreateGuid();
+            Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
+
+            Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt, '', 'Andreu');
+        end;
 
         exit('OK:' + Id);
     end;
@@ -7184,6 +7255,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('description', Descripcion);
         JsonFormater.WriteStringProperty('state', Incidencias.Estado);
         JsonFormater.WriteStringProperty('incidenceType', Format(Incidencias."Tipo Incidencia"));
+        JsonFormater.WriteStringProperty('subIncidenceType', Format(Incidencias."SubTipo Incidencia"));
         JsonFormater.WriteStringProperty('resource', Incidencias.Recurso);
         //tipo elemento
         JsonFormater.WriteStringProperty('type', Format(Incidencias."Tipo Elemento"));

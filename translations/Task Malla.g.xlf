@@ -103,6 +103,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Recurso - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 3135629377 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>SubTipo Incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field SubTipo Incidencia - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 1678601853 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Tipo Elemento</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -237,6 +242,11 @@
           <source>UsuariosGtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 91669665 - Field 419670674 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Apellido</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Apellido - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 91669665 - Field 323353982 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Departamento</source>
@@ -1289,7 +1299,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Asignado - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="Page 2811520765 - Control 3000305522 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Usuario</source>
+          <source>Usuario Asignado</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Asignado - Property Caption</note>
         </trans-unit>
@@ -3182,6 +3192,21 @@
           <source>Verano</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Enum Temporada Limpieza - EnumValue Verano - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 329155189 - EnumValue 216777522 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Incidencia - EnumValue Incidencias EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 329155189 - EnumValue 4110611298 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mobiliario Urbano</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Incidencia - EnumValue Incidencias Mobiliario Urbano - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 329155189 - EnumValue 1087136323 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Soportes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Incidencia - EnumValue Incidencias Soportes - Property Caption</note>
         </trans-unit>
         <trans-unit id="Enum 1437760470 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Tipo periodicidad</source>

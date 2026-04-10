@@ -36,11 +36,30 @@ table 7001250 "Incidencias"
         {
 
         }
+        field(26; "SubTipo Incidencia"; Enum "SubTipo Incidencia")
+        {
 
+            DataClassification = CustomerContent;
+        }
         field(9; Recurso; Code[20])
         {
             TableRelation = if ("Tipo Elemento" = const(Recurso)) Resource else if ("Tipo Elemento" = const(Parada)) "Emplazamientos"."Nº Emplazamiento" where("Tipo Emplazamiento" = const(Opis));
             ValidateTableRelation = false;
+            trigger OnLookup()
+            var
+                Resource: Record Resource;
+                ParadasBus: Record Emplazamientos;
+            begin
+                if "Tipo Elemento" = "Tipo Elemento"::Recurso then begin
+                    If Page.RunModal(Page::"Resource List", Resource) = Action::LookupOK then
+                        Recurso := Resource."No.";
+
+                end else begin
+                    If Page.RunModal(Page::"Paradas Bus", ParadasBus) = Action::LookupOK then begin
+                        Recurso := ParadasBus."Nº Emplazamiento";
+                    end;
+                end;
+            end;
         }
         field(10; "Tipo Elemento"; Option)
         {
@@ -175,6 +194,7 @@ table 7001250 "Incidencias"
     var
         OutStream: OutStream;
     begin
+        CalcFields("Work Description");
         Clear("Work Description");
         "Work Description".CreateOutStream(OutStream, TEXTENCODING::UTF8);
         OutStream.Write(WorkDescription);
@@ -222,7 +242,7 @@ table 7001250 "Incidencias"
         UsuarioGtask: Record UsuariosGtask;
     begin
         If not IsNullGuid(pUsuario) then begin
-            UsuarioGtask.SetRange("Id Usuario", Usuario);
+            UsuarioGtask.SetRange("Id Usuario", pUsuario);
             If UsuarioGtask.FindFirst() then begin
                 Exit(UsuarioGtask."Id Gtask");
             end;
@@ -245,7 +265,7 @@ table 7001250 "Incidencias"
 
 
 
-    internal procedure NombreElemento(): Variant
+    internal procedure NombreElemento(): Text
     var
         Emplazamientos: Record "Emplazamientos";
         Resource: Record Resource;
@@ -262,8 +282,50 @@ table 7001250 "Incidencias"
                 until Empresas.Next() = 0;
             end;
         end;
-        If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Rec.Recurso) then
+        If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Recurso) then
             exit(Emplazamientos."Descripción");
         Exit('Elemento erroneo');
+    end;
+
+    internal procedure PuntoX(): Decimal
+    var
+        Emplazamientos: Record "Emplazamientos";
+        Resource: Record Resource;
+    begin
+        if "Tipo Elemento" = "Tipo Elemento"::Recurso then begin
+            if Resource.Get(Rec.Recurso) then
+                exit(Resource.PuntoX);
+        end;
+        If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Rec.Recurso) then
+            exit(Emplazamientos.PuntoX);
+        Exit(0);
+    end;
+
+    internal procedure PuntoY(): Decimal
+    var
+        Emplazamientos: Record "Emplazamientos";
+        Resource: Record Resource;
+    begin
+        if "Tipo Elemento" = "Tipo Elemento"::Recurso then begin
+            if Resource.Get(Rec.Recurso) then
+                exit(Resource.PuntoY);
+        end;
+        If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Rec.Recurso) then
+            exit(Emplazamientos.PuntoY);
+        Exit(0);
+    end;
+
+    internal procedure Dirección(): Text
+    var
+        Emplazamientos: Record "Emplazamientos";
+        Resource: Record Resource;
+    begin
+        if "Tipo Elemento" = "Tipo Elemento"::Recurso then begin
+            if Resource.Get(Rec.Recurso) then
+                exit(Resource.Name);
+        end;
+        If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, Rec.Recurso) then
+            exit(Emplazamientos."Ubicación");
+        Exit('');
     end;
 }

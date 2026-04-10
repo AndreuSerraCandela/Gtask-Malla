@@ -19,12 +19,17 @@ enum 50020 "Task Enum"
 }
 enum 50021 "Tipo Incidencia"
 {
-    value(0; "Incidencias Electricas") { }
-    value(1; "Incidencias EMT")
-    { }
-    value(2; "Incidencias Villena") { }
-    //EMT,Mobiliario Urbano,Grupo Taller,Poda
-    value(3; "Incidencias Mobiliario Urbano") { }
-    value(4; "Incidencias Grupo Taller") { }
-    value(5; "Incidencias Poda") { }
+    value(0; "Incidencias Mobiliario Urbano") { Caption = 'Mobiliario Urbano'; }
+    value(1; "Incidencias EMT") { Caption = 'EMT'; }
+    value(2; "Incidencias Soportes") { Caption = 'Soportes'; }
+}
+enum 50025 "SubTipo Incidencia"
+{
+    value(0; "Mantenimiento") { }
+    value(1; "Limpieza") { }
+    value(2; "Electrica") { }
+    value(3; "Poda") { }
+    value(4; "Tip") { }
+    value(5; "Otras") { }
+    //Limpieza,Electrica,Poda,Tip,Otras
 }

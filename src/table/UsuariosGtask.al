@@ -26,6 +26,11 @@ table 7001209 "UsuariosGtask"
         {
             DataClassification = ToBeClassified;
         }
+        //Apellido
+        field(9; "Apellido"; Text[250])
+        {
+            DataClassification = ToBeClassified;
+        }
         //email
         field(3; "Email"; Text[250])
         {
