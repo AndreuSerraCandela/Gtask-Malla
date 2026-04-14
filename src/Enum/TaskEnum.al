@@ -21,7 +21,7 @@ enum 50021 "Tipo Incidencia"
 {
     value(0; "Incidencias Mobiliario Urbano") { Caption = 'Mobiliario Urbano'; }
     value(1; "Incidencias EMT") { Caption = 'EMT'; }
-    value(2; "Incidencias Soportes") { Caption = 'Soportes'; }
+    value(2; "Incidencias Soportes") { Caption = 'Vallas'; }
 }
 enum 50025 "SubTipo Incidencia"
 {

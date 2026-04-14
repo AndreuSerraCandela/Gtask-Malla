@@ -19,6 +19,7 @@ page 50127 "Mensaje WhatsApp Card"
                     ApplicationArea = All;
                     MultiLine = true;
                 }
+                field("Mensaje enviado"; Rec."Mensaje enviado") { ApplicationArea = All; }
                 field("Teléfono"; Rec."Teléfono") { ApplicationArea = All; }
                 field("Nombre Usuario"; NombreUsuario(Rec."Id Usuario")) { ApplicationArea = All; }
                 field("Id Mensaje WA"; Rec."Id Mensaje WA") { ApplicationArea = All; }

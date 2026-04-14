@@ -2417,7 +2417,7 @@ codeunit 7001149 Procesos_GTask
     var
         CuerpoRespuesta: Text;
     begin
-        if not TryHttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, NombreParametroPlantillaCuerpo, CuerpoRespuesta) then
+        if not TryHttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, NombreParametroPlantillaCuerpo, ContextOrigen, CuerpoRespuesta) then
             exit(false); // TryFunction devolvió error
         if (ContextOrigen.TableNo <> 0) and (CuerpoRespuesta <> '') then
             RegistrarMensajeWhatsAppDesdeRespuesta(CuerpoRespuesta, IdMensajeOriginalWa, IdUsuarioBC, ContextOrigen, Mensaje, TelefonoDestino);
@@ -2425,7 +2425,7 @@ codeunit 7001149 Procesos_GTask
     end;
 
     [TryFunction]
-    local procedure TryHttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; NombreParametroPlantillaCuerpo: Text; var ResponseBody: Text)
+    local procedure TryHttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; NombreParametroPlantillaCuerpo: Text; IdRegistro: RecordId; var ResponseBody: Text)
     var
         HttpClient: HttpClient;
         HttpContent: HttpContent;
@@ -2436,6 +2436,11 @@ codeunit 7001149 Procesos_GTask
         RequestBody: Text;
         MetaUrl: Text;
         NombreTxt: Text;
+        TabNo: Integer;
+        Incidencias: Record Incidencias;
+        UserTask: Record "User Task";
+        Job: Record Job;
+
     begin
         Clear(ResponseBody);
         MetaUrl := 'https://meta.malla.es/enviar';
@@ -2451,6 +2456,28 @@ codeunit 7001149 Procesos_GTask
         NombreTxt := CopyStr(NombreParametroPlantillaCuerpo, 1, 1024);
         if NombreTxt <> '' then
             JsonBody.Add('NombreOperario', NombreTxt);
+        TabNo := IdRegistro.TableNo;
+        if TabNo <> 0 then begin
+            JsonBody.Add('IdTabla', TabNo);
+        end;
+        case TabNo of
+            Database::Incidencias:
+                begin
+                    Incidencias.Get(IdRegistro);
+                    JsonBody.Add('IdRegistro', Incidencias."No.");
+                end;
+
+            Database::"User Task":
+                begin
+                    UserTask.Get(IdRegistro);
+                    JsonBody.Add('IdRegistro', UserTask.Id);
+                end;
+            Database::Job:
+                begin
+                    Job.Get(IdRegistro);
+                    JsonBody.Add('IdRegistro', Job."No.");
+                end;
+        end;
         JsonBody.WriteTo(RequestBody);
 
         HttpContent.WriteFrom(RequestBody);
@@ -2668,7 +2695,10 @@ codeunit 7001149 Procesos_GTask
         HayMedios: Boolean;
         TxtWebhook: Text;
         Incidencia: Record Incidencias;
-        IdIncidencia: Text;
+        IdRegistroT: Text;
+        IdTablaTxt: Text;
+        IdTablaInt: Integer;
+        Enviado: text;
     begin
         Clear(JOut);
         if JsonText = '' then begin
@@ -2703,6 +2733,9 @@ codeunit 7001149 Procesos_GTask
             if UserG.FindFirst() then
                 GuidUsuario := UserG."Id Usuario";
         end;
+        //Leer 'enviado'
+        Enviado := LeerTextoJsonPrimerValor(J, 'enviado', '', '', '', '');
+
 
         if MsgWA.Get(WamId) then begin
             // Recarga del mismo id_mensaje: actualizar texto/teléfono y volver a adjuntar si viene medios_base64
@@ -2711,6 +2744,10 @@ codeunit 7001149 Procesos_GTask
                 MsgWA."Texto mensaje" := CopyStr(TxtWebhook, 1, MaxStrLen(MsgWA."Texto mensaje"));
             if Telefono <> '' then
                 MsgWA.Validate("Teléfono", CopyStr(Telefono, 1, MaxStrLen(MsgWA."Teléfono")));
+            if Enviado = 'true' then
+                MsgWA."Mensaje enviado" := true
+            else
+                MsgWA."Mensaje enviado" := false;
             MsgWA.Modify(true);
             MsgWA.Get(WamId);
             HayMedios := TryRellenarTempBlobMediosBase64DesdeJson(J, TempMedios);
@@ -2728,11 +2765,21 @@ codeunit 7001149 Procesos_GTask
         end;
 
         ContextId := CopyStr(LeerTextoJsonPrimerValor(J, 'id_contexto', 'context_id', 'id_mensaje_original', 'replied_to', 'parent_id'), 1, 200);
-        IdIncidencia := CopyStr(LeerTextoJsonPrimerValor(J, 'id_incidencia', '', '', '', ''), 1, 200);
+        IdRegistroT := CopyStr(LeerTextoJsonPrimerValor(J, 'id_registro', 'IdRegistro', 'id_incidencia', 'identificador_registro', 'IdIncidencia'), 1, 200);
+        IdTablaTxt := LeerTextoJsonPrimerValor(J, 'id_tabla', 'IdTabla', '', '', '');
+        Clear(IdTablaInt);
+        if IdTablaTxt <> '' then
+            Evaluate(IdTablaInt, IdTablaTxt);
+        if (IdTablaInt = 0) and (IdRegistroT <> '') then
+            IdTablaInt := Database::Incidencias;
         MsgWA.Init();
         MsgWA."Id Mensaje WA" := WamId;
         MsgWA."Id Mensaje Original" := ContextId;
         MsgWA."Fecha creación" := CurrentDateTime;
+        if Enviado = 'true' then
+            MsgWA."Mensaje enviado" := true
+        else
+            MsgWA."Mensaje enviado" := false;
         if ContextId <> '' then begin
             if MsgOrigen.Get(ContextId) then begin
                 MsgWA."Origen Tabla ID" := MsgOrigen."Origen Tabla ID";
@@ -2741,8 +2788,8 @@ codeunit 7001149 Procesos_GTask
                     GuidUsuario := MsgOrigen."Id Usuario";
             end;
         end;
-        If IdIncidencia <> '' then begin
-            if Incidencia.Get(IdIncidencia) then begin
+        If (IdRegistroT <> '') and (IdTablaInt = Database::Incidencias) then begin
+            if Incidencia.Get(IdRegistroT) then begin
                 MsgWA."Origen Tabla ID" := Database::Incidencias;
                 MsgWA."Origen Registro ID" := Incidencia.RecordId;
             end;
@@ -3115,7 +3162,8 @@ codeunit 7001149 Procesos_GTask
         exit('');
     end;
 
-    local procedure NotificarUsuariosComunicadosPorWhatsApp(rDet: Record Incidencias)
+    [TryFunction]
+    procedure NotificarUsuariosComunicadosPorWhatsApp(rDet: Record Incidencias)
     var
         UserG: Record UsuariosGtask;
         MensajeMeta: Text;
@@ -3127,13 +3175,14 @@ codeunit 7001149 Procesos_GTask
         GuidEmt: Guid;
         ParadasBus: Record "Emplazamientos";
         Recurso: Record Resource;
+        UserTask: Record "User Task";
     begin
         EnviadoASC := false;
         Clear(MensajeMeta);
         if rDet."Es Peticion" then
-            MensajeMeta := StrSubstNo('Orden de trabajo nº %1: %2 finalizada', rDet."No.", rDet.Descripción)
+            MensajeMeta := StrSubstNo('Orden de trabajo finalizada nº %1: %2', rDet."No.", rDet.Descripción)
         else
-            MensajeMeta := StrSubstNo('Incidencia nº %1: %2 finalizada', rDet."No.", rDet.Descripción);
+            MensajeMeta := StrSubstNo('Incidencia finalizada nº %1: %2', rDet."No.", rDet.Descripción);
         if rDet.Recurso <> '' then begin
             if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
                 MensajeMeta += ' | Parada: ' + rDet.Recurso;
@@ -3148,7 +3197,14 @@ codeunit 7001149 Procesos_GTask
         end;
         MensajeMeta += ' — EMTGis https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
         Usuario.Reset();
-        Usuario.SetRange("Id Usuario", rDet.Usuario);
+        if rDet.Id_Tarea <> 0 then begin
+            UserTask.Get(rDet.Id_Tarea);
+            Usuario.SetRange("Id Usuario", UserTask.Supervisor);
+            UsuariosGtaskxCatego.SetRange("User Task Group Code", UserTask."User Task Group Assigned To");
+        end else begin
+            Usuario.SetRange("Id Usuario", rDet.Usuario);
+            UsuariosGtaskxCatego.SetRange("User Task Group Code", rDet."User Task Group");
+        end;
         If not Usuario.FindSet() then
             Usuario.init;
         //Para el usurio 34651049109 el guid es {6a7fff89-f519-4695-bc0b-4c414b6e0736}

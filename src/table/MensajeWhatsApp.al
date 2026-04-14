@@ -66,31 +66,36 @@ table 7001236 "Mensaje WhatsApp"
             DataClassification = CustomerContent;
             trigger OnValidate()
             var
-            UserG: Record UsuariosGtask;
+                UserG: Record UsuariosGtask;
             begin
                 UserG.Reset();
                 UserG.SetRange("Teléfono", CopyStr("Teléfono", 1, MaxStrLen(UserG."Teléfono")));
                 if UserG.FindFirst() then
                     "Id Usuario" := UserG."Id Usuario"
-                    else begin
-                        If CopyStr("Teléfono",1,1)='+' then
-                            "Teléfono" := CopyStr("Teléfono",2,MaxStrLen("Teléfono"));
-                        if CopyStr("Teléfono",1,2)='34' then
-                        begin
+                else begin
+                    If CopyStr("Teléfono", 1, 1) = '+' then
+                        "Teléfono" := CopyStr("Teléfono", 2, MaxStrLen("Teléfono"));
+                    if CopyStr("Teléfono", 1, 2) = '34' then begin
+                        UserG.Reset();
+                        UserG.SetRange("Teléfono", CopyStr("Teléfono", 1, 10));
+                        if UserG.FindFirst() then
+                            "Id Usuario" := UserG."Id Usuario"
+                        else begin
                             UserG.Reset();
-                            UserG.SetRange("Teléfono", CopyStr("Teléfono",1,10));
-                            if UserG.FindFirst() then
-                                "Id Usuario" := UserG."Id Usuario"
-                                else begin
-                                    UserG.Reset();
-                                    UserG.SetRange("Teléfono", CopyStr("Teléfono",1,10));
-                                end;
+                            UserG.SetRange("Teléfono", CopyStr("Teléfono", 1, 10));
                         end;
                     end;
+                end;
 
             end;
         }
-       
+        //Mensaje enviado
+        field(50; "Mensaje enviado"; Boolean)
+        {
+            Caption = 'Mensaje enviado';
+            DataClassification = SystemMetadata;
+        }
+
     }
 
     keys

@@ -31,6 +31,12 @@ page 50126 "Mensajes WhatsApp"
                     ToolTip = 'ID del usuario que creó el mensaje';
 
                 }
+                field("Mensaje enviado"; Rec."Mensaje enviado")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Mensaje enviado';
+                    ToolTip = 'Indica si el mensaje ha sido enviado';
+                }
             }
         }
         area(factboxes)

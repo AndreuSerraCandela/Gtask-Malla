@@ -168,6 +168,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Id Usuario - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 1861971213 - Field 215954087 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensaje enviado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Mensaje WhatsApp - Field Mensaje enviado - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 1861971213 - Field 2430366863 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Nº enlace documentos adjuntos</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1452,6 +1457,16 @@
           <source>Mensajes WhatsApp</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Control 215954087 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si el mensaje ha sido enviado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Control Mensaje enviado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2183610684 - Control 215954087 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensaje enviado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Mensajes WhatsApp - Control Mensaje enviado - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2183610684 - Control 1546832578 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>ID del usuario que creó el mensaje</source>
@@ -3204,7 +3219,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Incidencia - EnumValue Incidencias Mobiliario Urbano - Property Caption</note>
         </trans-unit>
         <trans-unit id="Enum 329155189 - EnumValue 1087136323 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Soportes</source>
+          <source>Vallas</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Incidencia - EnumValue Incidencias Soportes - Property Caption</note>
         </trans-unit>

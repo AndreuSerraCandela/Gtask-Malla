@@ -4623,7 +4623,7 @@ codeunit 7001148 GTask
             repeat
                 //Gtask.Email(Incidencias, EmailResponsable, EmailSupervisor);
                 EmailResponsable := 'villena@malla.es';
-                ListadeCorreos := 'javier@malla.es;lllompart@malla.es;andreuserra@malla.es';
+                ListadeCorreos := 'javi@malla.es;lllompart@malla.es;andreuserra@malla.es';
                 If Incidencias."Tipo Incidencia" = Incidencias."Tipo Incidencia"::"Incidencias EMT" then
                     ListadeCorreos += ';aitorrodriguez@malla.es;jaumecuart@malla.es';
                 If Incidencias."Tipo Elemento" = Incidencias."Tipo Elemento"::Recurso then begin
@@ -6136,8 +6136,9 @@ codeunit 7001148 GTask
                                         DocumentAtt."File Name" := DocuName2;
                                         DocumentAtt."File Extension" := FileManager.GetExtension(DocuName);
                                         DocumentAtt."Document Flow Service" := true;
+                                        // idUrl ya viene de _id; JsonCampo apunta al último Get ('name'), no usar AsInteger aquí.
                                         if idUrl <> 0 then
-                                            DocumentAtt.ID_Url := JsonCampo.AsValue().AsInteger()
+                                            DocumentAtt.ID_Url := idUrl
                                         else
                                             DocumentAtt.ID_Url := 0;
                                         if Url <> '' then
@@ -6361,6 +6362,7 @@ codeunit 7001148 GTask
         GuidEmt: Guid;
         SubTipoIncidencia: Text;
         EnviadoASC: Boolean;
+        NotificarWhatsApp: Boolean;
     begin
         //{
         //"id":"65b5c4c3d4e5f6789012335"
@@ -6444,7 +6446,8 @@ codeunit 7001148 GTask
                             If evaluate(ImpagenesTemp.Id, JsonCampo.AsValue().AsText()) Then;
                         If ImpagenesTemp.Id = 0 then ImpagenesTemp.Id := IdImagen;
                         if ImpagenesTemp.Id = 0 then Error('Imagen no encontrada');
-                        ImpagenesTemp.Insert();
+                        If ImpagenesTemp.Insert() Then;
+
                         IdImagen := 0;
                     end;
                 end;
@@ -6577,7 +6580,10 @@ codeunit 7001148 GTask
             'IN_PROGRESS', 'EN_PROCESO':
                 rDet.Estado := rDet.Estado::EnProgreso;
             'COMPLETED', 'CLOSED', 'CERRADA':
-                rDet.Estado := rDet.Estado::Cerrada;
+                begin
+                    NotificarWhatsApp := rdet.Estado <> rDet.Estado::Cerrada;
+                    rDet.Estado := rDet.Estado::Cerrada;
+                end;
         end;
         rDet.Empresa := Empresa;
 
@@ -6590,20 +6596,26 @@ codeunit 7001148 GTask
                 // si ya existe la imagen, entonces, le asigno nº de miagen siguiente
                 Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
                 Imagenes.SetRange("Es Incidencia", true);
-                Imagen := ImpagenesTemp."Nº Imagen";
-                Imagenes.SetRange("Nº Imagen", ImpagenesTemp."Nº Imagen");
-                If Imagenes.FindSet() then
-                    repeat
-                        Imagen += 1;
-                    until Imagenes.Next() = 0;
-                Imagenes.Init();
-                Imagenes."Nº Orden" := rDet."Nº Orden";
-                Imagenes."Nº Imagen" := Imagen;
-                Imagenes.Id := ImpagenesTemp.Id;
-                Imagenes."Es Incidencia" := true;
-                Imagenes.Url := ImpagenesTemp.Url;
-                Imagenes.Nombre := ImpagenesTemp.Nombre;
-                Imagenes.Insert();
+                Imagenes.SetRange(Url, ImpagenesTemp.Url);
+                If not Imagenes.FindFirst() then begin
+                    Imagenes.Reset;
+                    Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
+                    Imagenes.SetRange("Es Incidencia", true);
+                    Imagen := ImpagenesTemp."Nº Imagen";
+                    Imagenes.SetRange("Nº Imagen", ImpagenesTemp."Nº Imagen");
+                    If Imagenes.FindSet() then
+                        repeat
+                            Imagen += 1;
+                        until Imagenes.Next() = 0;
+                    Imagenes.Init();
+                    Imagenes."Nº Orden" := rDet."Nº Orden";
+                    Imagenes."Nº Imagen" := Imagen;
+                    Imagenes.Id := ImpagenesTemp.Id;
+                    Imagenes."Es Incidencia" := true;
+                    Imagenes.Url := ImpagenesTemp.Url;
+                    Imagenes.Nombre := ImpagenesTemp.Nombre;
+                    If Imagenes.Insert() Then;
+                end;
             until ImpagenesTemp.Next() = 0;
 
         CompanyInfo.Get();
@@ -6748,6 +6760,7 @@ codeunit 7001148 GTask
             //Para el usurio 34605264114 el guid es {ce35a5ab-f8f2-4634-8437-f83f4d99c820}
 
             //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
+            UsuariosGtaskxCatego.SetRange("User Task Group Code", rDet."User Task Group");
             UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
             if UsuariosGtaskxCatego.FindSet() then
                 repeat
@@ -6762,10 +6775,13 @@ codeunit 7001148 GTask
                 GuidEmt := CreateGuid();
                 Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
 
-                Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '', Usuario.Nombre);
+                Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '', 'Andreu');
             end;
         end;
 
+        if NotificarWhatsApp then begin
+            If Procesos_GTask.NotificarUsuariosComunicadosPorWhatsApp(rDet) then;
+        end;
         exit('OK:' + Id + ' Id_Gtask:' + rDet."Id Tarea Gtask");
     end;
 
@@ -7196,9 +7212,11 @@ codeunit 7001148 GTask
         else
             if Stop <> '' then
                 MensajeMeta += ' | Parada: ' + Stop;
+        MensajeMeta += ' — EMT https://taller.malla.es/?id=' + CopyStr(rDet."No.", 1, MaxStrLen(rDet."No."));
         //Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34605264114', MensajeMeta, UsuarioPost, 'EMTAlert', rDet.RecordId, GuidEmt2, '', WaNombreOperario);
         //Recuperar el detalle de la categoría de todos los usuario de enviar whatsapp
         EnviadoASC := false;
+        UsuariosGtaskxCatego.SetRange("User Task Group Code", 'EMT');
         UsuariosGtaskxCatego.SetRange("Enviar Whatsapp", true);
         if UsuariosGtaskxCatego.FindSet() then
             repeat
@@ -7326,6 +7344,7 @@ codeunit 7001148 GTask
         Incidencias.Reset();
         Incidencias.SetRange("Comunicado por EMT", false);
         Incidencias.SetRange(Estado, Incidencias.Estado::Cerrada);
+        Incidencias.SetRange("Tipo Incidencia", Incidencias."Tipo Incidencia"::"Incidencias EMT");
         if Incidencias.FindSet() then
             repeat
                 Procesos_GTask.EscribirIncidenciaHistorial(Incidencias, JsonFormater);
