@@ -26,6 +26,13 @@ pageextension 92175 FichaParadaBusExtension extends "Ficha Parada Bus"
             }
 
         }
+        addafter("Zona Limpieza")
+        {
+            field("Zona Revisión"; Rec."Zona Revisión")
+            {
+                Caption = 'Zona Revisión';
+            }
+        }
     }
     actions
     {

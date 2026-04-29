@@ -599,9 +599,11 @@ codeunit 7001148 GTask
                                         If Docuname2 = '' Then Docuname2 := DocuName;
                                         DocumentAtt."File Name" := DocuName2;
                                         DocumentAtt."URL" := DocUrl;
-                                        if JsonDetalleCampo.Get('_id', JsonCampo) then
-                                            DocumentAtt.ID_Url := JsonCampo.AsValue().AsInteger()
-                                        else
+                                        if JsonDetalleCampo.Get('_id', JsonCampo) then begin
+                                            if JsonCampo.IsValue and not JsonCampo.AsValue().IsNull then
+                                                if not Evaluate(DocumentAtt.ID_Url, JsonCampo.AsValue().AsText()) then
+                                                    DocumentAtt.ID_Url := 0;
+                                        end else
                                             DocumentAtt.ID_Url := 0;
                                         DocumentAtt.Insert();
                                     end;
@@ -3714,7 +3716,6 @@ codeunit 7001148 GTask
         //     UserTask."Created By" := UserTask.Supervisor
         // else
         UserTask."Created By" := ResponsableOld;
-        ;
         if TareaAnterior <> 0 then begin
             // Dependencia: usar responsable/supervisor/categoría de la tarea anterior (evita Error si la zona no tiene categoría en Gtask)
             Responsable := ResponsableOld;
@@ -3809,7 +3810,7 @@ codeunit 7001148 GTask
     /// <param name="CodigoCategoria">Código de la categoría de tarea</param>
     /// <param name="Fecha">Fecha para la tarea (opcional, por defecto WorkDate)</param>
     /// <returns>True si la tarea se creó correctamente, False si ya existía</returns>
-    procedure CrearTareaPuestaApunto(CodigoEmplazamiento: Code[20]; CodigoCategoria: Code[20]; Fecha: Date): Boolean
+    procedure CrearTareaRevision(CodigoEmplazamiento: Code[20]; CodigoCategoria: Code[20]; Fecha: Date): Boolean
     var
         Emplazamientos: Record Emplazamientos;
         UserTask: Record "User Task";
@@ -3843,8 +3844,8 @@ codeunit 7001148 GTask
         // Obtener información de zona de limpieza si existe
         RecRef.GetTable(Emplazamientos);
 
-        // Crear la tarea usando el procedimiento interno para puesta a punto
-        CrearTareaLimpieza('PuestaApunto', RecRef,
+        // Crear la tarea usando el procedimiento interno para revisión
+        CrearTareaLimpieza('REVISION', RecRef,
             Categorias.Description + ' ' + CodigoEmplazamiento,
             Emplazamientos."Zona Limpieza",
             'Tarea de ' + Categorias.Description + ' para el emplazamiento OPI ' + CodigoEmplazamiento +
@@ -5643,9 +5644,16 @@ codeunit 7001148 GTask
                                         Docuname2 := DocuName;
                                         If DocuName.Contains('.jpg') then
                                             DocuName := CopyStr(DocuName, 1, StrLen(DocuName) - 4);
-                                        DocumentAtt.Setfilter("File Name", '%1', DocuName + '*');
+                                        If DocUrl <> '' then
+                                            DocumentAtt.SetRange("URL", DocUrl)
+                                        else
+                                            DocumentAtt.Setfilter("File Name", '%1', DocuName + '*');
                                         If Not DocumentAtt.Findfirst() then begin
-                                            DocumentAtt.SetRange("File Name");
+
+                                            If DocUrl <> '' then
+                                                DocumentAtt.SetRange("URL")
+                                            else
+                                                DocumentAtt.SetRange("File Name");
                                             if DocumentAtt.FindLast() then
                                                 Line := DocumentAtt.Id + 1
                                             else
@@ -5666,36 +5674,41 @@ codeunit 7001148 GTask
                                             DocumentAtt.Insert();
                                             if CodEmpresa <> '' then
                                                 DocumentAttachment2.ChangeCompany(Procesos_GTask.CambiaEmpresa(CodEmpresa));
-                                            DocumentAttachment2 := DocumentAtt;
-                                            DocumentAttachment2."Table ID" := Database::"Orden fijación";
-                                            DocumentAttachment2."No." := Tareas."Job No.";
-                                            DocumentAttachment2."Line No." := Tareas.Reserva;
-                                            DocumentAttachment2."ID_Doc" := Tareas.OrdenFijacion;
-                                            DocumentAttachment2."Document Flow Service" := true;
-                                            If DocumentAttachment2.Insert() Then
-                                                AdImagenValla(DocumentAttachment2, Procesos_GTask.CambiaEmpresa(CodEmpresa));
-                                            if CodEmpresa <> '' then
-                                                DocumentAttachment3.ChangeCompany(Procesos_GTask.CambiaEmpresa(CodEmpresa));
-                                            DocumentAttachment3.SetRange("Table ID", Database::Job);
-                                            DocumentAttachment3.SetRange("No.", Tareas."Job No.");
-                                            Docuname2 := DocumentAtt."File Name";
-                                            If DocumentAtt."File Name".Contains('.jpg') then
-                                                DocumentAtt."File Name" := CopyStr(DocumentAtt."File Name", 1, StrLen(DocumentAtt."File Name") - 4);
-                                            DocumentAttachment3.Setfilter("File Name", '%1', DocumentAtt."File Name" + '*');
-                                            if not DocumentAttachment3.FindSet() then begin
+                                            If Tareas.OrdenFijacion <> 0 then begin
                                                 DocumentAttachment2 := DocumentAtt;
-                                                repeat
-                                                    DocumentAttachment2."Line No." := Line;
-                                                    If Docuname2 = '' Then Docuname2 := DocuName;
-                                                    DocumentAttachment2."File Name" := Docuname2;
-                                                    DocumentAttachment2."Table ID" := Database::Job;
-                                                    If OrdenFijacion.Get(Tareas.OrdenFijacion, Tareas.Reserva) then
-                                                        DocumentAttachment2."No." := OrdenFijacion."Nº Proyecto"
-                                                    else
-                                                        DocumentAttachment2."No." := Tareas."Job No.";
-                                                    DocumentAttachment2."Document Flow Service" := true;
-                                                    Line += 1;
-                                                until DocumentAttachment2.Insert();
+                                                DocumentAttachment2."Table ID" := Database::"Orden fijación";
+                                                DocumentAttachment2."No." := Tareas."Job No.";
+                                                DocumentAttachment2."Line No." := Tareas.Reserva;
+                                                DocumentAttachment2."ID_Doc" := Tareas.OrdenFijacion;
+                                                DocumentAttachment2."Document Flow Service" := true;
+                                                If DocumentAttachment2.Insert() Then
+                                                    AdImagenValla(DocumentAttachment2, Procesos_GTask.CambiaEmpresa(CodEmpresa));
+                                                if CodEmpresa <> '' then
+                                                    DocumentAttachment3.ChangeCompany(Procesos_GTask.CambiaEmpresa(CodEmpresa));
+                                                DocumentAttachment3.SetRange("Table ID", Database::Job);
+                                                DocumentAttachment3.SetRange("No.", Tareas."Job No.");
+                                                Docuname2 := DocumentAtt."File Name";
+                                                If DocumentAtt."File Name".Contains('.jpg') then
+                                                    DocumentAtt."File Name" := CopyStr(DocumentAtt."File Name", 1, StrLen(DocumentAtt."File Name") - 4);
+                                                If DocUrl <> '' then
+                                                    DocumentAttachment3.SetRange("URL", DocUrl)
+                                                else
+                                                    DocumentAttachment3.Setfilter("File Name", '%1', DocumentAtt."File Name" + '*');
+                                                if not DocumentAttachment3.FindSet() then begin
+                                                    DocumentAttachment2 := DocumentAtt;
+                                                    repeat
+                                                        DocumentAttachment2."Line No." := Line;
+                                                        If Docuname2 = '' Then Docuname2 := DocuName;
+                                                        DocumentAttachment2."File Name" := Docuname2;
+                                                        DocumentAttachment2."Table ID" := Database::Job;
+                                                        If OrdenFijacion.Get(Tareas.OrdenFijacion, Tareas.Reserva) then
+                                                            DocumentAttachment2."No." := OrdenFijacion."Nº Proyecto"
+                                                        else
+                                                            DocumentAttachment2."No." := Tareas."Job No.";
+                                                        DocumentAttachment2."Document Flow Service" := true;
+                                                        Line += 1;
+                                                    until DocumentAttachment2.Insert();
+                                                end;
                                             end;
                                         end;
                                     end;
@@ -7670,6 +7683,7 @@ codeunit 7001148 GTask
         IdResponsabel: Text;
         UserGtask: Record UsuariosGtask;
         ZonasLimpieza: Record "Zonas Limpieza";
+        FiltroZonasLimpieza: Text;
 
     begin
         // Leer JSON de entrada
@@ -7728,6 +7742,9 @@ codeunit 7001148 GTask
                 if CategoriasLimpieza <> '' then
                     CategoriasLimpieza := CategoriasLimpieza + '|';
                 CategoriasLimpieza := CategoriasLimpieza + ZonasLimpieza.Categoria;
+                If FiltroZonasLimpieza <> '' then
+                    FiltroZonasLimpieza := FiltroZonasLimpieza + '|';
+                FiltroZonasLimpieza := FiltroZonasLimpieza + Format(ZonasLimpieza.Id);
             until ZonasLimpieza.Next() = 0;
         end;
 
@@ -7744,6 +7761,8 @@ codeunit 7001148 GTask
                 UserTask.SetRange(Id_record, RecordIdEmplazamiento);
                 if CategoriasLimpieza <> '' then
                     UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                if FiltroZonasLimpieza <> '' then
+                    UserTask.SetFilter(ZonaLimpieza, FiltroZonasLimpieza);
                 if FechaDesde <> 0D then
                     UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
                 if IdResponsabel <> '' then begin
@@ -7811,6 +7830,8 @@ codeunit 7001148 GTask
                 UserTask.Reset();
                 if CategoriasLimpieza <> '' then
                     UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                if FiltroZonasLimpieza <> '' then
+                    UserTask.SetFilter(ZonaLimpieza, FiltroZonasLimpieza);
                 if FechaDesde <> 0D then
                     UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
                 if UserTask.FindSet() then begin
@@ -7842,6 +7863,214 @@ codeunit 7001148 GTask
         JsonArray.WriteTo(JsonResult);
         exit(JsonResult);
     end;
+
+    [ServiceEnabled]
+    procedure GetTareasRevision(JsonText: Text): Text
+    var
+        JsonObject: JsonObject;
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonTarea: JsonObject;
+        UserTask: Record "User Task";
+        Emplazamientos: Record Emplazamientos;
+        EmplazamientosFiltrados: Record Emplazamientos;
+        ZonaLimpieza: Integer;
+        CodigoEmplazamiento: Code[20];
+        FechaDesdeTexto: Text;
+        FechaHastaTexto: Text;
+        FechaDesde: Date;
+        FechaHasta: Date;
+        FechaDesdeDT: DateTime;
+        FechaHastaDT: DateTime;
+        CategoriasLimpieza: Text;
+        JsonResult: Text;
+        RecordIdEmplazamiento: RecordId;
+        IdResponsabel: Text;
+        UserGtask: Record UsuariosGtask;
+        ZonasLimpieza: Record "Zonas Limpieza";
+        FiltroZonasLimpieza: Text;
+
+
+    begin
+        // Leer JSON de entrada
+        if not JsonObject.ReadFrom(JsonText) then
+            Error('JSON inválido');
+
+        // Inicializar variables
+        ZonaLimpieza := 0;
+        CodigoEmplazamiento := '';
+        FechaDesde := 0D;
+        FechaHasta := 0D;
+
+        // Obtener zona de limpieza (opcional)
+        if JsonObject.Get('zonaLimpieza', JsonToken) then begin
+            if not Evaluate(ZonaLimpieza, JsonToken.AsValue().AsText()) then
+                ZonaLimpieza := 0;
+        end;
+
+        // Obtener código de emplazamiento (opcional)
+        if JsonObject.Get('codigoEmplazamiento', JsonToken) then
+            CodigoEmplazamiento := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(CodigoEmplazamiento));
+
+        // Obtener fecha desde (opcional)
+        if JsonObject.Get('fechaDesde', JsonToken) then begin
+            FechaDesdeTexto := JsonToken.AsValue().AsText();
+            if Evaluate(FechaDesde, FechaDesdeTexto) then
+                FechaDesdeDT := CreateDateTime(FechaDesde, 0T)
+            else
+                FechaDesde := 0D;
+        end;
+
+        // Obtener fecha hasta (opcional)
+        if JsonObject.Get('fechaHasta', JsonToken) then begin
+            FechaHastaTexto := JsonToken.AsValue().AsText();
+            if Evaluate(FechaHasta, FechaHastaTexto) then
+                FechaHastaDT := CreateDateTime(FechaHasta, 235959T)
+            else
+                FechaHasta := 0D;
+        end;
+
+        // // Obtener categorías de tipo LIMPIEZA
+        // UserTaskGroup.ChangeCompany('Malla Publicidad');
+        // UserTaskGroup.SetRange("Tipo de Tarea", 'LIMPIEZA');
+        // CategoriasLimpieza := '';
+        // if UserTaskGroup.FindSet() then begin
+        //     repeat
+        //         if CategoriasLimpieza <> '' then
+        //             CategoriasLimpieza := CategoriasLimpieza + '|';
+        //         CategoriasLimpieza := CategoriasLimpieza + UserTaskGroup.Code;
+        //     until UserTaskGroup.Next() = 0;
+        // end;
+        ZonasLimpieza.SetRange("Tipo Tarea", 'REVISION');
+        CategoriasLimpieza := '';
+        if ZonasLimpieza.FindSet() then begin
+            repeat
+                if CategoriasLimpieza <> '' then
+                    CategoriasLimpieza := CategoriasLimpieza + '|';
+                // Debe coincidir con DevuelveCategoriaSupervisorResponsablePorZona: "User Task Group" = Tipo Tarea, no Categoria
+                CategoriasLimpieza := CategoriasLimpieza + ZonasLimpieza."Tipo Tarea";
+                If FiltroZonasLimpieza <> '' then
+                    FiltroZonasLimpieza := FiltroZonasLimpieza + '|';
+                FiltroZonasLimpieza := FiltroZonasLimpieza + Format(ZonasLimpieza.Id);
+            until ZonasLimpieza.Next() = 0;
+        end;
+
+        if JsonObject.Get('Usuario', JsonToken) then
+            IdResponsabel := JsonToken.AsValue().AsText();
+
+        // Inicializar array de resultados
+
+        // Si se proporciona código de emplazamiento, buscar directamente por Id_record
+        if CodigoEmplazamiento <> '' then begin
+            if Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, CodigoEmplazamiento) then begin
+                RecordIdEmplazamiento := Emplazamientos.RecordId;
+                UserTask.Reset();
+                UserTask.SetRange(Id_record, RecordIdEmplazamiento);
+                if CategoriasLimpieza <> '' then
+                    UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                if FiltroZonasLimpieza <> '' then
+                    UserTask.SetFilter(ZonaLimpieza, FiltroZonasLimpieza);
+                if FechaDesde <> 0D then
+                    UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                if IdResponsabel <> '' then begin
+                    UserGtask.SetRange("Id Gtask", IdResponsabel);
+                    if UserGtask.FindFirst() then
+                        UserTask.SetRange("Assigned To", UserGtask."Id Usuario");
+                end;
+                if UserTask.FindSet() then begin
+                    repeat
+                        UserTaskTemp := UserTask;
+                        If UserTaskTemp.insert Then
+                            Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
+                    until UserTask.Next() = 0;
+                end;
+                // Si se ha proporcionado Fecha desde, añadir todas las tareas con fecha antgerior a desde y estado pendiente
+                if FechaDesde <> 0D then begin
+                    UserTask.SetRange("Start DateTime", 0DT, FechaDesdeDT);
+                    UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
+                    if UserTask.FindSet() then begin
+                        repeat
+                            UserTaskTemp := UserTask;
+                            If UserTaskTemp.insert Then
+                                Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
+                        until UserTask.Next() = 0;
+                    end;
+                end;
+            end;
+        end else begin
+            // Si se proporciona zona, buscar emplazamientos de esa zona
+            if ZonaLimpieza <> 0 then begin
+                EmplazamientosFiltrados.Reset();
+                EmplazamientosFiltrados.SetRange("Zona Limpieza", ZonaLimpieza);
+                if EmplazamientosFiltrados.FindSet() then begin
+                    repeat
+                        UserTask.Reset();
+                        UserTask.SetRange(Id_record, EmplazamientosFiltrados.RecordId);
+                        if CategoriasLimpieza <> '' then
+                            UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                        if FechaDesde <> 0D then
+                            UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                        // Buscar todas las tareas que cumplan los filtros
+                        if UserTask.FindSet() then begin
+                            repeat
+                                UserTaskTemp := UserTask;
+                                If UserTaskTemp.insert Then
+                                    Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
+                            until UserTask.Next() = 0;
+                        end;
+                        // Si se ha proporcionado Fecha desde, añadir todas las tareas con fecha antgerior a desde y estado pendiente
+                        if FechaDesde <> 0D then begin
+                            UserTask.SetRange("Start DateTime", 0DT, FechaDesdeDT);
+                            UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
+                            if UserTask.FindSet() then begin
+                                repeat
+                                    UserTaskTemp := UserTask;
+                                    If UserTaskTemp.insert Then
+                                        Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
+                                until UserTask.Next() = 0;
+                            end;
+                        end;
+                    until EmplazamientosFiltrados.Next() = 0;
+                end;
+            end else begin
+                // Si no hay filtro de zona ni emplazamiento, buscar todas las tareas de limpieza
+                UserTask.Reset();
+                if CategoriasLimpieza <> '' then
+                    UserTask.SetFilter("User Task Group Assigned To", CategoriasLimpieza);
+                if FiltroZonasLimpieza <> '' then
+                    UserTask.SetFilter(ZonaLimpieza, FiltroZonasLimpieza);
+                if FechaDesde <> 0D then
+                    UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+                if UserTask.FindSet() then begin
+                    repeat
+                        // Intentar obtener el emplazamiento desde Id_record
+                        if UserTask.Id_record.TableNo = Database::Emplazamientos then begin
+                            if Emplazamientos.Get(UserTask.Id_record) then
+                                UserTaskTemp := UserTask;
+                            If UserTaskTemp.insert Then
+                                Procesos_GTask.AgregarTareaAlJson(UserTask, Emplazamientos.RecordId, JsonArray, UserTaskTemp);
+                        end;
+                    until UserTask.Next() = 0;
+                end;
+                // Si se ha proporcionado Fecha desde, añadir todas las tareas con fecha antgerior a desde y estado pendiente
+                if FechaDesde <> 0D then begin
+                    UserTask.SetRange("Start DateTime", 0DT, FechaDesdeDT);
+                    UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
+                    if UserTask.FindSet() then begin
+                        repeat
+                            UserTaskTemp := UserTask;
+                            If UserTaskTemp.insert Then
+                                Procesos_GTask.AgregarTareaAlJson(UserTask, UserTask.Id_record, JsonArray, UserTaskTemp);
+                        until UserTask.Next() = 0;
+                    end;
+                end;
+            end;
+        end;
+
+        JsonArray.WriteTo(JsonResult);
+        exit(JsonResult);
+    end;
+
 
     /// <summary>
     /// Endpoint que devuelve una lista de tareas de limpieza ficticias asociadas a las paradas bus,
@@ -8067,13 +8296,20 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
-    /// Endpoint para crear tareas de puesta a punto desde JSON
+    /// Endpoint para crear tareas de revisión desde JSON
     /// Formato JSON esperado: [{"codigoEmplazamiento": "COD001", "codigoCategoria": "CAT001", "fecha": "2024-01-15"}, ...]
     /// </summary>
     /// <param name="JsonText">JSON array con las tareas a crear</param>
     /// <returns>JSON con el resultado: {"tareasCreadas": 5, "tareasExistentes": 2, "errores": []}</returns>
     [ServiceEnabled]
     procedure CrearTareasPuestaApuntoJson(JsonText: Text): Text
+
+    begin
+        exit(CrearTareasRevisionJson(JsonText));
+    end;
+
+    [ServiceEnabled]
+    procedure CrearTareasRevisionJson(JsonText: Text): Text
     var
         JsonArray: JsonArray;
         JsonToken: JsonToken;
@@ -8130,7 +8366,7 @@ codeunit 7001148 GTask
                 JsonErrores.Add(JsonError);
             end else begin
                 // Intentar crear la tarea
-                if CrearTareaPuestaApunto(CodigoEmplazamiento, CodigoCategoria, Fecha) then
+                if CrearTareaRevision(CodigoEmplazamiento, CodigoCategoria, Fecha) then
                     TareasCreadas += 1
                 else
                     TareasExistentes += 1;
@@ -8147,11 +8383,11 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
-    /// Endpoint para obtener la lista de categorías de puesta a punto
+    /// Endpoint para obtener la lista de categorías de revisión
     /// </summary>
     /// <returns>JSON array con las categorías: [{"code": "CAT001", "description": "Descripción 1"}, ...]</returns>
     [ServiceEnabled]
-    procedure GetCategoriasPuestaApunto(): Text
+    procedure GetCategoriasRevision(): Text
     var
         ZonasLimpieza: Record "Zonas Limpieza";
         JsonArray: JsonArray;
@@ -8159,12 +8395,12 @@ codeunit 7001148 GTask
         JsonText: Text;
     begin
         ZonasLimpieza.ChangeCompany('Malla Publicidad');
-        ZonasLimpieza.SetRange("Tipo Tarea", 'PuestaApunto');
+        ZonasLimpieza.SetRange("Tipo Tarea", 'REVISION');
 
         if ZonasLimpieza.FindSet() then begin
             repeat
                 Clear(JsonCategoria);
-                JsonCategoria.Add('code', ZonasLimpieza.Categoria);
+                JsonCategoria.Add('code', ZonasLimpieza."Tipo Tarea");
                 JsonCategoria.Add('description', ZonasLimpieza."Descripción");
                 JsonArray.Add(JsonCategoria);
             until ZonasLimpieza.Next() = 0;

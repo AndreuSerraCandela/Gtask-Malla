@@ -49,6 +49,16 @@ tableextension 92103 Tareasusuarios extends "User Task"
         field(50004; OrdenFijacion; Integer)
         {
             Caption = 'Orden Fijación';
+            trigger OnValidate()
+            var
+                RecOrdenFijacion: Record "Orden fijación";
+            begin
+                RecOrdenFijacion.SetRange("Nº Orden", OrdenFijacion);
+                if RecOrdenFijacion.FindFirst() then begin
+                    "Job No." := RecOrdenFijacion."Nº Proyecto";
+                end;
+
+            end;
         }
         field(50005; "Job No."; Code[20])
         {

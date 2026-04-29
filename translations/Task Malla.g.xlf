@@ -1773,6 +1773,26 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Change ABA - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1333914805 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Borrar tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasLimpiezaº - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1333914805 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Borrar Tareas Limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasLimpiezaº - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1206900011 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Borrar tareas de revisión para los emplazamientos OPI de las zonas de revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasRevisión - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 1206900011 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Borrar Tareas Revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasRevisión - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 1230573612 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Consultar tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1783,15 +1803,15 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Limpieza - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 2813304876 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
-          <source>Consultar tareas de puesta apunto para los emplazamientos OPI de las zonas de limpieza</source>
+        <trans-unit id="PageExtension 4279944175 - Action 958830492 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar tareas de revisión para los emplazamientos OPI de las zonas de revisión</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Puesta Apunto - Property ToolTip</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Revisión - Property ToolTip</note>
         </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 2813304876 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
-          <source>Consultar Tareas Puesta Apunto</source>
+        <trans-unit id="PageExtension 4279944175 - Action 958830492 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Consultar Tareas Revisión</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Puesta Apunto - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Consultar Tareas Revisión - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 1915239495 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Abre las incidencias de esta parada (sin órdenes de trabajo)</source>
@@ -1803,6 +1823,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action ConsultarIncidencias - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 3963725715 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Crear trabajos de revisión para los emplazamientos OPI de las zonas de revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Tareas de Revisión - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 3963725715 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Crear Trabajos de Revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Tareas de Revisión - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 2568060100 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Crear tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1812,16 +1842,6 @@
           <source>Crear Tareas Limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Tareas Limpieza - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 2843282141 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
-          <source>Crear trabajos de puesta apunto para los emplazamientos OPI de las zonas de limpieza</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Trabajos de Puesta Apunto - Property ToolTip</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 2843282141 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
-          <source>Crear Trabajos de Puesta Apunto</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action Crear Trabajos de Puesta Apunto - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 3998804535 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Abre las órdenes de trabajo (incidencias tipo petición) de esta parada</source>
@@ -1837,6 +1857,11 @@
           <source>Matrícula</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Control Matricula - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Control 1944627135 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Zona Revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Control Zona Revisión - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Change 435373057 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Estado TIP</source>
@@ -2102,6 +2127,11 @@
           <source>Matrícula</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control Matricula - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Control 1944627135 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Zona Revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control Zona Revisión - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 721450737 - Change 3380427369 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
           <source>TIP</source>
@@ -2552,6 +2582,16 @@
           <source>Abrir ficha</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action AbrirFicha - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 50910241 - Action 684513683 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
+          <source>Importa un archivo Excel con números de emplazamiento en la columna A y asigna la zona de limpieza actual a cada uno.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action ImportarParadasRevision - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 50910241 - Action 684513683 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
+          <source>Importar paradas revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension ZonasLimpiezaExt - Action ImportarParadasRevision - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 50910241 - Action 3154651828 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
           <source>Importa un archivo Excel con números de emplazamiento en la columna A y asigna la zona de limpieza actual a cada uno.</source>

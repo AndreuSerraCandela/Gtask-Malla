@@ -1589,7 +1589,7 @@ codeunit 7001149 Procesos_GTask
             Error('El tipo de tarea %1 no coincide con el tipo de tarea de la zona de limpieza %2.', TipoTarea, ZonasLimpieza."Tipo Tarea");
 
         // Recoger todos los datos de la zona de limpieza
-        Categoria := ZonasLimpieza.Categoria;
+        Categoria := ZonasLimpieza."Tipo Tarea";
         Departamento := ZonasLimpieza.Departamento;
         Servicio := ZonasLimpieza.Servicio;
         Responsable := ZonasLimpieza.Responsable;
@@ -2381,13 +2381,16 @@ codeunit 7001149 Procesos_GTask
             UserTask.Reset();
             UserTask.SetRange(Id_record, Emplazamientos.RecordId);
             UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
-            if UserTask.FindFirst() then
-                continue; // Ya tiene tarea pendiente, no crear nada
+            if UserTask.FindFirst() then begin
+                if ZonasLimpieza.Get(UserTask.ZonaLimpieza) then
+                    If ZonasLimpieza."Tipo Tarea" = 'LIMPIEZA' then
+                        continue; // Ya tiene tarea pendiente, no crear nada
+            end;
 
             // Obtener zona y comprobar que esté configurada para limpieza
             if not ZonasLimpieza.Get(Emplazamientos."Zona Limpieza") then
                 continue;
-            if (ZonasLimpieza."Tipo Tarea" <> 'LIMPIEZA') and (ZonasLimpieza."Tipo Tarea" <> 'REVISION') then
+            if (ZonasLimpieza."Tipo Tarea" <> 'LIMPIEZA') then
                 continue;
             if IsNullGuid(ZonasLimpieza.Responsable) then
                 continue;
@@ -2404,6 +2407,42 @@ codeunit 7001149 Procesos_GTask
                 Emplazamientos."Zona Limpieza", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
                 ContadorTareas += 1;
         until Emplazamientos.Next() = 0;
+        Emplazamientos.SetFilter("Zona Revisión", '<>%1', 0);
+        if not Emplazamientos.FindSet() then
+            exit(0);
+
+        repeat
+            // ¿Tiene esta parada alguna tarea no finalizada?
+            UserTask.Reset();
+            UserTask.SetRange(Id_record, Emplazamientos.RecordId);
+            UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
+            if UserTask.FindFirst() then begin
+                if ZonasLimpieza.Get(UserTask.ZonaLimpieza) then
+                    If ZonasLimpieza."Tipo Tarea" = 'REVISION' then
+                        continue; // Ya tiene tarea pendiente, no crear nada
+            end;
+
+            // Obtener zona y comprobar que esté configurada para limpieza
+            if not ZonasLimpieza.Get(Emplazamientos."Zona Revisión") then
+                continue;
+            if (ZonasLimpieza."Tipo Tarea" <> 'REVISION') then
+                continue;
+            if IsNullGuid(ZonasLimpieza.Responsable) then
+                continue;
+
+            // Próximo día de limpieza para esta zona
+            ProximoDiaLimpieza := UserTask.CalcularProximoDiaLimpieza(ZonasLimpieza, WorkDate());
+            if ProximoDiaLimpieza = 0D then
+                continue;
+
+            RecRef.GetTable(Emplazamientos);
+            Descripcion := 'Tarea de ' + LowerCase(ZonasLimpieza."Tipo Tarea") + ' para la Parada ' + Emplazamientos."Nº Emplazamiento" +
+                ' - ' + Emplazamientos."Descripción" + ' en la zona de revisión ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada";
+            if Gtask.CrearTareaLimpieza(ZonasLimpieza."Tipo Tarea", RecRef, ZonasLimpieza."Tipo Tarea" + ' Parada ' + Emplazamientos."Nº Emplazamiento",
+                Emplazamientos."Zona Limpieza", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
+                ContadorTareas += 1;
+        until Emplazamientos.Next() = 0;
+
 
         exit(ContadorTareas);
     end;
