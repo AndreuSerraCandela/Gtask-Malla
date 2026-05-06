@@ -3727,7 +3727,7 @@ codeunit 7001148 GTask
             EmailSupervisor := EmailSupervisorOld;
         end else
             Procesos_GTask.DevuelveCategoriaSupervisorResponsablePorZona(TipoTarea, ZonaLimpieza, Responsable, Supervisor, Categoria, Departamento,
-        Servicio, EmailResponsable, EmailSupervisor, User, UserTask, ListadeCorreos);
+        Servicio, EmailResponsable, EmailSupervisor, User, UserTask, ListadeCorreos, RecRef);
         UserTask."Assigned To" := Responsable;
         UserTask."Supervisor" := Supervisor;
         UserTask.Departamento := Departamento;
@@ -4738,6 +4738,155 @@ codeunit 7001148 GTask
     end;
 
     #region Services
+
+    /// <summary>
+    /// Devuelve peticiones (incidencias) abiertas o en progreso con parte de trabajo, con adjuntos en Base64
+    /// y, si existe Id Factura en la orden EMT, la factura impresa en PDF en Base64.
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetOrdenesTrabajo(): Text
+    var
+        Incidencias: Record Incidencias;
+        JsonRoot: JsonObject;
+        JsonArray: JsonArray;
+        JsonLinea: JsonObject;
+        Txt: Text;
+    begin
+        Clear(JsonArray);
+        Incidencias.SetRange("Es Peticion", true);
+        Incidencias.SetFilter("Parte Trabajo", '<>%1', '');
+        Incidencias.SetFilter(Estado, '<>%1', Incidencias.Estado::Cerrada);
+        if Incidencias.FindSet() then
+            repeat
+                Clear(JsonLinea);
+                JsonLinea.Add('no', Incidencias."No.");
+                JsonLinea.Add('descripcion', Incidencias."Descripción");
+                JsonLinea.Add('parteTrabajo', Incidencias."Parte Trabajo");
+                JsonLinea.Add('estado', Format(Incidencias.Estado));
+                JsonLinea.Add('fechaHora', Incidencias."FechaHora");
+                JsonLinea.Add('workDescription', Incidencias.GetWorkDescription());
+                AgregarAdjuntosYFacturaOrdenJson(Incidencias."Parte Trabajo", JsonLinea);
+                JsonArray.Add(JsonLinea);
+            until Incidencias.Next() = 0;
+
+        Clear(JsonRoot);
+        JsonRoot.Add('value', JsonArray.AsToken());
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure AgregarAdjuntosYFacturaOrdenJson(ParteTrabajoNo: Code[20]; var JsonLinea: JsonObject)
+    var
+        JsonAdjuntos: JsonArray;
+        JsonFactura: JsonObject;
+        TimeSheetHeader: Record "Time Sheet Header";
+    begin
+        Clear(JsonAdjuntos);
+        RecopilarAdjuntosParteTrabajo(ParteTrabajoNo, JsonAdjuntos);
+        JsonLinea.Add('adjuntos', JsonAdjuntos.AsToken());
+
+        Clear(JsonFactura);
+        if TimeSheetHeader.Get(ParteTrabajoNo) and (TimeSheetHeader."Id Factura" <> '') and RellenarFacturaPdfJson(TimeSheetHeader, JsonFactura) then
+            JsonLinea.Add('factura', JsonFactura.AsToken())
+        else begin
+            Clear(JsonFactura);
+            JsonFactura.Add('disponible', false);
+            JsonLinea.Add('factura', JsonFactura.AsToken());
+        end;
+    end;
+
+    local procedure RecopilarAdjuntosParteTrabajo(ParteTrabajoNo: Code[20]; var JsonAdjuntos: JsonArray)
+    var
+        TimeSheetLine: Record "Time Sheet Line";
+        Doc: Record "Document Attachment";
+        JsonAdj: JsonObject;
+        Base64Txt: Text;
+        ClavesProcesadas: Text;
+        Clave: Text;
+    begin
+        TimeSheetLine.SetRange("Time Sheet No.", ParteTrabajoNo);
+        if not TimeSheetLine.FindSet() then
+            exit;
+        repeat
+            if TimeSheetLine."Job No." <> '' then begin
+                Doc.Reset();
+                Doc.SetRange("Table ID", Database::"Time Sheet Line");
+                Doc.SetRange("No.", TimeSheetLine."Job No.");
+                if TimeSheetLine."Job Line No." <> 0 then
+                    Doc.SetRange("Line No.", TimeSheetLine."Job Line No.");
+                if Doc.FindSet() then
+                    repeat
+                        Clave := Format(Doc.SystemId);
+                        if StrPos('|' + ClavesProcesadas + '|', '|' + Clave + '|') = 0 then begin
+                            ClavesProcesadas += Clave + '|';
+                            Base64Txt := DocumentAttachmentToBase64Local(Doc);
+                            if Base64Txt <> '' then begin
+                                Clear(JsonAdj);
+                                JsonAdj.Add('fileName', Doc."File Name");
+                                JsonAdj.Add('fileExtension', Doc."File Extension");
+                                JsonAdj.Add('document', Base64Txt);
+                                JsonAdjuntos.Add(JsonAdj);
+                            end;
+                        end;
+                    until Doc.Next() = 0;
+            end;
+        until TimeSheetLine.Next() = 0;
+    end;
+
+    local procedure DocumentAttachmentToBase64Local(var DocumentAttachment: Record "Document Attachment"): Text
+    var
+        TempBlob: Codeunit "Temp Blob";
+        Int: InStream;
+        DocOut: OutStream;
+        Bs64: Codeunit "Base64 Convert";
+    begin
+        if DocumentAttachment."Document Reference ID".HasValue then begin
+            TempBlob.CreateOutStream(DocOut);
+            DocumentAttachment."Document Reference ID".ExportStream(DocOut);
+            TempBlob.CreateInStream(Int);
+            exit(Bs64.ToBase64(Int));
+        end;
+        if DocumentAttachment.Url <> '' then
+            exit(DocumentAttachment.ToBase64StringOcr(DocumentAttachment.Url));
+        exit('');
+    end;
+
+    local procedure RellenarFacturaPdfJson(var TimeSheetHeader: Record "Time Sheet Header"; var JsonFactura: JsonObject): Boolean
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ReportSelections: Record "Report Selections";
+        TempBlob: Codeunit "Temp Blob";
+        OutStr: OutStream;
+        InStr: InStream;
+        Bs64: Codeunit "Base64 Convert";
+        RecRef: RecordRef;
+        PdfBase64: Text;
+    begin
+        Clear(JsonFactura);
+        if TimeSheetHeader."Id Factura" = '' then
+            exit(false);
+        SalesInvHeader.SetRange("Pre-Assigned No.", TimeSheetHeader."Id Factura");
+        if not SalesInvHeader.FindFirst() then
+            exit(false);
+
+        ReportSelections.SetRange(Usage, ReportSelections.Usage::"S.Invoice");
+        if not ReportSelections.FindFirst() then
+            exit(false);
+
+        RecRef.GetTable(SalesInvHeader);
+        TempBlob.CreateOutStream(OutStr);
+        Report.SaveAs(ReportSelections."Report ID", '', ReportFormat::Pdf, OutStr, RecRef);
+        TempBlob.CreateInStream(InStr);
+        PdfBase64 := Bs64.ToBase64(InStr);
+        if PdfBase64 = '' then
+            exit(false);
+        JsonFactura.Add('disponible', true);
+        JsonFactura.Add('no', SalesInvHeader."No.");
+        JsonFactura.Add('fileName', StrSubstNo('Factura_%1.pdf', SalesInvHeader."No."));
+        JsonFactura.Add('document', PdfBase64);
+        exit(true);
+    end;
+
     [ServiceEnabled]
     procedure UpdateParadaBus(JsonText: Text): Text
     var
@@ -8252,7 +8401,7 @@ codeunit 7001148 GTask
             FechaTexto := JsonToken.AsValue().AsText();
             if (FechaTexto <> '') and Evaluate(FechaDesde, FechaTexto) then begin
                 FechaHasta := FechaDesde;
-                FechaDesdeDT := CreateDateTime(FechaDesde, 0T);
+                FechaDesdeDT := 0DT;
                 FechaHastaDT := CreateDateTime(FechaHasta, 235959T);
                 TieneFecha := true;
             end;
@@ -8265,6 +8414,7 @@ codeunit 7001148 GTask
         if JsonObject.Get('fechaHasta', JsonToken) then begin
             FechaTexto := JsonToken.AsValue().AsText();
             if (FechaTexto <> '') and Evaluate(FechaHasta, FechaTexto) then begin
+                FechaDesdeDT := 0DT;
                 FechaHastaDT := CreateDateTime(FechaHasta, 235959T);
                 TieneFecha := true;
             end;
@@ -8285,7 +8435,7 @@ codeunit 7001148 GTask
             UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
         if TieneCategoria then
             UserTask.SetFilter("User Task Group Assigned To", Categoria);
-
+        Usertask.Setfilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
         if UserTask.FindSet() then
             repeat
                 Procesos_GTask.AgregarTareaUsuarioAlJson(UserTask, JsonArray);

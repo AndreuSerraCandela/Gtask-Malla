@@ -41,6 +41,11 @@ pageextension 92150 JobSetupTask extends "Jobs Setup"
                     ApplicationArea = All;
                     ToolTip = 'Periodicidad de las tareas de limpieza en zona no crítica.';
                 }
+                field("Cliente EMT x defecto"; Rec."Cliente EMT x defecto")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Cliente EMT x defecto';
+                }
             }
             group("Debug")
             {

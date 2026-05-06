@@ -79,6 +79,12 @@ table 7001209 "UsuariosGtask"
             Caption = 'Teléfono';
             DataClassification = EndUserIdentifiableInformation;
         }
+        field(50008; "Empleado"; Code[20])
+        {
+            Caption = 'Empleado';
+            DataClassification = ToBeClassified;
+            TableRelation = Employee."No.";
+        }
     }
 
     keys

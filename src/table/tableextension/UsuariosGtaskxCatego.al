@@ -53,6 +53,8 @@ tableextension 92404 "User Task Group Member" extends "User Task Group Member"
         {
             DataClassification = ToBeClassified;
         }
+        //Empleado
+
 
 
     }

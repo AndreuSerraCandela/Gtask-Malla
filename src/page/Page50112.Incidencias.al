@@ -404,7 +404,7 @@ page 50117 "Lista Incidencias Taller"
 {
     PageType = List;
     SourceTable = "Incidencias";
-    CardPageId = "Incidencias Taller";
+    //CardPageId = "Incidencias Taller";
     ApplicationArea = All;
     UsageCategory = Documents;
     layout
@@ -413,7 +413,35 @@ page 50117 "Lista Incidencias Taller"
         {
             repeater(Detalle)
             {
-                field("No."; Rec."No.") { ApplicationArea = All; }
+                field("No."; Rec."No.")
+                {
+                    ApplicationArea = All;
+                    trigger OnDrillDown()
+                    var
+                        PartesTrabajo: Record "Time Sheet Header";
+                        JobsSetup: Record "Jobs Setup";
+                    begin
+                        if IsPeticion then begin
+                            PartesTrabajo.SetRange("No.", Rec."Parte Trabajo");
+                            if (not PartesTrabajo.FindFirst()) or (Rec."Parte Trabajo" = '') then begin
+                                PartesTrabajo.Init();
+                                if Rec."Parte Trabajo" <> '' then
+                                    PartesTrabajo."No." := Rec."Parte Trabajo";
+                                PartesTrabajo."No." := Rec."No.";
+                                Rec."Parte Trabajo" := PartesTrabajo."No.";
+                                Rec.Modify();
+                                PartesTrabajo.Validate(Tipo, PartesTrabajo.Tipo::EMT);
+                                JobsSetup.Get();
+                                JobsSetup.TestField("Cliente EMT x defecto");
+                                PartesTrabajo.Validate(Cliente, JobsSetup."Cliente EMT x defecto");
+                                PartesTrabajo.Insert();
+                                Commit();
+                            end;
+                            Page.RunModal(Page::"Ordenes Trabajo", Rec);
+                        end else
+                            Page.RunModal(Page::"Incidencias Taller", Rec);
+                    end;
+                }
 
                 field("Descripción"; Rec."Descripción") { ApplicationArea = All; }
                 field(Recurso; Rec.Recurso) { ApplicationArea = All; }
@@ -545,6 +573,37 @@ page 50117 "Lista Incidencias Taller"
     {
         area(Processing)
         {
+            action(Editar)
+            {
+                ApplicationArea = All;
+                Caption = 'Editar';
+                Image = Edit;
+                trigger OnAction()
+                var
+                    PartesTrabajo: Record "Time Sheet Header";
+                    JobsSetup: Record "Jobs Setup";
+                begin
+                    if IsPeticion then begin
+                        PartesTrabajo.SetRange("No.", Rec."Parte Trabajo");
+                        if (not PartesTrabajo.FindFirst()) or (Rec."Parte Trabajo" = '') then begin
+                            PartesTrabajo.Init();
+                            if Rec."Parte Trabajo" <> '' then
+                                PartesTrabajo."No." := Rec."Parte Trabajo";
+                            PartesTrabajo."No." := Rec."No.";
+                            Rec."Parte Trabajo" := PartesTrabajo."No.";
+                            Rec.Modify();
+                            PartesTrabajo.Validate(Tipo, PartesTrabajo.Tipo::EMT);
+                            JobsSetup.Get();
+                            JobsSetup.TestField("Cliente EMT x defecto");
+                            PartesTrabajo.Validate(Cliente, JobsSetup."Cliente EMT x defecto");
+                            PartesTrabajo.Insert();
+                            Commit();
+                        end;
+                        Page.RunModal(Page::"Ordenes Trabajo", Rec);
+                    end else
+                        Page.RunModal(Page::"Incidencias Taller", Rec);
+                end;
+            }
             action("Cerrar Incidencia")
             {
                 ApplicationArea = All;
@@ -580,7 +639,7 @@ page 50117 "Lista Incidencias Taller"
         area(Promoted)
         {
 
-
+            actionref(EditarRef; Editar) { }
 
             actionref(CerrarIncidencia; "Cerrar Incidencia") { }
             actionref(MensajesWhatsAppListaPromoted; MensajesWhatsAppLista) { }
@@ -597,6 +656,9 @@ page 50117 "Lista Incidencias Taller"
     var
         UsuarioGtask: Record UsuariosGtask;
     begin
+        IsPeticion := Rec."Es Peticion";
+        if IsPeticion then CurrPage.Caption := 'Ordenes Trabajo';
+
         NombreUsuario := '';
         If not IsNullGuid(Rec.Usuario) then begin
             UsuarioGtask.SetRange("Id Usuario", Rec.Usuario);
@@ -630,4 +692,8 @@ page 50117 "Lista Incidencias Taller"
         else
             exit('');
     end;
+
+    var
+        IsPeticion: Boolean;
+
 }

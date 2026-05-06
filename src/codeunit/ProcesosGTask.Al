@@ -254,6 +254,7 @@ codeunit 7001149 Procesos_GTask
     var
         "Task": Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
         MsgWA: Record "Mensaje WhatsApp";
 
     begin
@@ -272,6 +273,12 @@ codeunit 7001149 Procesos_GTask
             If TimeSheetLine.FindFirst() then
                 RecRef.GetTable(TimeSheetLine);
         end;
+        If DocumentAttachment."Table ID" = Database::"Time Sheet Header" then begin
+            RecRef.Open(Database::"Time Sheet Header");
+            TimeSheetHeader.SetRange("No.", DocumentAttachment."No.");
+            If TimeSheetHeader.FindFirst() then
+                RecRef.GetTable(TimeSheetHeader);
+        end;
         If DocumentAttachment."Table ID" = Database::"Mensaje WhatsApp" then begin
             RecRef.Open(Database::"Mensaje WhatsApp");
             MsgWA.SetRange("No. doc. adjuntos", DocumentAttachment."No.");
@@ -287,6 +294,7 @@ codeunit 7001149 Procesos_GTask
     var
         "Task": Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
         MsgWA: Record "Mensaje WhatsApp";
 
     begin
@@ -305,6 +313,12 @@ codeunit 7001149 Procesos_GTask
             If TimeSheetLine.FindFirst() then
                 RecRef.GetTable(TimeSheetLine);
         end;
+        If DocumentAttachment."Table ID" = Database::"Time Sheet Header" then begin
+            RecRef.Open(Database::"Time Sheet Header");
+            TimeSheetHeader.SetRange("No.", DocumentAttachment."No.");
+            If TimeSheetHeader.FindFirst() then
+                RecRef.GetTable(TimeSheetHeader);
+        end;
 
 
 
@@ -321,6 +335,7 @@ codeunit 7001149 Procesos_GTask
     var
         "Task": Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
         MsgWA: Record "Mensaje WhatsApp";
         NroAdj: Integer;
 
@@ -345,6 +360,12 @@ codeunit 7001149 Procesos_GTask
                     RecRef.GetTable(MsgWA);
             end;
         end;
+        If DocumentAttachment."Table ID" = Database::"Time Sheet Header" then begin
+            RecRef.Open(Database::"Time Sheet Header");
+            TimeSheetHeader.SetRange("No.", DocumentAttachment."No.");
+            If TimeSheetHeader.FindFirst() then
+                RecRef.GetTable(TimeSheetHeader);
+        end;
 
     end;
 
@@ -356,6 +377,7 @@ codeunit 7001149 Procesos_GTask
         LineNo: Integer;
         UserTask: Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
         MensajeWA: Record "Mensaje WhatsApp";
     begin
         If RecordRef.Number = Database::"User Task" then begin
@@ -376,6 +398,11 @@ codeunit 7001149 Procesos_GTask
             FieldRef := RecordRef.Field(MensajeWA.FieldNo("Nº registro adjuntos"));
             DocumentAttachment.SetRange("No.", Format(FieldRef.Value()));
         end;
+        If RecordRef.Number = Database::"Time Sheet Header" then begin
+            FieldRef := RecordRef.Field(TimeSheetHeader.FieldNo("No."));
+            RecNo := FieldRef.Value();
+            DocumentAttachment.SetRange("No.", RecNo);
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document Attachment Mgmt", 'OnAfterTableHasNumberFieldPrimaryKey', '', false, false)]
@@ -383,6 +410,7 @@ codeunit 7001149 Procesos_GTask
     var
         UserTask: Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
         MensajeWA: Record "Mensaje WhatsApp";
     begin
         If TableNo = Database::"User Task" then begin
@@ -396,6 +424,10 @@ codeunit 7001149 Procesos_GTask
         If TableNo = Database::"Mensaje WhatsApp" then begin
             Result := true;
             FieldNo := MensajeWA.FieldNo("Nº registro adjuntos");
+        end;
+        If TableNo = Database::"Time Sheet Header" then begin
+            Result := true;
+            FieldNo := TimeSheetHeader.FieldNo("No.");
         end;
     end;
 
@@ -451,6 +483,8 @@ codeunit 7001149 Procesos_GTask
     var
         Tareas: Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
+
     begin
         If Rec.IsTemporary() then exit;
         If Rec."Document Flow Service" Then exit;
@@ -465,7 +499,12 @@ codeunit 7001149 Procesos_GTask
             If TimeSheetLine."Job Line No." > 0 then
                 TimeSheetLine.SetRange("Job Line No.", Rec."Line No.");
             If TimeSheetLine.FindFirst() then
-                GetSetDocattchmentParteTrabajo(TimeSheetLine, TimeSheetLine."Job No.");
+                GetSetDocattchmentParteTrabajo(Database::"Time Sheet Line", TimeSheetLine.RecordId);
+        end;
+        If Rec."Table ID" = Database::"Time Sheet Header" then begin
+            TimeSheetHeader.SetRange("No.", Rec."No.");
+            If TimeSheetHeader.FindFirst() then
+                GetSetDocattchmentParteTrabajo(Database::"Time Sheet Header", TimeSheetHeader.RecordId);
         end;
 
     end;
@@ -475,6 +514,8 @@ codeunit 7001149 Procesos_GTask
     var
         Tareas: Record "User Task";
         TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
+
     begin
         If Rec.IsTemporary() then exit;
         If Rec."Document Flow Service" Then exit;
@@ -491,8 +532,14 @@ codeunit 7001149 Procesos_GTask
             If TimeSheetLine."Job Line No." > 0 then
                 TimeSheetLine.SetRange("Job Line No.", Rec."Line No.");
             If TimeSheetLine.FindFirst() then
-                GetSetDocattchmentParteTrabajo(TimeSheetLine, TimeSheetLine."Job No.");
+                GetSetDocattchmentParteTrabajo(Database::"Time Sheet Line", TimeSheetLine.RecordId);
         end;
+        If Rec."Table ID" = Database::"Time Sheet Header" then begin
+            TimeSheetHeader.SetRange("No.", Rec."No.");
+            If TimeSheetHeader.FindFirst() then
+                GetSetDocattchmentParteTrabajo(Database::"Time Sheet Header", TimeSheetHeader.RecordId);
+        end;
+
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"To-Do", 'OnAfterModifyEvent', '', false, false)]
@@ -1430,9 +1477,10 @@ codeunit 7001149 Procesos_GTask
 
 
 
-    local procedure GetSetDocattchmentParteTrabajo(TimeSheetLine: Record "Time Sheet Line"; JobNo: Code[20])
+    local procedure GetSetDocattchmentParteTrabajo(Table: Integer; RecordId: RecordId)
     begin
         //TODO: Implementar
+        // Para recuperar los documentos de Gtask
     end;
 
 
@@ -1577,7 +1625,8 @@ codeunit 7001149 Procesos_GTask
        var EmailSupervisor: Text;
        VAR User: Record "User";
        Var UserTask: Record "User Task";
-       var ListaCorreo: Text)
+       var ListaCorreo: Text;
+       RecRef: RecordRef)
     var
         ZonasLimpieza: Record "Zonas Limpieza";
     begin
@@ -1586,7 +1635,7 @@ codeunit 7001149 Procesos_GTask
         if not ZonasLimpieza.Get(ZonaLimpieza) then
             Error('Zona de limpieza %1 no encontrada.', ZonaLimpieza);
         If TipoTarea <> ZonasLimpieza."Tipo Tarea" then
-            Error('El tipo de tarea %1 no coincide con el tipo de tarea de la zona de limpieza %2.', TipoTarea, ZonasLimpieza."Tipo Tarea");
+            Error('El tipo de tarea %1 no coincide con el tipo de tarea de la zona de limpieza %2. en la Zona de limpieza %3. en el Registro %4', TipoTarea, ZonasLimpieza."Tipo Tarea", ZonasLimpieza.Descripción, RecRef.RecordId);
 
         // Recoger todos los datos de la zona de limpieza
         Categoria := ZonasLimpieza."Tipo Tarea";
@@ -2371,22 +2420,28 @@ codeunit 7001149 Procesos_GTask
         ProximoDiaLimpieza: Date;
         ContadorTareas: Integer;
         Descripcion: Text;
+        saltarPorTareaPendiente: Boolean;
     begin
         Emplazamientos.SetFilter("Zona Limpieza", '<>%1', 0);
         if not Emplazamientos.FindSet() then
             exit(0);
 
         repeat
+            saltarPorTareaPendiente := false;
             // ¿Tiene esta parada alguna tarea no finalizada?
             UserTask.Reset();
             UserTask.SetRange(Id_record, Emplazamientos.RecordId);
             UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
-            if UserTask.FindFirst() then begin
-                if ZonasLimpieza.Get(UserTask.ZonaLimpieza) then
-                    If ZonasLimpieza."Tipo Tarea" = 'LIMPIEZA' then
-                        continue; // Ya tiene tarea pendiente, no crear nada
-            end;
+            if UserTask.FindFirst() then
+                Repeat
+                    if ZonasLimpieza.Get(UserTask.ZonaLimpieza) then
+                        If ZonasLimpieza."Tipo Tarea" = 'LIMPIEZA' then begin
+                            saltarPorTareaPendiente := true;
+                        end;
 
+                until UserTask.Next() = 0;
+            if saltarPorTareaPendiente then
+                continue;
             // Obtener zona y comprobar que esté configurada para limpieza
             if not ZonasLimpieza.Get(Emplazamientos."Zona Limpieza") then
                 continue;
@@ -2407,22 +2462,29 @@ codeunit 7001149 Procesos_GTask
                 Emplazamientos."Zona Limpieza", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
                 ContadorTareas += 1;
         until Emplazamientos.Next() = 0;
+        Emplazamientos.Reset();
         Emplazamientos.SetFilter("Zona Revisión", '<>%1', 0);
         if not Emplazamientos.FindSet() then
             exit(0);
 
         repeat
             // ¿Tiene esta parada alguna tarea no finalizada?
+            saltarPorTareaPendiente := false;
             UserTask.Reset();
             UserTask.SetRange(Id_record, Emplazamientos.RecordId);
             UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
-            if UserTask.FindFirst() then begin
-                if ZonasLimpieza.Get(UserTask.ZonaLimpieza) then
-                    If ZonasLimpieza."Tipo Tarea" = 'REVISION' then
-                        continue; // Ya tiene tarea pendiente, no crear nada
-            end;
+            if UserTask.FindFirst() then
+                Repeat
+                    if ZonasLimpieza.Get(UserTask.ZonaLimpieza) then
+                        If ZonasLimpieza."Tipo Tarea" = 'REVISION' then begin
+                            saltarPorTareaPendiente := true;
+                        end;
+                    continue; // Ya tiene tarea pendiente, no crear nada
+                until UserTask.Next() = 0;
+            if saltarPorTareaPendiente then
+                continue;
 
-            // Obtener zona y comprobar que esté configurada para limpieza
+            // Obtener zona y comprobar que esté configurada para revisión
             if not ZonasLimpieza.Get(Emplazamientos."Zona Revisión") then
                 continue;
             if (ZonasLimpieza."Tipo Tarea" <> 'REVISION') then
@@ -2439,7 +2501,7 @@ codeunit 7001149 Procesos_GTask
             Descripcion := 'Tarea de ' + LowerCase(ZonasLimpieza."Tipo Tarea") + ' para la Parada ' + Emplazamientos."Nº Emplazamiento" +
                 ' - ' + Emplazamientos."Descripción" + ' en la zona de revisión ' + ZonasLimpieza."Descripción" + ' - ' + ZonasLimpieza."Descripción Detallada";
             if Gtask.CrearTareaLimpieza(ZonasLimpieza."Tipo Tarea", RecRef, ZonasLimpieza."Tipo Tarea" + ' Parada ' + Emplazamientos."Nº Emplazamiento",
-                Emplazamientos."Zona Limpieza", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
+                Emplazamientos."Zona Revisión", Descripcion, false, '', ProximoDiaLimpieza, true, 0) then
                 ContadorTareas += 1;
         until Emplazamientos.Next() = 0;
 
@@ -3268,5 +3330,43 @@ codeunit 7001149 Procesos_GTask
         end;
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Time Sheet Line", 'OnValidateTypeOnAfterClearFields', '', false, false)]
+    local procedure OnValidateTypeOnAfterClearFields(var TimeSheetLine: Record "Time Sheet Line")
+    var
+        TimeSheetHeader: Record "Time Sheet Header";
+        Employee: Record Employee;
+        UsuariosGtask: Record UsuariosGtask;
+    begin
+        if not TimeSheetHeader.Get(TimeSheetLine."Time Sheet No.") then
+            exit;
+        if TimeSheetHeader."Resource No." <> '' then
+            exit;
+        UsuariosGtask.SetRange("Id Usuario", UserSecurityId());
+        if not UsuariosGtask.FindFirst() then
+            Error('No se ha encontrado el usuario %1 en la tabla UsuariosGtask', UserId());
+        UsuariosGtask.TestField("Empleado");
+        Employee.Get(UsuariosGtask."Empleado");
+        Employee.TestField("Resource No.");
+        TimeSheetHeader."Resource No." := Employee."Resource No.";
+        TimeSheetHeader.Modify();
+
+    end;
+    //On Insert TimeSheatHeader
+    [EventSubscriber(ObjectType::Table, Database::"Time Sheet Header", 'OnAfterInsertEvent', '', false, false)]
+    local procedure OnAfterInsertEvent(var Rec: Record "Time Sheet Header")
+    var
+        TimeSheetLine: Record "Time Sheet Line";
+        Employee: Record Employee;
+        UsuariosGtask: Record UsuariosGtask;
+    begin
+        UsuariosGtask.SetRange("Id Usuario", UserSecurityId());
+        if not UsuariosGtask.FindFirst() then
+            Error('No se ha encontrado el usuario %1 en la tabla UsuariosGtask', UserId());
+        UsuariosGtask.TestField("Empleado");
+        Employee.Get(UsuariosGtask."Empleado");
+        Employee.TestField("Resource No.");
+        Rec."Resource No." := Employee."Resource No.";
+
+    end;
 
 }

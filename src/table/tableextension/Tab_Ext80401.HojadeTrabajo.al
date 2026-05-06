@@ -10,7 +10,7 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
 
         field(80001; Tipo; Option)
         {
-            OptionMembers = " ",Trabajo,Nacional;
+            OptionMembers = " ",Trabajo,Nacional,EMT;
             Caption = 'Tipo';
             DataClassification = ToBeClassified;
         }
@@ -119,6 +119,11 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
         {
             OptionMembers = Abierto,Cerrado,Facturado;
             Caption = 'Estado';
+            DataClassification = ToBeClassified;
+        }
+        field(80020; "Id Factura"; Code[20])
+        {
+            Caption = 'Id Factura';
             DataClassification = ToBeClassified;
         }
     }

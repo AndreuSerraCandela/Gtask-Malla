@@ -132,6 +132,12 @@ table 7001250 "Incidencias"
             Caption = 'ID último mensaje WhatsApp';
             DataClassification = CustomerContent;
         }
+        field(27; "Parte Trabajo"; Code[20])
+        {
+            TableRelation = "Time Sheet Header"."No." where(Tipo = const(EMT));
+            DataClassification = CustomerContent;
+
+        }
     }
     keys
     {

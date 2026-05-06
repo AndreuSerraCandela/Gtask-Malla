@@ -1,0 +1,1254 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner" xmlns:am="http://schemas.microsoft.com/sqlserver/reporting/authoringmetadata">
+  <rd:ReportUnitType>Mm</rd:ReportUnitType>
+  <rd:ReportID>68bb11b3-6826-4d1d-95a3-407864229bd2</rd:ReportID>
+  <am:AuthoringMetadata>
+    <am:CreatedBy>
+      <am:Name>MSRB</am:Name>
+      <am:Version>15.1.30001.02</am:Version>
+    </am:CreatedBy>
+    <am:UpdatedBy>
+      <am:Name>MSRB</am:Name>
+      <am:Version>15.1.30001.02</am:Version>
+    </am:UpdatedBy>
+    <am:LastModifiedTimestamp>2026-05-06T09:55:49.2216568Z</am:LastModifiedTimestamp>
+  </am:AuthoringMetadata>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="DataSource">
+      <rd:SecurityType>None</rd:SecurityType>
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:DataSourceID>276ec814-64c6-4ca1-98f6-198975147613</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Textbox Name="TxtTituloEmpresa">
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!EmpresaNombre.Value, "DataSet_Result")</Value>
+                    <Style>
+                      <Color>#444444</Color>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Left</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>0.2cm</Top>
+            <Left>0.35cm</Left>
+            <Height>0.5cm</Height>
+            <Width>19cm</Width>
+            <Style />
+          </Textbox>
+          <Textbox Name="TxtTitulo">
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Orden de trabajo EMT</Value>
+                    <Style>
+                      <FontSize>14pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Left</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>0.85cm</Top>
+            <Left>0.35cm</Left>
+            <Height>0.75cm</Height>
+            <Width>19cm</Width>
+            <ZIndex>1</ZIndex>
+            <Style />
+          </Textbox>
+          <Rectangle Name="RectCabeceraInfo">
+            <ReportItems>
+              <Textbox Name="TxtLblPet">
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Petición</Value>
+                        <Style>
+                          <FontSize>8.5pt</FontSize>
+                          <FontWeight>Bold</FontWeight>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>0.25cm</Top>
+                <Left>0.3cm</Left>
+                <Height>0.4cm</Height>
+                <Width>2cm</Width>
+                <Style />
+              </Textbox>
+              <Textbox Name="TxtPetValor">
+                <CanGrow>true</CanGrow>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=First(Fields!Pet_Numero.Value, "DataSet_Result") &amp; " — " &amp; First(Fields!Pet_Descripcion.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontSize>9.5pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>0.25cm</Top>
+                <Left>2.5cm</Left>
+                <Height>0.6cm</Height>
+                <Width>16cm</Width>
+                <ZIndex>1</ZIndex>
+                <Style />
+              </Textbox>
+              <Textbox Name="TxtLblOrd">
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Orden / Cliente</Value>
+                        <Style>
+                          <FontSize>8.5pt</FontSize>
+                          <FontWeight>Bold</FontWeight>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>1.45cm</Top>
+                <Left>0.3cm</Left>
+                <Height>0.4cm</Height>
+                <Width>2cm</Width>
+                <ZIndex>2</ZIndex>
+                <Style />
+              </Textbox>
+              <Textbox Name="TxtOrdenValor">
+                <CanGrow>true</CanGrow>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=First(Fields!Cab_OrdenNo.Value, "DataSet_Result") &amp; " • " &amp; First(Fields!Cab_ClienteNo.Value, "DataSet_Result") &amp; " • " &amp; First(Fields!Cab_NombreCliente.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontSize>9.5pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>1.45cm</Top>
+                <Left>2.5cm</Left>
+                <Height>0.6cm</Height>
+                <Width>16cm</Width>
+                <ZIndex>3</ZIndex>
+                <Style />
+              </Textbox>
+              <Textbox Name="TxtLblDir">
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Dirección</Value>
+                        <Style>
+                          <FontSize>8.5pt</FontSize>
+                          <FontWeight>Bold</FontWeight>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>2.6cm</Top>
+                <Left>0.3cm</Left>
+                <Height>0.35cm</Height>
+                <Width>2cm</Width>
+                <ZIndex>4</ZIndex>
+                <Style />
+              </Textbox>
+              <Textbox Name="TxtDirValor">
+                <CanGrow>true</CanGrow>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>=First(Fields!Cab_Direccion.Value, "DataSet_Result")</Value>
+                        <Style>
+                          <FontSize>9pt</FontSize>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>2.6cm</Top>
+                <Left>2.5cm</Left>
+                <Height>0.5cm</Height>
+                <Width>16cm</Width>
+                <ZIndex>5</ZIndex>
+                <Style />
+              </Textbox>
+              <Textbox Name="TxtCabExtra">
+                <CanGrow>true</CanGrow>
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>="Estado: " &amp; First(Fields!Cab_Estado.Value, "DataSet_Result") &amp; "   │   Proyecto: " &amp; First(Fields!Cab_Proyecto.Value, "DataSet_Result") &amp; "   │   Factura: " &amp; First(Fields!Cab_IdFactura.Value, "DataSet_Result") &amp; "   │   Fechas parte: " &amp; Code.DispDateOrDash(First(Fields!Cab_FechaIni.Value, "DataSet_Result")) &amp; " — " &amp; Code.DispDateOrDash(First(Fields!Cab_FechaFin.Value, "DataSet_Result"))</Value>
+                        <Style>
+                          <FontSize>9pt</FontSize>
+                          <Color>#333333</Color>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>3.85cm</Top>
+                <Left>0.3cm</Left>
+                <Height>0.65cm</Height>
+                <Width>18.2cm</Width>
+                <ZIndex>6</ZIndex>
+                <Style />
+              </Textbox>
+              <Line Name="LineSepTituloTbl">
+                <Top>4.55cm</Top>
+                <Left>0.2cm</Left>
+                <Height>0cm</Height>
+                <Width>18.55cm</Width>
+                <ZIndex>7</ZIndex>
+                <Style>
+                  <Color>#bbbbbb</Color>
+                </Style>
+              </Line>
+              <Textbox Name="TxtLblLineas">
+                <Paragraphs>
+                  <Paragraph>
+                    <TextRuns>
+                      <TextRun>
+                        <Value>Detalle de líneas</Value>
+                        <Style>
+                          <FontWeight>Bold</FontWeight>
+                        </Style>
+                      </TextRun>
+                    </TextRuns>
+                    <Style>
+                      <TextAlign>Left</TextAlign>
+                    </Style>
+                  </Paragraph>
+                </Paragraphs>
+                <Top>4.65cm</Top>
+                <Left>0.3cm</Left>
+                <Height>0.45cm</Height>
+                <Width>6cm</Width>
+                <ZIndex>8</ZIndex>
+                <Style />
+              </Textbox>
+            </ReportItems>
+            <Top>1.85cm</Top>
+            <Left>0.35cm</Left>
+            <Height>5.4cm</Height>
+            <Width>19cm</Width>
+            <ZIndex>2</ZIndex>
+            <Style>
+              <Border>
+                <Color>#cccccc</Color>
+                <Style>Solid</Style>
+                <Width>0.75pt</Width>
+              </Border>
+              <BackgroundColor>#fafafa</BackgroundColor>
+            </Style>
+          </Rectangle>
+          <Tablix Name="TblLineas">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn>
+                  <Width>0.07938cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.15cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>2.47063cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>0.15646cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>9.74354cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.1cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.35cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.25cm</Width>
+                </TablixColumn>
+                <TablixColumn>
+                  <Width>1.7cm</Width>
+                </TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.52cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx1">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Nº línea</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx2">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Tipo</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx3">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Código</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx4">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Job</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx5">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Descripción</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx7">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Cant.</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx8">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Precio</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx9">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Dto %</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Hx10">
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>Importe</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                    <FontWeight>Bold</FontWeight>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>Solid</Style>
+                            </Border>
+                            <BackgroundColor>#e8e8e8</BackgroundColor>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.58cm</Height>
+                  <TablixCells>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx1">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Linea_NumLinea.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx2">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Linea_TipoParte.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Center</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx3">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Linea_No.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx4">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Linea_JobNo.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx5">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Fields!Linea_Description.Value &amp; ChrW(10) &amp; Fields!Linea_Descripcion.Value</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Left</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Top</VerticalAlign>
+                            <PaddingLeft>2pt</PaddingLeft>
+                            <PaddingTop>2pt</PaddingTop>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx7">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.FmtDecimal(Fields!Linea_Cantidad.Value)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx8">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.FmtDecimal(Fields!Linea_Precio.Value)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx9">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.FmtDecimal(Fields!Linea_Dto.Value)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                    <TablixCell>
+                      <CellContents>
+                        <Textbox Name="Cx10">
+                          <CanGrow>true</CanGrow>
+                          <Paragraphs>
+                            <Paragraph>
+                              <TextRuns>
+                                <TextRun>
+                                  <Value>=Code.FmtDecimal(Fields!Linea_Importe.Value)</Value>
+                                  <Style>
+                                    <FontSize>8pt</FontSize>
+                                  </Style>
+                                </TextRun>
+                              </TextRuns>
+                              <Style>
+                                <TextAlign>Right</TextAlign>
+                              </Style>
+                            </Paragraph>
+                          </Paragraphs>
+                          <Style>
+                            <Border>
+                              <Style>None</Style>
+                            </Border>
+                            <VerticalAlign>Middle</VerticalAlign>
+                            <PaddingRight>2pt</PaddingRight>
+                          </Style>
+                        </Textbox>
+                      </CellContents>
+                    </TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <TablixColumnHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <Visibility>
+                    <Hidden>true</Hidden>
+                  </Visibility>
+                </TablixMember>
+                <TablixMember>
+                  <Visibility>
+                    <Hidden>true</Hidden>
+                  </Visibility>
+                </TablixMember>
+                <TablixMember />
+                <TablixMember>
+                  <Visibility>
+                    <Hidden>true</Hidden>
+                  </Visibility>
+                </TablixMember>
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+                <TablixMember />
+              </TablixMembers>
+            </TablixColumnHierarchy>
+            <TablixRowHierarchy>
+              <TablixMembers>
+                <TablixMember>
+                  <RepeatOnNewPage>true</RepeatOnNewPage>
+                  <KeepTogether>true</KeepTogether>
+                </TablixMember>
+                <TablixMember>
+                  <Group Name="GrupoLineaParte">
+                    <GroupExpressions>
+                      <GroupExpression>=CStr(Fields!Linea_TimeSheetNo.Value) &amp; "|" &amp; CStr(Fields!Linea_NumLinea.Value)</GroupExpression>
+                    </GroupExpressions>
+                  </Group>
+                  <TablixMembers>
+                    <TablixMember />
+                  </TablixMembers>
+                </TablixMember>
+              </TablixMembers>
+            </TablixRowHierarchy>
+            <DataSetName>DataSet_Result</DataSetName>
+            <Top>7.4cm</Top>
+            <Left>0.35cm</Left>
+            <Height>1.1cm</Height>
+            <Width>19cm</Width>
+            <ZIndex>3</ZIndex>
+            <Style />
+          </Tablix>
+        </ReportItems>
+        <Height>29.7cm</Height>
+        <Style />
+      </Body>
+      <Width>21cm</Width>
+      <Page>
+        <PageHeight>297mm</PageHeight>
+        <PageWidth>210mm</PageWidth>
+        <LeftMargin>8mm</LeftMargin>
+        <RightMargin>8mm</RightMargin>
+        <TopMargin>8mm</TopMargin>
+        <BottomMargin>8mm</BottomMargin>
+        <Style />
+      </Page>
+    </ReportSection>
+  </ReportSections>
+  <ReportParameters>
+    <ReportParameter Name="LblTitle">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblTitle</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblTitle</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblPeticion">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblPeticion</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblPeticion</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblOrden">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblOrden</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblOrden</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblCliente">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblCliente</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblCliente</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblNombreCli">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblNombreCli</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblNombreCli</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblDireccion">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblDireccion</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblDireccion</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblFIni">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblFIni</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblFIni</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblFFin">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblFFin</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblFFin</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblEstado">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblEstado</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblEstado</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblProyecto">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblProyecto</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblProyecto</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblFactura">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblFactura</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblFactura</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LblLineas">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>LblLineas</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>LblLineas</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <ReportParametersLayout>
+    <GridLayoutDefinition>
+      <NumberOfColumns>1</NumberOfColumns>
+      <NumberOfRows>12</NumberOfRows>
+      <CellDefinitions>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>0</RowIndex>
+          <ParameterName>LblTitle</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>1</RowIndex>
+          <ParameterName>LblPeticion</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>2</RowIndex>
+          <ParameterName>LblOrden</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>3</RowIndex>
+          <ParameterName>LblCliente</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>4</RowIndex>
+          <ParameterName>LblNombreCli</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>5</RowIndex>
+          <ParameterName>LblDireccion</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>6</RowIndex>
+          <ParameterName>LblFIni</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>7</RowIndex>
+          <ParameterName>LblFFin</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>8</RowIndex>
+          <ParameterName>LblEstado</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>9</RowIndex>
+          <ParameterName>LblProyecto</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>10</RowIndex>
+          <ParameterName>LblFactura</ParameterName>
+        </CellDefinition>
+        <CellDefinition>
+          <ColumnIndex>0</ColumnIndex>
+          <RowIndex>11</RowIndex>
+          <ParameterName>LblLineas</ParameterName>
+        </CellDefinition>
+      </CellDefinitions>
+    </GridLayoutDefinition>
+  </ReportParametersLayout>
+  <Code>Public Function BlankZero(ByVal Value As Decimal)
+    Return Value
+End Function
+
+Public Function DispDateOrDash(ByVal Value As Object) As String
+    If Value Is Nothing Then Return "(—)"
+    Dim s As String = Convert.ToString(Value)
+    If String.IsNullOrWhiteSpace(s) OrElse s = "1900-01-01" Then Return "(—)"
+    Dim d As DateTime
+    If DateTime.TryParse(s, d) Then
+        Return d.ToString("dd/MM/yyyy")
+    Else
+        Return "(—)"
+    End If
+End Function
+
+Public Function BoolSiNo(ByVal Value As Object) As String
+    If Value Is Nothing Then Return "(—)"
+    If TypeOf Value Is Boolean Then
+        If DirectCast(Value, Boolean) Then
+            Return "Sí"
+        Else
+            Return "No"
+        End If
+    End If
+    Return Convert.ToString(Value)
+End Function
+
+Public Function FmtDecimal(ByVal Value As Object) As String
+    If Value Is Nothing Then Return ""
+    Dim d As Decimal = 0D
+    Dim s As String = Convert.ToString(Value, System.Globalization.CultureInfo.InvariantCulture)
+    If String.IsNullOrWhiteSpace(s) Then Return ""
+    If Decimal.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, d) Then
+        Return d.ToString("N2")
+    Else
+        Return Convert.ToString(Value)
+    End If
+End Function
+</Code>
+  <Language>=User!Language</Language>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Fields>
+        <Field Name="Linea_NumLinea">
+          <DataField>Linea_NumLinea</DataField>
+        </Field>
+        <Field Name="Linea_TimeSheetNo">
+          <DataField>Linea_TimeSheetNo</DataField>
+        </Field>
+        <Field Name="Linea_TipoStd">
+          <DataField>Linea_TipoStd</DataField>
+        </Field>
+        <Field Name="Linea_JobNo">
+          <DataField>Linea_JobNo</DataField>
+        </Field>
+        <Field Name="Linea_Description">
+          <DataField>Linea_Description</DataField>
+        </Field>
+        <Field Name="Linea_TipoParte">
+          <DataField>Linea_TipoParte</DataField>
+        </Field>
+        <Field Name="Linea_No">
+          <DataField>Linea_No</DataField>
+        </Field>
+        <Field Name="Linea_Descripcion">
+          <DataField>Linea_Descripcion</DataField>
+        </Field>
+        <Field Name="Linea_Unidad">
+          <DataField>Linea_Unidad</DataField>
+        </Field>
+        <Field Name="Linea_Cantidad">
+          <DataField>Linea_Cantidad</DataField>
+        </Field>
+        <Field Name="Linea_CantidadFormat">
+          <DataField>Linea_CantidadFormat</DataField>
+        </Field>
+        <Field Name="Linea_Precio">
+          <DataField>Linea_Precio</DataField>
+        </Field>
+        <Field Name="Linea_PrecioFormat">
+          <DataField>Linea_PrecioFormat</DataField>
+        </Field>
+        <Field Name="Linea_Dto">
+          <DataField>Linea_Dto</DataField>
+        </Field>
+        <Field Name="Linea_DtoFormat">
+          <DataField>Linea_DtoFormat</DataField>
+        </Field>
+        <Field Name="Linea_Importe">
+          <DataField>Linea_Importe</DataField>
+        </Field>
+        <Field Name="Linea_ImporteFormat">
+          <DataField>Linea_ImporteFormat</DataField>
+        </Field>
+        <Field Name="Linea_Finalizada">
+          <DataField>Linea_Finalizada</DataField>
+        </Field>
+        <Field Name="Linea_Comprobada">
+          <DataField>Linea_Comprobada</DataField>
+        </Field>
+        <Field Name="Cab_OrdenNo">
+          <DataField>Cab_OrdenNo</DataField>
+        </Field>
+        <Field Name="Cab_ClienteNo">
+          <DataField>Cab_ClienteNo</DataField>
+        </Field>
+        <Field Name="Cab_NombreCliente">
+          <DataField>Cab_NombreCliente</DataField>
+        </Field>
+        <Field Name="Cab_Direccion">
+          <DataField>Cab_Direccion</DataField>
+        </Field>
+        <Field Name="Cab_FechaIni">
+          <DataField>Cab_FechaIni</DataField>
+        </Field>
+        <Field Name="Cab_FechaFin">
+          <DataField>Cab_FechaFin</DataField>
+        </Field>
+        <Field Name="Cab_Estado">
+          <DataField>Cab_Estado</DataField>
+        </Field>
+        <Field Name="Cab_Proyecto">
+          <DataField>Cab_Proyecto</DataField>
+        </Field>
+        <Field Name="Cab_IdFactura">
+          <DataField>Cab_IdFactura</DataField>
+        </Field>
+        <Field Name="Pet_Numero">
+          <DataField>Pet_Numero</DataField>
+        </Field>
+        <Field Name="Pet_Descripcion">
+          <DataField>Pet_Descripcion</DataField>
+        </Field>
+        <Field Name="EmpresaNombre">
+          <DataField>EmpresaNombre</DataField>
+        </Field>
+      </Fields>
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+    </DataSet>
+  </DataSets>
+</Report>

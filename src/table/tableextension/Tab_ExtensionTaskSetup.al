@@ -44,5 +44,12 @@ tableextension 92500 "Tab_ExtensionTaskSetup2" extends "Jobs Setup"
             Caption = 'Es Debug';
             DataClassification = CustomerContent;
         }
+        //Cliente EMT x defecto
+        field(50115; "Cliente EMT x defecto"; Code[20])
+        {
+            Caption = 'Cliente EMT x defecto';
+            DataClassification = CustomerContent;
+            TableRelation = Customer."No.";
+        }
     }
 }

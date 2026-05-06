@@ -48,6 +48,10 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                 }
+                field("Empleado"; Rec."Empleado")
+                {
+                    ApplicationArea = All;
+                }
                 // field("Id Usuario Limpieza EMT"; Rec."Id Usuario Limpieza EMT")
                 // {
                 //     ApplicationArea = All;

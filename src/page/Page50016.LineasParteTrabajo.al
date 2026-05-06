@@ -4,6 +4,7 @@ page 50116 "Líneas Parte de Trabajo"
     SourceTable = "Time Sheet Line";
     Caption = 'Líneas Parte de Trabajo';
     Editable = true;
+    AutoSplitKey = true;
 
     layout
     {
@@ -21,17 +22,20 @@ page 50116 "Líneas Parte de Trabajo"
                 {
                     ApplicationArea = All;
                     ToolTip = 'Especifica el tipo de línea.';
+                    Visible = not EsEmt;
                 }
                 field("Job No."; Rec."Job No.")
                 {
                     ApplicationArea = All;
                     ToolTip = 'Especifica el número del trabajo.';
+                    Visible = Not EsEmt;
                 }
                 field(Description; Rec.Description)
                 {
                     ApplicationArea = All;
                     ToolTip = 'Especifica la descripción de la línea.';
                     StyleExpr = Negrita;
+                    Visible = not EsEmt;
                 }
                 field("Fecha Orden"; Rec."Fecha Orden")
                 {
@@ -55,29 +59,88 @@ page 50116 "Líneas Parte de Trabajo"
                 {
                     ApplicationArea = All;
                     ToolTip = 'Especifica el número del elemento.';
+                    trigger OnValidate()
+                    var
+                        Item: Record Item;
+                        Resource: Record Resource;
+                    begin
+                        if Rec.Descripcion = '' Then begin
+                            case Rec.Tipo of
+                                Rec.Tipo::Producto:
+                                    begin
+                                        if Item.Get(Rec.No) then
+                                            Rec.Descripcion := Item.Description;
+                                    end;
+                                Rec.Tipo::Recurso:
+                                    begin
+                                        if Resource.Get(Rec.No) then
+                                            Rec.Descripcion := Resource.Name;
+                                    end;
+                            end;
+                        end;
+                    end;
+                }
+                field(Description2; Rec.Description)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Especifica la descripción de la línea.';
+                    StyleExpr = Negrita;
+                    Visible = EsEmt;
                 }
 
                 field(Unidad; Rec.Unidad)
                 {
                     ApplicationArea = All;
                     ToolTip = 'Especifica la unidad.';
+                    Visible = not EsEmt;
                 }
+                // Cantidad
+                field(Cantidad; Rec.Cantidad)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Especifica la cantidad de la línea.';
+                    Visible = EsEmt;
+                }
+                field(Precio; Rec.Precio)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Especifica el precio de la línea.';
+                    Visible = EsEmt;
+                }
+                // Dto
+                field(Dto; Rec.Dto)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Especifica el dto de la línea.';
+                    Visible = EsEmt;
+                }
+                // Importe
+                field(Importe; Rec.Importe)
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Especifica el importe de la línea.';
+                    Visible = EsEmt;
+                }
+
                 field(Fibalizada; Rec.Finalizada)
                 {
                     ApplicationArea = All;
                     ToolTip = 'Indica si la línea está finalizada.';
+                    Visible = not EsEmt;
 
                 }
                 field(Comprobada; Rec.Comprobada)
                 {
                     ApplicationArea = All;
                     ToolTip = 'Indica si la línea está comprobada.';
+                    Visible = not EsEmt;
                 }
                 field(Enviada; Rec.Enviada)
                 {
                     ApplicationArea = All;
                     ToolTip = 'Indica si la línea está enviada.';
                     Editable = false;
+                    Visible = not EsEmt;
                 }
             }
         }
@@ -210,9 +273,14 @@ page 50116 "Líneas Parte de Trabajo"
 
     var
         Negrita: Text;
+        EsEmt: Boolean;
 
     trigger OnAfterGetRecord()
+    var
+        TimeSheetHeader: Record "Time Sheet Header";
     begin
+        if TimeSheetHeader.Get(Rec."Time Sheet No.") then
+            EsEmt := TimeSheetHeader.Tipo = TimeSheetHeader.Tipo::EMT;
         // Determinar si la descripción debe estar en negrita
         if Rec."Job Line No." <> 0 then
             Negrita := 'Strong'
