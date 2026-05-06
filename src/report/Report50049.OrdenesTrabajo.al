@@ -93,6 +93,12 @@ report 50081 "Ordenes Trabajo"
             column(EmpresaNombre; NombreEmpresa)
             {
             }
+            column(EmpresaPicture; CompanyInformation.Picture)
+            {
+            }
+            column(EmpresaCabTexto; EmpresaCabTexto)
+            {
+            }
 
             trigger OnAfterGetRecord()
             var
@@ -161,15 +167,16 @@ report 50081 "Ordenes Trabajo"
     }
 
     trigger OnPreReport()
-    var
-        CompanyInformation: Record "Company Information";
     begin
-        CompanyInformation.Get();
-        NombreEmpresa := CompanyInformation.Name;
+        LoadCompanyHeader();
     end;
 
     var
+        CompanyInformation: Record "Company Information";
+        FormatAddr: Codeunit "Format Address";
+        CompanyAddr: array[8] of Text[100];
         NombreEmpresa: Text[100];
+        EmpresaCabTexto: Text[2048];
         Cab_OrdenNo: Code[20];
         Cab_ClienteNo: Code[20];
         Cab_NombreCliente: Text[50];
@@ -182,6 +189,69 @@ report 50081 "Ordenes Trabajo"
         Pet_Numero: Code[20];
         Pet_Descripcion: Text[100];
         UltimaCabeceraOrden: Code[20];
+
+    local procedure LoadCompanyHeader()
+    begin
+        CompanyInformation.Get();
+        CompanyInformation.CalcFields(Picture);
+        NombreEmpresa := CompanyInformation.Name;
+        Clear(CompanyAddr);
+        FormatAddr.Company(CompanyAddr, CompanyInformation);
+        BuildEmpresaCabTexto();
+    end;
+
+    local procedure BuildEmpresaCabTexto()
+    var
+        i: Integer;
+    begin
+        Clear(EmpresaCabTexto);
+        for i := 2 to 8 do
+            AppendPipeLine(EmpresaCabTexto, CompanyAddr[i]);
+        AppendPipeLine(EmpresaCabTexto, BuildEmpresaContactoLine());
+        AppendPipeLine(EmpresaCabTexto, BuildEmpresaBancoLine());
+    end;
+
+    local procedure AppendPipeLine(var Dest: Text; Line: Text)
+    begin
+        if Line = '' then
+            exit;
+        if Dest <> '' then
+            Dest += '|';
+        Dest += Line;
+    end;
+
+    local procedure BuildEmpresaContactoLine(): Text
+    var
+        T: Text;
+    begin
+        if CompanyInformation."Phone No." <> '' then
+            T := 'Tel. ' + CompanyInformation."Phone No.";
+        if CompanyInformation."VAT Registration No." <> '' then begin
+            if T <> '' then
+                T += '   ·   ';
+            T += 'CIF/NIF: ' + CompanyInformation."VAT Registration No.";
+        end;
+        if CompanyInformation."E-Mail" <> '' then begin
+            if T <> '' then
+                T += '   ·   ';
+            T += CompanyInformation."E-Mail";
+        end;
+        if CompanyInformation."Home Page" <> '' then begin
+            if T <> '' then
+                T += '   ·   ';
+            T += CompanyInformation."Home Page";
+        end;
+        exit(T);
+    end;
+
+    local procedure BuildEmpresaBancoLine(): Text
+    begin
+        if (CompanyInformation."Bank Name" = '') and (CompanyInformation."Bank Account No." = '') then
+            exit('');
+        if CompanyInformation."Bank Name" <> '' then
+            exit('Banco: ' + CompanyInformation."Bank Name" + ' · Cuenta: ' + CompanyInformation."Bank Account No.");
+        exit('Cuenta: ' + CompanyInformation."Bank Account No.");
+    end;
 
     local procedure ClearCabeceraYPeticionVars()
     begin

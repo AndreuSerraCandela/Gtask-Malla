@@ -28,6 +28,22 @@
     <ReportSection>
       <Body>
         <ReportItems>
+          <Image Name="ImgEmpresaLogo">
+            <Source>Database</Source>
+            <Value>=Convert.ToBase64String(First(Fields!EmpresaPicture.Value, "DataSet_Result"))</Value>
+            <MIMEType>image/bmp</MIMEType>
+            <Sizing>FitProportional</Sizing>
+            <Top>0.2cm</Top>
+            <Left>0.35cm</Left>
+            <Height>1.85cm</Height>
+            <Width>3.1cm</Width>
+            <ZIndex>0</ZIndex>
+            <Visibility>
+              <Hidden>=IsNothing(First(Fields!EmpresaPicture.Value, "DataSet_Result"))</Hidden>
+            </Visibility>
+            <DataElementOutput>NoOutput</DataElementOutput>
+            <Style />
+          </Image>
           <Textbox Name="TxtTituloEmpresa">
             <Paragraphs>
               <Paragraph>
@@ -35,7 +51,9 @@
                   <TextRun>
                     <Value>=First(Fields!EmpresaNombre.Value, "DataSet_Result")</Value>
                     <Style>
-                      <Color>#444444</Color>
+                      <Color>#222222</Color>
+                      <FontSize>11pt</FontSize>
+                      <FontWeight>Bold</FontWeight>
                     </Style>
                   </TextRun>
                 </TextRuns>
@@ -45,9 +63,35 @@
               </Paragraph>
             </Paragraphs>
             <Top>0.2cm</Top>
-            <Left>0.35cm</Left>
-            <Height>0.5cm</Height>
-            <Width>19cm</Width>
+            <Left>3.65cm</Left>
+            <Height>0.45cm</Height>
+            <Width>15.7cm</Width>
+            <ZIndex>1</ZIndex>
+            <Style />
+          </Textbox>
+          <Textbox Name="TxtEmpresaCab">
+            <CanGrow>true</CanGrow>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=Replace(First(Fields!EmpresaCabTexto.Value, "DataSet_Result"), "|", ChrW(10))</Value>
+                    <Style>
+                      <Color>#444444</Color>
+                      <FontSize>8.5pt</FontSize>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Left</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <Top>0.62cm</Top>
+            <Left>3.65cm</Left>
+            <Height>1.35cm</Height>
+            <Width>15.7cm</Width>
+            <ZIndex>1</ZIndex>
             <Style />
           </Textbox>
           <Textbox Name="TxtTitulo">
@@ -67,11 +111,11 @@
                 </Style>
               </Paragraph>
             </Paragraphs>
-            <Top>0.85cm</Top>
+            <Top>2.15cm</Top>
             <Left>0.35cm</Left>
             <Height>0.75cm</Height>
             <Width>19cm</Width>
-            <ZIndex>1</ZIndex>
+            <ZIndex>2</ZIndex>
             <Style />
           </Textbox>
           <Rectangle Name="RectCabeceraInfo">
@@ -278,7 +322,7 @@
                 <Style />
               </Textbox>
             </ReportItems>
-            <Top>1.85cm</Top>
+            <Top>2.95cm</Top>
             <Left>0.35cm</Left>
             <Height>5.4cm</Height>
             <Width>19cm</Width>
@@ -1184,7 +1228,7 @@
               </TablixMembers>
             </TablixRowHierarchy>
             <DataSetName>DataSet_Result</DataSetName>
-            <Top>7.4cm</Top>
+            <Top>8.45cm</Top>
             <Left>0.35cm</Left>
             <Height>1.66cm</Height>
             <Width>20.35894cm</Width>
@@ -1531,6 +1575,12 @@ End Function
         </Field>
         <Field Name="EmpresaNombre">
           <DataField>EmpresaNombre</DataField>
+        </Field>
+        <Field Name="EmpresaPicture">
+          <DataField>EmpresaPicture</DataField>
+        </Field>
+        <Field Name="EmpresaCabTexto">
+          <DataField>EmpresaCabTexto</DataField>
         </Field>
       </Fields>
       <Query>
