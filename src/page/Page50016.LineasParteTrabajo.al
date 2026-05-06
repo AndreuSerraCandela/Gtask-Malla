@@ -64,17 +64,17 @@ page 50116 "Líneas Parte de Trabajo"
                         Item: Record Item;
                         Resource: Record Resource;
                     begin
-                        if Rec.Descripcion = '' Then begin
+                        if Rec.Description = '' Then begin
                             case Rec.Tipo of
                                 Rec.Tipo::Producto:
                                     begin
                                         if Item.Get(Rec.No) then
-                                            Rec.Descripcion := Item.Description;
+                                            Rec.Description := Item.Description;
                                     end;
                                 Rec.Tipo::Recurso:
                                     begin
                                         if Resource.Get(Rec.No) then
-                                            Rec.Descripcion := Resource.Name;
+                                            Rec.Description := Resource.Name;
                                     end;
                             end;
                         end;

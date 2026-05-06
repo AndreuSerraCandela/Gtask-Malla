@@ -198,9 +198,7 @@ tableextension 92403 "Lineas parte de trabajo" extends "Time Sheet Line"
             Tipo::Producto,
             Tipo::Recurso:
                 begin
-
-
-
+                    GetPriceCalculationHandler(PriceType::Sale, PriceCalculation);
                     PriceCalculation.ApplyDiscount();
                     ApplyPrice(CalledByFieldNo, PriceCalculation);
 
