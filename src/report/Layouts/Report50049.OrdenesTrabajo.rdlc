@@ -11,7 +11,7 @@
       <am:Name>MSRB</am:Name>
       <am:Version>15.1.30001.02</am:Version>
     </am:UpdatedBy>
-    <am:LastModifiedTimestamp>2026-05-06T09:55:49.2216568Z</am:LastModifiedTimestamp>
+    <am:LastModifiedTimestamp>2026-05-06T10:00:41.7561294Z</am:LastModifiedTimestamp>
   </am:AuthoringMetadata>
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -24,6 +24,109 @@
       <rd:DataSourceID>276ec814-64c6-4ca1-98f6-198975147613</rd:DataSourceID>
     </DataSource>
   </DataSources>
+  <DataSets>
+    <DataSet Name="DataSet_Result">
+      <Query>
+        <DataSourceName>DataSource</DataSourceName>
+        <CommandText />
+      </Query>
+      <Fields>
+        <Field Name="Linea_NumLinea">
+          <DataField>Linea_NumLinea</DataField>
+        </Field>
+        <Field Name="Linea_TimeSheetNo">
+          <DataField>Linea_TimeSheetNo</DataField>
+        </Field>
+        <Field Name="Linea_TipoStd">
+          <DataField>Linea_TipoStd</DataField>
+        </Field>
+        <Field Name="Linea_JobNo">
+          <DataField>Linea_JobNo</DataField>
+        </Field>
+        <Field Name="Linea_Description">
+          <DataField>Linea_Description</DataField>
+        </Field>
+        <Field Name="Linea_TipoParte">
+          <DataField>Linea_TipoParte</DataField>
+        </Field>
+        <Field Name="Linea_No">
+          <DataField>Linea_No</DataField>
+        </Field>
+        <Field Name="Linea_Descripcion">
+          <DataField>Linea_Descripcion</DataField>
+        </Field>
+        <Field Name="Linea_Unidad">
+          <DataField>Linea_Unidad</DataField>
+        </Field>
+        <Field Name="Linea_Cantidad">
+          <DataField>Linea_Cantidad</DataField>
+        </Field>
+        <Field Name="Linea_CantidadFormat">
+          <DataField>Linea_CantidadFormat</DataField>
+        </Field>
+        <Field Name="Linea_Precio">
+          <DataField>Linea_Precio</DataField>
+        </Field>
+        <Field Name="Linea_PrecioFormat">
+          <DataField>Linea_PrecioFormat</DataField>
+        </Field>
+        <Field Name="Linea_Dto">
+          <DataField>Linea_Dto</DataField>
+        </Field>
+        <Field Name="Linea_DtoFormat">
+          <DataField>Linea_DtoFormat</DataField>
+        </Field>
+        <Field Name="Linea_Importe">
+          <DataField>Linea_Importe</DataField>
+        </Field>
+        <Field Name="Linea_ImporteFormat">
+          <DataField>Linea_ImporteFormat</DataField>
+        </Field>
+        <Field Name="Linea_Finalizada">
+          <DataField>Linea_Finalizada</DataField>
+        </Field>
+        <Field Name="Linea_Comprobada">
+          <DataField>Linea_Comprobada</DataField>
+        </Field>
+        <Field Name="Cab_OrdenNo">
+          <DataField>Cab_OrdenNo</DataField>
+        </Field>
+        <Field Name="Cab_ClienteNo">
+          <DataField>Cab_ClienteNo</DataField>
+        </Field>
+        <Field Name="Cab_NombreCliente">
+          <DataField>Cab_NombreCliente</DataField>
+        </Field>
+        <Field Name="Cab_Direccion">
+          <DataField>Cab_Direccion</DataField>
+        </Field>
+        <Field Name="Cab_FechaIni">
+          <DataField>Cab_FechaIni</DataField>
+        </Field>
+        <Field Name="Cab_FechaFin">
+          <DataField>Cab_FechaFin</DataField>
+        </Field>
+        <Field Name="Cab_Estado">
+          <DataField>Cab_Estado</DataField>
+        </Field>
+        <Field Name="Cab_Proyecto">
+          <DataField>Cab_Proyecto</DataField>
+        </Field>
+        <Field Name="Cab_IdFactura">
+          <DataField>Cab_IdFactura</DataField>
+        </Field>
+        <Field Name="Pet_Numero">
+          <DataField>Pet_Numero</DataField>
+        </Field>
+        <Field Name="Pet_Descripcion">
+          <DataField>Pet_Descripcion</DataField>
+        </Field>
+        <Field Name="EmpresaNombre">
+          <DataField>EmpresaNombre</DataField>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
   <ReportSections>
     <ReportSection>
       <Body>
@@ -299,28 +402,28 @@
                   <Width>0.07938cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1.15cm</Width>
+                  <Width>1.08532cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>2.47063cm</Width>
+                  <Width>2.43829cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.15646cm</Width>
+                  <Width>0.12412cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>9.74354cm</Width>
+                  <Width>11.36119cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1.1cm</Width>
+                  <Width>1.06766cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1.35cm</Width>
+                  <Width>1.31766cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1.25cm</Width>
+                  <Width>1.21766cm</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>1.7cm</Width>
+                  <Width>1.66766cm</Width>
                 </TablixColumn>
               </TablixColumns>
               <TablixRows>
@@ -909,16 +1012,26 @@
             <Top>7.4cm</Top>
             <Left>0.35cm</Left>
             <Height>1.1cm</Height>
-            <Width>19cm</Width>
+            <Width>20.35896cm</Width>
             <ZIndex>3</ZIndex>
             <Style />
           </Tablix>
         </ReportItems>
-        <Height>29.7cm</Height>
+        <Height>8.5cm</Height>
         <Style />
       </Body>
-      <Width>21cm</Width>
+      <Width>20.70896cm</Width>
       <Page>
+        <PageFooter>
+          <Height>25.4mm</Height>
+          <PrintOnFirstPage>true</PrintOnFirstPage>
+          <PrintOnLastPage>true</PrintOnLastPage>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </PageFooter>
         <PageHeight>297mm</PageHeight>
         <PageWidth>210mm</PageWidth>
         <LeftMargin>8mm</LeftMargin>
@@ -1148,107 +1261,4 @@ Public Function FmtDecimal(ByVal Value As Object) As String
 End Function
 </Code>
   <Language>=User!Language</Language>
-  <DataSets>
-    <DataSet Name="DataSet_Result">
-      <Fields>
-        <Field Name="Linea_NumLinea">
-          <DataField>Linea_NumLinea</DataField>
-        </Field>
-        <Field Name="Linea_TimeSheetNo">
-          <DataField>Linea_TimeSheetNo</DataField>
-        </Field>
-        <Field Name="Linea_TipoStd">
-          <DataField>Linea_TipoStd</DataField>
-        </Field>
-        <Field Name="Linea_JobNo">
-          <DataField>Linea_JobNo</DataField>
-        </Field>
-        <Field Name="Linea_Description">
-          <DataField>Linea_Description</DataField>
-        </Field>
-        <Field Name="Linea_TipoParte">
-          <DataField>Linea_TipoParte</DataField>
-        </Field>
-        <Field Name="Linea_No">
-          <DataField>Linea_No</DataField>
-        </Field>
-        <Field Name="Linea_Descripcion">
-          <DataField>Linea_Descripcion</DataField>
-        </Field>
-        <Field Name="Linea_Unidad">
-          <DataField>Linea_Unidad</DataField>
-        </Field>
-        <Field Name="Linea_Cantidad">
-          <DataField>Linea_Cantidad</DataField>
-        </Field>
-        <Field Name="Linea_CantidadFormat">
-          <DataField>Linea_CantidadFormat</DataField>
-        </Field>
-        <Field Name="Linea_Precio">
-          <DataField>Linea_Precio</DataField>
-        </Field>
-        <Field Name="Linea_PrecioFormat">
-          <DataField>Linea_PrecioFormat</DataField>
-        </Field>
-        <Field Name="Linea_Dto">
-          <DataField>Linea_Dto</DataField>
-        </Field>
-        <Field Name="Linea_DtoFormat">
-          <DataField>Linea_DtoFormat</DataField>
-        </Field>
-        <Field Name="Linea_Importe">
-          <DataField>Linea_Importe</DataField>
-        </Field>
-        <Field Name="Linea_ImporteFormat">
-          <DataField>Linea_ImporteFormat</DataField>
-        </Field>
-        <Field Name="Linea_Finalizada">
-          <DataField>Linea_Finalizada</DataField>
-        </Field>
-        <Field Name="Linea_Comprobada">
-          <DataField>Linea_Comprobada</DataField>
-        </Field>
-        <Field Name="Cab_OrdenNo">
-          <DataField>Cab_OrdenNo</DataField>
-        </Field>
-        <Field Name="Cab_ClienteNo">
-          <DataField>Cab_ClienteNo</DataField>
-        </Field>
-        <Field Name="Cab_NombreCliente">
-          <DataField>Cab_NombreCliente</DataField>
-        </Field>
-        <Field Name="Cab_Direccion">
-          <DataField>Cab_Direccion</DataField>
-        </Field>
-        <Field Name="Cab_FechaIni">
-          <DataField>Cab_FechaIni</DataField>
-        </Field>
-        <Field Name="Cab_FechaFin">
-          <DataField>Cab_FechaFin</DataField>
-        </Field>
-        <Field Name="Cab_Estado">
-          <DataField>Cab_Estado</DataField>
-        </Field>
-        <Field Name="Cab_Proyecto">
-          <DataField>Cab_Proyecto</DataField>
-        </Field>
-        <Field Name="Cab_IdFactura">
-          <DataField>Cab_IdFactura</DataField>
-        </Field>
-        <Field Name="Pet_Numero">
-          <DataField>Pet_Numero</DataField>
-        </Field>
-        <Field Name="Pet_Descripcion">
-          <DataField>Pet_Descripcion</DataField>
-        </Field>
-        <Field Name="EmpresaNombre">
-          <DataField>EmpresaNombre</DataField>
-        </Field>
-      </Fields>
-      <Query>
-        <DataSourceName>DataSource</DataSourceName>
-        <CommandText />
-      </Query>
-    </DataSet>
-  </DataSets>
 </Report>
