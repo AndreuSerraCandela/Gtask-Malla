@@ -8959,7 +8959,7 @@ codeunit 7001148 GTask
             UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
         if TieneCategoria then
             UserTask.SetFilter("User Task Group Assigned To", Categoria);
-        Usertask.Setfilter(Estado, '%1|%2|%3', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso", UserTask.Estado::Cancelado);
+        Usertask.Setfilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
         if UserTask.FindSet() then
             repeat
                 Procesos_GTask.AgregarTareaUsuarioAlJson(UserTask, JsonArray);
