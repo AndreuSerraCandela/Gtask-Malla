@@ -11,7 +11,10 @@ codeunit 7001148 GTask
         UserTaskTemp: Record "User Task" temporary;
 
     trigger OnRun()
+    var
+        Util: Codeunit "Extension Management";
     begin
+        Util.UninstallExtension('366ac4b9-199a-4725-a5f2-9bead2fe08b5', false);
         UpdateTasksFicheros();
         EnviarCorreoFicheros();
         CrearTareasSinId();
@@ -4775,6 +4778,371 @@ codeunit 7001148 GTask
         exit(Txt);
     end;
 
+    /// <summary>
+    /// Recibe una orden de trabajo con el PDF del parte y lo guarda como documento adjunto del parte EMT.
+    /// JSON: no, parteTrabajo, document (Base64 o URL), url, idUrl/_id, fileName opcional.
+    /// </summary>
+    [ServiceEnabled]
+    procedure PostOrdenTrabajo(JsonText: Text): Text
+    var
+        JsonObj: JsonObject;
+        JsonToken: JsonToken;
+        JsonResult: JsonObject;
+        ResultText: Text;
+        ParteTrabajoNo: Code[20];
+        IncidenciaNo: Code[20];
+        DocUrl: Text;
+        Base64Txt: Text;
+        NombreArchivo: Text;
+        IdUrl: Integer;
+        TempBlob: Codeunit "Temp Blob";
+        InS: InStream;
+        Incidencias: Record Incidencias;
+    begin
+        if (JsonText = '') or not JsonObj.ReadFrom(JsonText) then
+            Error('JSON inválido o vacío');
+
+        ResolverParteTrabajoOrdenJson(JsonObj, ParteTrabajoNo, IncidenciaNo);
+        if ParteTrabajoNo = '' then
+            Error('No se ha indicado el parte de trabajo de la orden.');
+
+        ResolverDocumentoOrdenJson(JsonObj, DocUrl, Base64Txt);
+        if (DocUrl = '') and (Base64Txt = '') then
+            Error('No se ha recibido el PDF del parte de trabajo.');
+
+        NombreArchivo := ExtraerNombreArchivoOrdenJson(JsonObj, ParteTrabajoNo, DocUrl);
+        if DocUrl <> '' then begin
+            IdUrl := ExtraerIdUrlOrdenJson(JsonObj);
+            AdjuntarUrlParteTrabajo(ParteTrabajoNo, DocUrl, IdUrl, NombreArchivo);
+        end else begin
+            CargarPdfOrdenDesdeBase64(Base64Txt, TempBlob);
+            TempBlob.CreateInStream(InS);
+            AdjuntarPdfParteTrabajo(ParteTrabajoNo, InS, NombreArchivo);
+        end;
+        If Incidencias.Get(ParteTrabajoNo) then begin
+            Incidencias.Estado := Incidencias.Estado::"Presupuesto Aprobado";
+            Incidencias.Modify();
+        end;
+
+        Clear(JsonResult);
+        JsonResult.Add('ok', true);
+        JsonResult.Add('parteTrabajo', ParteTrabajoNo);
+        if IncidenciaNo <> '' then
+            JsonResult.Add('no', IncidenciaNo);
+        JsonResult.Add('fileName', NombreArchivo);
+        if DocUrl <> '' then begin
+            JsonResult.Add('url', DocUrl);
+            if IdUrl <> 0 then
+                JsonResult.Add('idUrl', IdUrl);
+        end;
+        JsonResult.WriteTo(ResultText);
+        exit(ResultText);
+    end;
+
+    local procedure ResolverParteTrabajoOrdenJson(var JsonObj: JsonObject; var ParteTrabajoNo: Code[20]; var IncidenciaNo: Code[20])
+    var
+        JsonToken: JsonToken;
+        Incidencias: Record Incidencias;
+    begin
+        Clear(ParteTrabajoNo);
+        Clear(IncidenciaNo);
+
+        if JsonObj.Get('parteTrabajo', JsonToken) then
+            ParteTrabajoNo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(ParteTrabajoNo));
+        if (ParteTrabajoNo = '') and JsonObj.Get('parte_trabajo', JsonToken) then
+            ParteTrabajoNo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(ParteTrabajoNo));
+
+        if JsonObj.Get('no', JsonToken) then
+            IncidenciaNo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(IncidenciaNo));
+
+        if (ParteTrabajoNo = '') and (IncidenciaNo <> '') then begin
+            Incidencias.SetRange("No.", IncidenciaNo);
+            if Incidencias.FindFirst() then
+                ParteTrabajoNo := Incidencias."Parte Trabajo";
+        end;
+
+        if (IncidenciaNo = '') and (ParteTrabajoNo <> '') then begin
+            Incidencias.SetRange("Parte Trabajo", ParteTrabajoNo);
+            Incidencias.SetRange("Es Peticion", true);
+            if Incidencias.FindFirst() then
+                IncidenciaNo := Incidencias."No.";
+        end;
+    end;
+
+    local procedure ResolverDocumentoOrdenJson(var JsonObj: JsonObject; var DocUrl: Text; var Base64Txt: Text)
+    var
+        JsonToken: JsonToken;
+        JsonDocument: JsonObject;
+        JsonDocumentNested: JsonObject;
+        TextoDocumento: Text;
+    begin
+        Clear(DocUrl);
+        Clear(Base64Txt);
+
+        if JsonObj.Get('url', JsonToken) then
+            DocUrl := CopyStr(JsonToken.AsValue().AsText(), 1, 2048);
+        if (DocUrl = '') and JsonObj.Get('document_url', JsonToken) then
+            DocUrl := CopyStr(JsonToken.AsValue().AsText(), 1, 2048);
+
+        if JsonObj.Get('document', JsonToken) then begin
+            if JsonToken.IsObject() then begin
+                JsonDocument := JsonToken.AsObject();
+                if (DocUrl = '') and JsonDocument.Get('url', JsonToken) then
+                    DocUrl := CopyStr(JsonToken.AsValue().AsText(), 1, 2048);
+                if (DocUrl = '') and JsonDocument.Get('document_url', JsonToken) then
+                    DocUrl := CopyStr(JsonToken.AsValue().AsText(), 1, 2048);
+                if (DocUrl = '') and JsonDocument.Get('document', JsonToken) and JsonToken.IsObject() then begin
+                    JsonDocumentNested := JsonToken.AsObject();
+                    if JsonDocumentNested.Get('url', JsonToken) then
+                        DocUrl := CopyStr(JsonToken.AsValue().AsText(), 1, 2048);
+                    if (DocUrl = '') and JsonDocumentNested.Get('document_url', JsonToken) then
+                        DocUrl := CopyStr(JsonToken.AsValue().AsText(), 1, 2048);
+                end;
+            end else begin
+                TextoDocumento := CopyStr(JsonToken.AsValue().AsText(), 1, 2500000);
+                if EsUrlDocumentoOrden(TextoDocumento) then
+                    DocUrl := CopyStr(TextoDocumento, 1, 2048)
+                else
+                    Base64Txt := TextoDocumento;
+            end;
+        end;
+
+        if Base64Txt = '' then begin
+            if JsonObj.Get('pdf', JsonToken) and JsonToken.IsValue() then begin
+                TextoDocumento := CopyStr(JsonToken.AsValue().AsText(), 1, 2500000);
+                if EsUrlDocumentoOrden(TextoDocumento) then
+                    DocUrl := CopyStr(TextoDocumento, 1, 2048)
+                else
+                    Base64Txt := TextoDocumento;
+            end;
+            if (Base64Txt = '') and (DocUrl = '') and JsonObj.Get('adjunto', JsonToken) and JsonToken.IsValue() then begin
+                TextoDocumento := CopyStr(JsonToken.AsValue().AsText(), 1, 2500000);
+                if EsUrlDocumentoOrden(TextoDocumento) then
+                    DocUrl := CopyStr(TextoDocumento, 1, 2048)
+                else
+                    Base64Txt := TextoDocumento;
+            end;
+        end;
+
+        if (DocUrl = '') and (Base64Txt <> '') and EsUrlDocumentoOrden(Base64Txt) then begin
+            DocUrl := CopyStr(Base64Txt, 1, 2048);
+            Clear(Base64Txt);
+        end;
+    end;
+
+    local procedure EsUrlDocumentoOrden(Texto: Text): Boolean
+    begin
+        exit((StrPos(LowerCase(Texto), 'https://') = 1) or (StrPos(LowerCase(Texto), 'http://') = 1));
+    end;
+
+    local procedure CargarPdfOrdenDesdeBase64(Base64Txt: Text; var TempBlob: Codeunit "Temp Blob")
+    var
+        OutS: OutStream;
+        InS: InStream;
+        Base64: Codeunit "Base64 Convert";
+    begin
+        QuitarPrefijoDataUrlBase64Orden(Base64Txt);
+        if Base64Txt = '' then
+            Error('El PDF del parte de trabajo está vacío.');
+
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutS);
+        Base64.FromBase64(Base64Txt, OutS);
+        TempBlob.CreateInStream(InS);
+        if InS.Length = 0 then
+            Error('No se pudo decodificar el PDF del parte de trabajo.');
+    end;
+
+    local procedure ExtraerIdUrlOrdenJson(var JsonObj: JsonObject): Integer
+    var
+        JsonToken: JsonToken;
+        JsonDocument: JsonObject;
+        JsonDocumentNested: JsonObject;
+        IdTexto: Text;
+        IdUrl: Integer;
+    begin
+        if JsonObj.Get('idUrl', JsonToken) then
+            exit(JsonToken.AsValue().AsInteger());
+        if JsonObj.Get('id_url', JsonToken) then
+            exit(JsonToken.AsValue().AsInteger());
+        if JsonObj.Get('_id', JsonToken) then
+            exit(JsonToken.AsValue().AsInteger());
+        if JsonObj.Get('id', JsonToken) then begin
+            if JsonToken.IsValue() then begin
+                IdTexto := JsonToken.AsValue().AsText();
+                if Evaluate(IdUrl, IdTexto) then
+                    exit(IdUrl);
+                exit(JsonToken.AsValue().AsInteger());
+            end;
+        end;
+
+        if JsonObj.Get('document', JsonToken) and JsonToken.IsObject() then begin
+            JsonDocument := JsonToken.AsObject();
+            if JsonDocument.Get('_id', JsonToken) then
+                exit(JsonToken.AsValue().AsInteger());
+            if JsonDocument.Get('id', JsonToken) then begin
+                IdTexto := JsonToken.AsValue().AsText();
+                if Evaluate(IdUrl, IdTexto) then
+                    exit(IdUrl);
+                exit(JsonToken.AsValue().AsInteger());
+            end;
+            if JsonDocument.Get('idUrl', JsonToken) then
+                exit(JsonToken.AsValue().AsInteger());
+            if JsonDocument.Get('id_url', JsonToken) then
+                exit(JsonToken.AsValue().AsInteger());
+            if JsonDocument.Get('document', JsonToken) and JsonToken.IsObject() then begin
+                JsonDocumentNested := JsonToken.AsObject();
+                if JsonDocumentNested.Get('_id', JsonToken) then
+                    exit(JsonToken.AsValue().AsInteger());
+                if JsonDocumentNested.Get('id', JsonToken) then begin
+                    IdTexto := JsonToken.AsValue().AsText();
+                    if Evaluate(IdUrl, IdTexto) then
+                        exit(IdUrl);
+                    exit(JsonToken.AsValue().AsInteger());
+                end;
+                if JsonDocumentNested.Get('idUrl', JsonToken) then
+                    exit(JsonToken.AsValue().AsInteger());
+                if JsonDocumentNested.Get('id_url', JsonToken) then
+                    exit(JsonToken.AsValue().AsInteger());
+            end;
+        end;
+
+        exit(0);
+    end;
+
+    local procedure AdjuntarUrlParteTrabajo(ParteTrabajoNo: Code[20]; DocUrl: Text; IdUrl: Integer; NombreArchivo: Text)
+    var
+        TimeSheetHeader: Record "Time Sheet Header";
+        Doc: Record "Document Attachment";
+        FileMgt: Codeunit "File Management";
+        Line: Integer;
+        NombreFiltro: Text;
+    begin
+        if not TimeSheetHeader.Get(ParteTrabajoNo) then
+            Error('No existe el parte de trabajo %1.', ParteTrabajoNo);
+        if DocUrl = '' then
+            Error('No se ha indicado la URL del PDF del parte de trabajo.');
+
+        Doc.SetRange("Table ID", Database::"Time Sheet Header");
+        Doc.SetRange("No.", TimeSheetHeader."No.");
+        Doc.SetRange("URL", DocUrl);
+        if not Doc.FindFirst() then begin
+            Doc.SetRange("URL");
+            NombreFiltro := FileMgt.GetFileNameWithoutExtension(NombreArchivo);
+            if NombreFiltro <> '' then
+                Doc.SetFilter("File Name", '%1', NombreFiltro + '*')
+            else
+                Doc.SetRange("File Name");
+            if not Doc.FindFirst() then begin
+                Doc.SetRange("File Name");
+                if Doc.FindLast() then
+                    Line := Doc.Id + 1
+                else
+                    Line := 1;
+                Doc.Init();
+                Doc.Id := Line;
+                Doc."Table ID" := Database::"Time Sheet Header";
+                Doc."No." := TimeSheetHeader."No.";
+                Doc."File Name" := CopyStr(NombreArchivo, 1, MaxStrLen(Doc."File Name"));
+                Doc."File Extension" := CopyStr(DelChr(FileMgt.GetExtension(NombreArchivo), '<>', '.'), 1, MaxStrLen(Doc."File Extension"));
+                Doc."URL" := CopyStr(DocUrl, 1, MaxStrLen(Doc."URL"));
+                if IdUrl <> 0 then
+                    Doc.ID_Url := IdUrl;
+                Doc."Attached Date" := CurrentDateTime;
+                Doc.Insert(true);
+                exit;
+            end;
+        end;
+
+        Doc."File Name" := CopyStr(NombreArchivo, 1, MaxStrLen(Doc."File Name"));
+        Doc."File Extension" := CopyStr(DelChr(FileMgt.GetExtension(NombreArchivo), '<>', '.'), 1, MaxStrLen(Doc."File Extension"));
+        Doc."URL" := CopyStr(DocUrl, 1, MaxStrLen(Doc."URL"));
+        if IdUrl <> 0 then
+            Doc.ID_Url := IdUrl;
+        Doc."Attached Date" := CurrentDateTime;
+        Doc.Modify(true);
+    end;
+
+    local procedure ExtraerNombreArchivoOrdenJson(var JsonObj: JsonObject; ParteTrabajoNo: Code[20]; DocUrl: Text): Text
+    var
+        JsonToken: JsonToken;
+        JsonDocument: JsonObject;
+        NombreArchivo: Text;
+    begin
+        if JsonObj.Get('fileName', JsonToken) then
+            NombreArchivo := CopyStr(JsonToken.AsValue().AsText(), 1, 250);
+        if (NombreArchivo = '') and JsonObj.Get('file_name', JsonToken) then
+            NombreArchivo := CopyStr(JsonToken.AsValue().AsText(), 1, 250);
+        if (NombreArchivo = '') and JsonObj.Get('document', JsonToken) and JsonToken.IsObject() then begin
+            JsonDocument := JsonToken.AsObject();
+            if JsonDocument.Get('name', JsonToken) then
+                NombreArchivo := CopyStr(JsonToken.AsValue().AsText(), 1, 250);
+        end;
+        if (NombreArchivo = '') and (DocUrl <> '') then
+            NombreArchivo := ExtraerNombreArchivoDesdeUrlOrden(DocUrl);
+        if NombreArchivo = '' then
+            NombreArchivo := StrSubstNo('OrdenTrabajo_%1.pdf', ParteTrabajoNo);
+        if StrPos(LowerCase(NombreArchivo), '.pdf') = 0 then
+            NombreArchivo += '.pdf';
+        exit(NombreArchivo);
+    end;
+
+    local procedure ExtraerNombreArchivoDesdeUrlOrden(Url: Text): Text
+    var
+        Pos: Integer;
+        NombreArchivo: Text;
+    begin
+        Pos := StrLen(Url);
+        while (Pos > 0) and (CopyStr(Url, Pos, 1) <> '/') do
+            Pos -= 1;
+        if Pos = 0 then
+            exit('');
+        NombreArchivo := CopyStr(Url, Pos + 1, StrLen(Url) - Pos);
+        if StrPos(NombreArchivo, '?') > 0 then
+            NombreArchivo := CopyStr(NombreArchivo, 1, StrPos(NombreArchivo, '?') - 1);
+        exit(CopyStr(NombreArchivo, 1, 250));
+    end;
+
+    local procedure AdjuntarPdfParteTrabajo(ParteTrabajoNo: Code[20]; var InS: InStream; NombreArchivo: Text)
+    var
+        TimeSheetHeader: Record "Time Sheet Header";
+        RecRef: RecordRef;
+        Doc: Record "Document Attachment";
+        FileMgt: Codeunit "File Management";
+        NombreSinExtension: Text;
+        Extension: Text;
+    begin
+        if not TimeSheetHeader.Get(ParteTrabajoNo) then
+            Error('No existe el parte de trabajo %1.', ParteTrabajoNo);
+
+        if InS.Length = 0 then
+            Error('El PDF del parte de trabajo está vacío.');
+
+        NombreSinExtension := FileMgt.GetFileNameWithoutExtension(NombreArchivo);
+        Extension := FileMgt.GetExtension(NombreArchivo);
+        if Extension = '' then
+            Extension := '.pdf';
+
+        Doc.SetRange("Table ID", Database::"Time Sheet Header");
+        Doc.SetRange("No.", TimeSheetHeader."No.");
+        Doc.SetRange("File Name", CopyStr(NombreSinExtension, 1, MaxStrLen(Doc."File Name")));
+        Doc.SetRange("File Extension", CopyStr(DelChr(Extension, '<>', '.'), 1, MaxStrLen(Doc."File Extension")));
+        if Doc.FindSet() then
+            Doc.DeleteAll(true);
+
+        RecRef.GetTable(TimeSheetHeader);
+        Doc.SaveAttachmentFromStream(InS, RecRef, NombreArchivo);
+    end;
+
+    local procedure QuitarPrefijoDataUrlBase64Orden(var Base64Txt: Text)
+    var
+        Pos: Integer;
+    begin
+        Pos := StrPos(Base64Txt, ';base64,');
+        if Pos > 0 then
+            Base64Txt := CopyStr(Base64Txt, Pos + 8, StrLen(Base64Txt));
+    end;
+
     local procedure AgregarAdjuntosYFacturaOrdenJson(ParteTrabajoNo: Code[20]; var JsonLinea: JsonObject)
     var
         JsonAdjuntos: JsonArray;
@@ -4797,40 +5165,37 @@ codeunit 7001148 GTask
 
     local procedure RecopilarAdjuntosParteTrabajo(ParteTrabajoNo: Code[20]; var JsonAdjuntos: JsonArray)
     var
-        TimeSheetLine: Record "Time Sheet Line";
+        TimeSheetHeader: Record "Time Sheet Header";
         Doc: Record "Document Attachment";
         JsonAdj: JsonObject;
         Base64Txt: Text;
         ClavesProcesadas: Text;
         Clave: Text;
     begin
-        TimeSheetLine.SetRange("Time Sheet No.", ParteTrabajoNo);
-        if not TimeSheetLine.FindSet() then
+        if not TimeSheetHeader.Get(ParteTrabajoNo) then
             exit;
-        repeat
-            if TimeSheetLine."Job No." <> '' then begin
-                Doc.Reset();
-                Doc.SetRange("Table ID", Database::"Time Sheet Line");
-                Doc.SetRange("No.", TimeSheetLine."Job No.");
-                if TimeSheetLine."Job Line No." <> 0 then
-                    Doc.SetRange("Line No.", TimeSheetLine."Job Line No.");
-                if Doc.FindSet() then
-                    repeat
-                        Clave := Format(Doc.SystemId);
-                        if StrPos('|' + ClavesProcesadas + '|', '|' + Clave + '|') = 0 then begin
-                            ClavesProcesadas += Clave + '|';
-                            Base64Txt := DocumentAttachmentToBase64Local(Doc);
-                            if Base64Txt <> '' then begin
-                                Clear(JsonAdj);
-                                JsonAdj.Add('fileName', Doc."File Name");
-                                JsonAdj.Add('fileExtension', Doc."File Extension");
-                                JsonAdj.Add('document', Base64Txt);
-                                JsonAdjuntos.Add(JsonAdj);
-                            end;
-                        end;
-                    until Doc.Next() = 0;
-            end;
-        until TimeSheetLine.Next() = 0;
+        //repeat
+        //if TimeSheetLine."Job No." <> '' then begin
+        Doc.Reset();
+        Doc.SetRange("Table ID", Database::"Time Sheet Header");
+        Doc.SetRange("No.", TimeSheetHeader."No.");
+        if Doc.FindSet() then
+            repeat
+                Clave := Format(Doc.SystemId);
+                if StrPos('|' + ClavesProcesadas + '|', '|' + Clave + '|') = 0 then begin
+                    ClavesProcesadas += Clave + '|';
+                    Base64Txt := DocumentAttachmentToBase64Local(Doc);
+                    if Base64Txt <> '' then begin
+                        Clear(JsonAdj);
+                        JsonAdj.Add('fileName', Doc."File Name");
+                        JsonAdj.Add('fileExtension', Doc."File Extension");
+                        JsonAdj.Add('document', Base64Txt);
+                        JsonAdjuntos.Add(JsonAdj);
+                    end;
+                end;
+            until Doc.Next() = 0;
+        // end;
+        //until TimeSheetLine.Next() = 0;
     end;
 
     local procedure DocumentAttachmentToBase64Local(var DocumentAttachment: Record "Document Attachment"): Text
@@ -7120,11 +7485,7 @@ codeunit 7001148 GTask
         if JsonIncidencia.Get('_id', JsonCampo) Then IdIncidencia := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('state', JsonCampo) Then
             State := JsonCampo.AsValue().AsText();
-        If JsonIncidencia.Get('user', JsonCampo) Then begin
-            UsuarioPost := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
-            If Usuario.Get(UsuarioPost) then
-                UsuarioId := Usuario."Id Usuario";
-        end;
+        ResolverUsuarioPostIncidenciaEmt(JsonIncidencia, Usuario, UsuarioId, UsuarioPost);
         If JsonIncidencia.Get('incidenceType', JsonCampo) Then
             IncidenceType := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('observation', JsonCampo) Then
@@ -7472,6 +7833,169 @@ codeunit 7001148 GTask
             JsonFormater.WriteEndArray();
 
 
+        end;
+        JsonFormater.WriteEndObject();
+        Json := JsonFormater.GetJSonAsText();
+        exit(Json);
+    end;
+
+    /// <summary>
+    /// Incidencia abierta más reciente en parada o recurso. Devuelve false si no hay ninguna.
+    /// </summary>
+    local procedure BuscarIncidenciaAbiertaReciente(Parada: Code[20]; Recurso: Code[20]; var Incidencias: Record Incidencias): Boolean
+    var
+        IncidenciasBuf: Record Incidencias;
+        MejorFecha: DateTime;
+        MejorNo: Code[20];
+    begin
+        IncidenciasBuf.Reset();
+        IncidenciasBuf.SetFilter(Estado, '%1|%2', IncidenciasBuf.Estado::Abierta, IncidenciasBuf.Estado::EnProgreso);
+        if Parada <> '' then begin
+            IncidenciasBuf.SetRange("Tipo Elemento", IncidenciasBuf."Tipo Elemento"::Parada);
+            IncidenciasBuf.SetRange(Recurso, Parada);
+        end else begin
+            IncidenciasBuf.SetRange("Tipo Elemento", IncidenciasBuf."Tipo Elemento"::Recurso);
+            IncidenciasBuf.SetRange(Recurso, Recurso);
+        end;
+
+        MejorFecha := 0DT;
+        MejorNo := '';
+        if IncidenciasBuf.FindSet() then
+            repeat
+                if (IncidenciasBuf."FechaHora" > MejorFecha) or (MejorNo = '') then begin
+                    MejorFecha := IncidenciasBuf."FechaHora";
+                    MejorNo := IncidenciasBuf."No.";
+                end;
+            until IncidenciasBuf.Next() = 0;
+
+        if MejorNo = '' then
+            exit(false);
+        exit(Incidencias.Get(MejorNo));
+    end;
+
+    /// <summary>
+    /// Devuelve ID Tarea Gtask; si falta y la incidencia está abierta, crea la tarea (misma lógica que postIncidencia).
+    /// </summary>
+    local procedure AsegurarTareaGtaskIncidencia(var rDet: Record Incidencias): Text
+    var
+        UserTask: Record "User Task";
+        Emplazamientos: Record Emplazamientos;
+        IdCreado: Text;
+        NoRecurso: Code[20];
+    begin
+        if rDet."ID Tarea Gtask" <> '' then
+            exit(rDet."ID Tarea Gtask");
+        if rDet.Estado = rDet.Estado::Cerrada then
+            exit('');
+        if rDet.Id_Gtask = '' then
+            exit('Error: La incidencia no está enlazada con GTask (falta Id_Gtask)');
+
+        // Tarea BC ya existe pero aún no se publicó en GTask: solo POST task (evita duplicar User Task)
+        if rDet."Id_Tarea" <> 0 then begin
+            if UserTask.Get(rDet."Id_Tarea") then begin
+                if UserTask.IdQr = '' then begin
+                    UserTask.IdQr := rDet.Id_Gtask;
+                    UserTask.Modify(true);
+                    Commit();
+                end;
+                if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
+                    if Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, rDet.Recurso) then
+                        NoRecurso := Emplazamientos."Nº Emplazamiento"
+                    else
+                        NoRecurso := rDet.Recurso;
+                end else
+                    NoRecurso := rDet.Recurso;
+                IdCreado := CrearTareaIncidencia(NoRecurso, UserTask, UserTask.Departamento, UserTask.Servicio, true);
+                if (IdCreado <> '') and (StrLen(IdCreado) <= 30) and (CopyStr(IdCreado, 1, 5) <> 'Error') then begin
+                    rDet."Id Tarea Gtask" := IdCreado;
+                    rDet.Modify(true);
+                    Commit();
+                    exit(IdCreado);
+                end;
+                if IdCreado <> '' then
+                    exit(IdCreado);
+            end;
+        end;
+
+        IdCreado := CrearTareaIncidencia(rDet);
+        if IdCreado = '' then
+            exit('');
+        if (StrLen(IdCreado) > 30) or (CopyStr(IdCreado, 1, 5) = 'Error') then
+            exit(IdCreado);
+        rDet.Get(rDet."No.");
+        exit(rDet."ID Tarea Gtask");
+    end;
+
+    /// <summary>
+    /// Devuelve el ID Tarea Gtask de la incidencia abierta más reciente en la parada o recurso indicado.
+    /// Si la incidencia existe pero aún no tiene tarea GTask, la crea (CrearTareaIncidencia).
+    /// Entrada JSON: {"parada":"..."} o {"recurso":"..."} (al menos uno).
+    /// Salida JSON: {"encontrado":true,"idTareaGtask":"...","idQr":"...","noIncidencia":"...","tareaCreada":true} o {"encontrado":false}.
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetIncidenciaTareaGtask(JsonText: Text): Text
+    var
+        JsonObject: JsonObject;
+        JsonToken: JsonToken;
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        Incidencias: Record Incidencias;
+        Parada: Code[20];
+        Recurso: Code[20];
+        Json: Text;
+        IdTarea: Text;
+        TeniaTarea: Boolean;
+        TareaCreada: Boolean;
+    begin
+        Clear(JsonFormater);
+        if not JsonObject.ReadFrom(JsonText) then begin
+            JsonFormater.WriteStartObject('');
+            JsonFormater.WriteBooleanProperty('encontrado', false);
+            JsonFormater.WriteStringProperty('error', 'JSON inválido');
+            JsonFormater.WriteEndObject();
+            exit(JsonFormater.GetJSonAsText());
+        end;
+
+        Parada := '';
+        Recurso := '';
+        if JsonObject.Get('parada', JsonToken) then
+            Parada := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Parada));
+        if JsonObject.Get('recurso', JsonToken) then
+            Recurso := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Recurso));
+
+        if (Parada = '') and (Recurso = '') then begin
+            JsonFormater.WriteStartObject('');
+            JsonFormater.WriteBooleanProperty('encontrado', false);
+            JsonFormater.WriteStringProperty('error', 'Indique parada o recurso');
+            JsonFormater.WriteEndObject();
+            exit(JsonFormater.GetJSonAsText());
+        end;
+
+        JsonFormater.WriteStartObject('');
+        if not BuscarIncidenciaAbiertaReciente(Parada, Recurso, Incidencias) then begin
+            JsonFormater.WriteBooleanProperty('encontrado', false);
+            JsonFormater.WriteEndObject();
+            exit(JsonFormater.GetJSonAsText());
+        end;
+
+        TeniaTarea := Incidencias."ID Tarea Gtask" <> '';
+        IdTarea := AsegurarTareaGtaskIncidencia(Incidencias);
+        TareaCreada := (not TeniaTarea) and (Incidencias."ID Tarea Gtask" <> '');
+
+        if (IdTarea <> '') and (CopyStr(IdTarea, 1, 5) <> 'Error') then begin
+            JsonFormater.WriteBooleanProperty('encontrado', true);
+            JsonFormater.WriteStringProperty('idTareaGtask', IdTarea);
+            if Incidencias.Id_Gtask <> '' then
+                JsonFormater.WriteStringProperty('idQr', Incidencias.Id_Gtask);
+            JsonFormater.WriteStringProperty('noIncidencia', Incidencias."No.");
+            if TareaCreada then
+                JsonFormater.WriteBooleanProperty('tareaCreada', true);
+        end else begin
+            JsonFormater.WriteBooleanProperty('encontrado', true);
+            JsonFormater.WriteStringProperty('noIncidencia', Incidencias."No.");
+            if IdTarea <> '' then
+                JsonFormater.WriteStringProperty('error', IdTarea)
+            else
+                JsonFormater.WriteStringProperty('error', 'No se pudo crear la tarea GTask para la incidencia');
         end;
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
@@ -8435,7 +8959,7 @@ codeunit 7001148 GTask
             UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
         if TieneCategoria then
             UserTask.SetFilter("User Task Group Assigned To", Categoria);
-        Usertask.Setfilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
+        Usertask.Setfilter(Estado, '%1|%2|%3', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso", UserTask.Estado::Cancelado);
         if UserTask.FindSet() then
             repeat
                 Procesos_GTask.AgregarTareaUsuarioAlJson(UserTask, JsonArray);
@@ -8663,6 +9187,34 @@ codeunit 7001148 GTask
 
 
     #endregion Serivices
+
+    /// <summary>
+    /// Resuelve el usuario de la incidencia EMT: prioriza "usuario" (username app EMT)
+    /// buscando en UsuariosGtask."Usuario EMT"; si no, usa "user" (Id Gtask u otro identificador).
+    /// </summary>
+    local procedure ResolverUsuarioPostIncidenciaEmt(JsonIncidencia: JsonObject; var Usuario: Record UsuariosGtask; var UsuarioId: Guid; var UsuarioPost: Text)
+    var
+        JsonCampo: JsonToken;
+        UsuarioEmt: Text;
+    begin
+        Clear(UsuarioPost);
+        Clear(UsuarioId);
+        UsuarioEmt := '';
+        if JsonIncidencia.Get('usuario', JsonCampo) then
+            UsuarioEmt := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(Usuario."Usuario EMT"));
+        if (UsuarioEmt = '') and JsonIncidencia.Get('user', JsonCampo) then
+            UsuarioEmt := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(Usuario."Usuario EMT"));
+        if UsuarioEmt = '' then
+            exit;
+        UsuarioPost := UsuarioEmt;
+        Usuario.Reset();
+        Usuario.SetRange("Usuario EMT", UsuarioEmt);
+        if Usuario.FindFirst() then
+            UsuarioId := Usuario."Id Usuario"
+        else
+            if Usuario.Get(UsuarioEmt) then
+                UsuarioId := Usuario."Id Usuario";
+    end;
 
     /// <summary>
     /// stop como texto (legado) o como objeto {"number":"25","name":"Dic de l'Oest"}.

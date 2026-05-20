@@ -39,7 +39,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Estado - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 3042810774 - Field 2950845476 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Abierta,EnProgreso,Cerrada</source>
+          <source>Abierta,EnProgreso,Cerrada,Presupuesto Aprobado,Facturada</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Estado - Property OptionCaption</note>
         </trans-unit>
@@ -312,6 +312,11 @@
           <source>Teléfono</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Teléfono - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 91669665 - Field 1841693126 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Usuario EMT - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2323889025 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Lineas Cartelería Nacional</source>
@@ -1233,6 +1238,66 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Action Validar Seleccionadas - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 149294027 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Lista de Actuaciones TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 1475260075 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descripción de la actuación.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control Descripcion - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 1475260075 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descripción</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control Descripcion - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 272390724 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha y hora de la actuación.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control FechaActuacion - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 272390724 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control FechaActuacion - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 2402660121 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Código y descripción del TIP / parada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control Parada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 2402660121 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Parada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control Parada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 2053597816 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Identificador gTASK y nombre del usuario.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control UsuarioGtask - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Control 2053597816 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario (gTASK)</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Control UsuarioGtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Action 608205450 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crea una actuación TIP para la parada actual.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Action CrearActuacion - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Action 608205450 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crear nueva actuación</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Action CrearActuacion - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 149294027 - Action 192386698 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Editar actuación</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones TIP - Action EditarActuacion - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 2811520765 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Lista Incidencias Taller</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1337,6 +1402,111 @@
           <source>Mensajes WhatsApp</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Action MensajesWhatsAppLista - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Action 1579204503 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ver Ordenes de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Action Ver Ordenes de Trabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Lista Ordenes de Trabajo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3402404909 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si la incidencia fue comunicada por EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Comunicado_por_EMT - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3402404909 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Comunicado por EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Comunicado_por_EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3640233012 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID de la incidencia en Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Id_Gtask - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3640233012 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Id_Gtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3252723232 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID de la tarea en Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control ID_Tarea_Gtask - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3252723232 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID Tarea Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control ID_Tarea_Gtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 1358744466 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que creó la incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Id_Uduario_Gtask - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 1358744466 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID Usuario Gtask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Id_Uduario_Gtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 1071160179 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que asignó la incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Id_Uduario_Gtask_Asignado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 1071160179 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID Usuario Gtask Asignado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Id_Uduario_Gtask_Asignado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 2821462494 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>URL de la primera imagen asociada a esta incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control URL Primera Imagen - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 2821462494 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>URL Primera Imagen</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control URL Primera Imagen - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 1546832578 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que creó la incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Usuario - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 1546832578 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Usuario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3000305522 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario que asignó la incidencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Usuario Asignado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Control 3000305522 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario Asignado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Control Usuario Asignado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Action 3050724617 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Editar</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Action Editar - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Action 3694851421 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abre los mensajes de WhatsApp vinculados a la incidencia seleccionada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Action MensajesWhatsAppLista - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3514455865 - Action 3694851421 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Mensajes WhatsApp</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Action MensajesWhatsAppLista - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2539053734 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Líneas Parte de Trabajo</source>
@@ -1848,6 +2018,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 91669665 - Control 1841693126 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nombre de usuario de la app EMT para vincular incidencias comunicadas por EMT.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Control Usuario EMT - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="Page 91669665 - Action 3530480013 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Crear Usuarios BC</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1928,15 +2103,15 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Change ABA - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 1333914805 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+        <trans-unit id="PageExtension 4279944175 - Action 3424277755 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Borrar tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasLimpiezaº - Property ToolTip</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasLimpieza - Property ToolTip</note>
         </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 1333914805 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+        <trans-unit id="PageExtension 4279944175 - Action 3424277755 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Borrar Tareas Limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasLimpiezaº - Property Caption</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasLimpieza - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 1206900011 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Borrar tareas de revisión para los emplazamientos OPI de las zonas de revisión</source>
@@ -1947,16 +2122,6 @@
           <source>Borrar Tareas Revisión</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action BorrarTareasRevisión - Property Caption</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 4018380790 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
-          <source>Cierra tareas de revisión para los emplazamientos OPI de las zonas de revisión</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action CerrarTareasRevisión - Property ToolTip</note>
-        </trans-unit>
-        <trans-unit id="PageExtension 4279944175 - Action 4018380790 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
-          <source>Cierra Tareas Revisión</source>
-          <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action CerrarTareasRevisión - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 1230573612 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Consultar tareas de limpieza para los emplazamientos OPI de las zonas de limpieza</source>
@@ -2297,6 +2462,16 @@
           <source>Zona Revisión</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control Zona Revisión - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Control 1748440303 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Lista de Actuaciones TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control GrupoActuacionesTIP - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 721450737 - Control 386379743 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
+          <source>Actuaciones</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension FichaParadaBusExtension - Control PartActuacionesTIP - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 721450737 - Change 3380427369 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2194365146">
           <source>TIP</source>

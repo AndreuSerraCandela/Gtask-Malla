@@ -66,7 +66,7 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     Incidencias.SetRange(Recurso, Rec."Nº Emplazamiento");
                     Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
                     Incidencias.SetRange("Es Peticion", true);
-                    Page.Run(Page::"Lista Incidencias Taller", Incidencias);
+                    Page.Run(Page::"Lista Ordenes de Trabajo", Incidencias);
                 end;
             }
             //Consultar tareas limpieza
@@ -102,7 +102,7 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     Page.Run(Page::"User Task List", UserTask);
                 end;
             }
-            action(BorrarTareasLimpiezaº)
+            action(BorrarTareasLimpieza)
             {
                 ApplicationArea = All;
                 Caption = 'Borrar Tareas Limpieza';
@@ -144,27 +144,27 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                         until Paradas.Next() = 0;
                 end;
             }
-            action(CerrarTareasRevisión)
-            {
-                ApplicationArea = All;
-                Caption = 'Cierra Tareas Revisión';
-                Image = TaskPage;
-                ToolTip = 'Cierra tareas de revisión para los emplazamientos OPI de las zonas de revisión';
-                trigger OnAction()
-                var
-                    Paradas: Record Emplazamientos;
-                    UserTask: Record "User Task";
-                begin
-                    CurrPage.SetSelectionFilter(Paradas);
-                    if Paradas.FindSet() then
-                        repeat
-                            UserTask.SetRange(Id_record, Paradas.RecordId);
-                            UserTask.SetRange("User Task Group Assigned To", 'REVISION');
-                            UserTask.SetRange(Estado, UserTask.Estado::Pendiente, UserTask.Estado::Pendiente);
-                            UserTask.ModifyAll(Estado, UserTask.Estado::Finalizado);
-                        until Paradas.Next() = 0;
-                end;
-            }
+            // action(CerrarTareasRevisión)
+            // {
+            //     ApplicationArea = All;
+            //     Caption = 'Cierra Tareas Revisión';
+            //     Image = TaskPage;
+            //     ToolTip = 'Cierra tareas de revisión para los emplazamientos OPI de las zonas de revisión';
+            //     trigger OnAction()
+            //     var
+            //         Paradas: Record Emplazamientos;
+            //         UserTask: Record "User Task";
+            //     begin
+            //         CurrPage.SetSelectionFilter(Paradas);
+            //         if Paradas.FindSet() then
+            //             repeat
+            //                 UserTask.SetRange(Id_record, Paradas.RecordId);
+            //                 UserTask.SetRange("User Task Group Assigned To", 'REVISION');
+            //                 UserTask.SetRange(Estado, UserTask.Estado::Pendiente, UserTask.Estado::Pendiente);
+            //                 UserTask.ModifyAll(Estado, UserTask.Estado::Finalizado);
+            //             until Paradas.Next() = 0;
+            //     end;
+            // }
             action("Crear Tareas Limpieza")
             {
                 ApplicationArea = All;

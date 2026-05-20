@@ -52,6 +52,11 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                 }
+                field("Usuario EMT"; Rec."Usuario EMT")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Nombre de usuario de la app EMT para vincular incidencias comunicadas por EMT.';
+                }
                 // field("Id Usuario Limpieza EMT"; Rec."Id Usuario Limpieza EMT")
                 // {
                 //     ApplicationArea = All;

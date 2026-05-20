@@ -404,7 +404,7 @@ page 50117 "Lista Incidencias Taller"
 {
     PageType = List;
     SourceTable = "Incidencias";
-    //CardPageId = "Incidencias Taller";
+    CardPageId = "Incidencias Taller";
     ApplicationArea = All;
     UsageCategory = Documents;
     layout
@@ -573,6 +573,18 @@ page 50117 "Lista Incidencias Taller"
     {
         area(Processing)
         {
+            action("Ver Ordenes de Trabajo")
+            {
+                ApplicationArea = All;
+                Caption = 'Ver Ordenes de Trabajo';
+                Image = List;
+                trigger OnAction()
+                begin
+                    CurrPage.Caption := 'Incidencias y Órdenes de Trabajo';
+                    Rec.SetRange("Es Peticion");
+                    CurrPage.Update(false);
+                end;
+            }
             action(Editar)
             {
                 ApplicationArea = All;
@@ -638,6 +650,7 @@ page 50117 "Lista Incidencias Taller"
 
         area(Promoted)
         {
+            actionref(VerOrdenesTrabajo; "Ver Ordenes de Trabajo") { }
 
             actionref(EditarRef; Editar) { }
 
@@ -649,15 +662,18 @@ page 50117 "Lista Incidencias Taller"
         NombreUsuario: Text;
         NombreUsuarioAsignado: Text;
         UrlPrimeraImagen: Text;
+        IsPeticion: Boolean;
 
-
+    trigger OnOpenPage()
+    begin
+        Rec.SetRange("Es Peticion", false);
+    end;
 
     trigger OnAfterGetRecord()
     var
         UsuarioGtask: Record UsuariosGtask;
     begin
         IsPeticion := Rec."Es Peticion";
-        if IsPeticion then CurrPage.Caption := 'Ordenes Trabajo';
 
         NombreUsuario := '';
         If not IsNullGuid(Rec.Usuario) then begin
@@ -692,8 +708,5 @@ page 50117 "Lista Incidencias Taller"
         else
             exit('');
     end;
-
-    var
-        IsPeticion: Boolean;
 
 }

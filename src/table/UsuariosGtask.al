@@ -85,6 +85,11 @@ table 7001209 "UsuariosGtask"
             DataClassification = ToBeClassified;
             TableRelation = Employee."No.";
         }
+        field(50009; "Usuario EMT"; Text[100])
+        {
+            Caption = 'Usuario EMT';
+            DataClassification = ToBeClassified;
+        }
     }
 
     keys

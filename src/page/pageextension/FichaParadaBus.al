@@ -1,4 +1,4 @@
-pageextension 92175 FichaParadaBusExtension extends "Ficha Parada Bus"
+pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
 {
     layout
     {
@@ -31,6 +31,20 @@ pageextension 92175 FichaParadaBusExtension extends "Ficha Parada Bus"
             field("Zona Revisión"; Rec."Zona Revisión")
             {
                 Caption = 'Zona Revisión';
+            }
+        }
+        addlast(Content)
+        {
+            group(GrupoActuacionesTIP)
+            {
+                Caption = 'Lista de Actuaciones TIP';
+                part(PartActuacionesTIP; "Lista Actuaciones TIP")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Actuaciones';
+                    SubPageLink = Recurso = FIELD("Nº Emplazamiento");
+                    UpdatePropagation = Both;
+                }
             }
         }
     }

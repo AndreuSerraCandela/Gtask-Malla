@@ -17,7 +17,7 @@ table 7001250 "Incidencias"
         }
         field(4; "Estado"; Option)
         {
-            OptionMembers = Abierta,EnProgreso,Cerrada;
+            OptionMembers = Abierta,EnProgreso,Cerrada,"Presupuesto Aprobado",Facturada;
             DataClassification = CustomerContent;
         }
         field(5; "Nº Orden"; Integer)
@@ -109,6 +109,7 @@ table 7001250 "Incidencias"
         //Comunicado por EMT
         field(21; "Comunicado por EMT"; Boolean)
         {
+
             DataClassification = CustomerContent;
         }
         //fecha de actuacion
