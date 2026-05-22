@@ -2518,15 +2518,14 @@ codeunit 7001149 Procesos_GTask
     var
         CuerpoRespuesta: Text;
     begin
-        if not TryHttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, NombreParametroPlantillaCuerpo, ContextOrigen, CuerpoRespuesta) then
+        if not HttpPostMetaWhatsApp(TelefonoDestino, Mensaje, UsuarioDesdePost, AppEmisora, NombreParametroPlantillaCuerpo, ContextOrigen, CuerpoRespuesta) then
             exit(false); // TryFunction devolvió error
         if (ContextOrigen.TableNo <> 0) and (CuerpoRespuesta <> '') then
             RegistrarMensajeWhatsAppDesdeRespuesta(CuerpoRespuesta, IdMensajeOriginalWa, IdUsuarioBC, ContextOrigen, Mensaje, TelefonoDestino);
         exit(true);
     end;
 
-    [TryFunction]
-    local procedure TryHttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; NombreParametroPlantillaCuerpo: Text; IdRegistro: RecordId; var ResponseBody: Text)
+    local procedure HttpPostMetaWhatsApp(TelefonoDestino: Text; Mensaje: Text; UsuarioDesdePost: Text; AppEmisora: Text; NombreParametroPlantillaCuerpo: Text; IdRegistro: RecordId; var ResponseBody: Text): boolean
     var
         HttpClient: HttpClient;
         HttpContent: HttpContent;
@@ -2589,9 +2588,13 @@ codeunit 7001149 Procesos_GTask
         HttpRequestMessage.SetRequestUri(MetaUrl);
         HttpRequestMessage.Content(HttpContent);
         HttpClient.Timeout(30000);
-        if not HttpClient.Send(HttpRequestMessage, HttpResponseMessage) then
-            Error('No se pudo enviar la petición HTTP a meta.malla.es.');
-        HttpResponseMessage.Content().ReadAs(ResponseBody);
+        If HttpClient.Send(HttpRequestMessage, HttpResponseMessage) Then
+            HttpResponseMessage.Content().ReadAs(ResponseBody)
+        else begin
+            ResponseBody := 'No se pudo enviar la petición HTTP a meta.malla.es.';
+            exit(false);
+        end;
+        exit(true);
     end;
 
     local procedure ExtraerWamIdMetaMessages(ResponseJson: Text): Text
@@ -3263,8 +3266,8 @@ codeunit 7001149 Procesos_GTask
         exit('');
     end;
 
-    [TryFunction]
-    procedure NotificarUsuariosComunicadosPorWhatsApp(rDet: Record Incidencias)
+
+    procedure NotificarUsuariosComunicadosPorWhatsApp(rDet: Record Incidencias): Boolean
     var
         UserG: Record UsuariosGtask;
         MensajeMeta: Text;
@@ -3326,7 +3329,7 @@ codeunit 7001149 Procesos_GTask
             GuidEmt := CreateGuid();
             Evaluate(GuidEmt, '{6a7fff89-f519-4695-bc0b-4c414b6e0736}');
 
-            Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '', Usuario.Nombre);
+            Procesos_GTask.EnviarMetaWhatsAppIncidenciaEmt('34651049109', MensajeMeta, Usuario.Nombre, 'EMTGis', rDet.RecordId, GuidEmt, '', 'Andreu');
         end;
     end;
 
