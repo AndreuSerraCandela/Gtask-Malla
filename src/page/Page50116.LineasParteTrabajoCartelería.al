@@ -1,8 +1,8 @@
-page 50116 "Líneas Parte de Trabajo"
+page 50116 "Líneas Parte de Trabajo Cart"
 {
     PageType = ListPart;
     SourceTable = "Time Sheet Line";
-    Caption = 'Líneas Parte de Trabajo';
+    Caption = 'Líneas Parte de Trabajo Cartelería';
     Editable = true;
     AutoSplitKey = true;
 

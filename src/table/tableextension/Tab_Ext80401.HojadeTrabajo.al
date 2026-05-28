@@ -126,6 +126,11 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
             Caption = 'Id Factura';
             DataClassification = ToBeClassified;
         }
+        field(80021; "Es Plantilla"; Boolean)
+        {
+            Caption = 'Es plantilla';
+            DataClassification = CustomerContent;
+        }
     }
 
 

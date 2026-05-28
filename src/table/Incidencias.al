@@ -135,9 +135,14 @@ table 7001250 "Incidencias"
         }
         field(27; "Parte Trabajo"; Code[20])
         {
-            TableRelation = "Time Sheet Header"."No." where(Tipo = const(EMT));
+            TableRelation = "Time Sheet Header"."No." where("Es Plantilla" = const(false));
             DataClassification = CustomerContent;
 
+        }
+        field(28; "Plantilla"; Code[20])
+        {
+            TableRelation = "Time Sheet Header"."No." where("Es Plantilla" = const(true));
+            DataClassification = CustomerContent;
         }
     }
     keys

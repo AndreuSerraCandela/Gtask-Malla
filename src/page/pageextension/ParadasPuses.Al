@@ -348,6 +348,24 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                         Message('No se encontraron Paradas Bus en la zona de revisión %1', ZonasLimpieza.Descripción);
                 end;
             }
+            action(ProcesarMantenimientosVencidos)
+            {
+                ApplicationArea = All;
+                Caption = 'Crear órdenes mantenimiento vencidas';
+                Image = CreateDocument;
+                ToolTip = 'Crea órdenes de mantenimiento para emplazamientos Opis, Vallas y Otros con fecha de próximo mantenimiento vencida.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    N: Integer;
+                begin
+                    if not Confirm('¿Crear órdenes de mantenimiento para todos los emplazamientos con mantenimiento vencido?', false) then
+                        exit;
+                    N := Gtask.ProcesarMantenimientosVencidos();
+                    Message('Se han creado %1 órdenes de mantenimiento.', N);
+                end;
+            }
         }
     }
 

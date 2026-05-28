@@ -1,9 +1,9 @@
-page 50115 "Partes de Trabajo"
+page 50115 "Partes de Trabajo Cart"
 {
     PageType = Card;
     SourceTable = "Time Sheet Header";
-    Caption = 'Orden de Trabajo';
-    SourceTableView = where(Tipo = const(Trabajo));
+    Caption = 'Orden de Trabajo Produccuón';
+    SourceTableView = where(Tipo = const(Trabajo), "Es Plantilla" = const(false));
     DelayedInsert = true;
 
     layout
@@ -53,7 +53,7 @@ page 50115 "Partes de Trabajo"
                 //     ToolTip = 'Especifica la fecha de inicio del proyecto.';
                 // }
             }
-            part(Lines; "Líneas Parte de Trabajo")
+            part(Lines; "Líneas Parte de Trabajo Cart")
             {
                 ApplicationArea = All;
                 SubPageLink = "Time Sheet No." = field("No.");
@@ -221,3 +221,4 @@ page 50115 "Partes de Trabajo"
         Rec.Tipo := Rec.Tipo::Trabajo;
     end;
 }
+

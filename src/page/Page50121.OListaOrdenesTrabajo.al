@@ -1,10 +1,10 @@
-page 50121 "Lista Ordenes de Trabajo"
+page 50123 "Lista Ordenes de Trabajo"
 {
     PageType = List;
     Caption = 'Lista Ordenes de Trabajo';
     SourceTable = "Incidencias";
     ApplicationArea = All;
-    UsageCategory = Documents;
+    UsageCategory = Lists;
     CardPageId = "Ordenes Trabajo";
     SourceTableView = where("Es Peticion" = const(true));
 
@@ -19,23 +19,10 @@ page 50121 "Lista Ordenes de Trabajo"
                     ApplicationArea = All;
                     trigger OnDrillDown()
                     var
-                        PartesTrabajo: Record "Time Sheet Header";
-                        JobsSetup: Record "Jobs Setup";
+                        Gtask: Codeunit Gtask;
                     begin
-                        if (not PartesTrabajo.FindFirst()) or (Rec."Parte Trabajo" = '') then begin
-                            PartesTrabajo.Init();
-                            if Rec."Parte Trabajo" <> '' then
-                                PartesTrabajo."No." := Rec."Parte Trabajo";
-                            PartesTrabajo."No." := Rec."No.";
-                            Rec."Parte Trabajo" := PartesTrabajo."No.";
-                            Rec.Modify();
-                            PartesTrabajo.Validate(Tipo, PartesTrabajo.Tipo::EMT);
-                            JobsSetup.Get();
-                            JobsSetup.TestField("Cliente EMT x defecto");
-                            PartesTrabajo.Validate(Cliente, JobsSetup."Cliente EMT x defecto");
-                            PartesTrabajo.Insert();
-                            Commit();
-                        end;
+                        Gtask.AsegurarParteMantenimiento(Rec);
+                        Commit();
                         Page.RunModal(Page::"Ordenes Trabajo", Rec);
                     end;
                 }
@@ -171,24 +158,10 @@ page 50121 "Lista Ordenes de Trabajo"
                 Image = Edit;
                 trigger OnAction()
                 var
-                    PartesTrabajo: Record "Time Sheet Header";
-                    JobsSetup: Record "Jobs Setup";
+                    Gtask: Codeunit Gtask;
                 begin
-                    PartesTrabajo.SetRange("No.", Rec."Parte Trabajo");
-                    if (not PartesTrabajo.FindFirst()) or (Rec."Parte Trabajo" = '') then begin
-                        PartesTrabajo.Init();
-                        if Rec."Parte Trabajo" <> '' then
-                            PartesTrabajo."No." := Rec."Parte Trabajo";
-                        PartesTrabajo."No." := Rec."No.";
-                        Rec."Parte Trabajo" := PartesTrabajo."No.";
-                        Rec.Modify();
-                        PartesTrabajo.Validate(Tipo, PartesTrabajo.Tipo::EMT);
-                        JobsSetup.Get();
-                        JobsSetup.TestField("Cliente EMT x defecto");
-                        PartesTrabajo.Validate(Cliente, JobsSetup."Cliente EMT x defecto");
-                        PartesTrabajo.Insert();
-                        Commit();
-                    end;
+                    Gtask.AsegurarParteMantenimiento(Rec);
+                    Commit();
                     Page.RunModal(Page::"Ordenes Trabajo", Rec);
                 end;
             }

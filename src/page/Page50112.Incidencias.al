@@ -418,25 +418,11 @@ page 50117 "Lista Incidencias Taller"
                     ApplicationArea = All;
                     trigger OnDrillDown()
                     var
-                        PartesTrabajo: Record "Time Sheet Header";
-                        JobsSetup: Record "Jobs Setup";
+                        Gtask: Codeunit Gtask;
                     begin
                         if IsPeticion then begin
-                            PartesTrabajo.SetRange("No.", Rec."Parte Trabajo");
-                            if (not PartesTrabajo.FindFirst()) or (Rec."Parte Trabajo" = '') then begin
-                                PartesTrabajo.Init();
-                                if Rec."Parte Trabajo" <> '' then
-                                    PartesTrabajo."No." := Rec."Parte Trabajo";
-                                PartesTrabajo."No." := Rec."No.";
-                                Rec."Parte Trabajo" := PartesTrabajo."No.";
-                                Rec.Modify();
-                                PartesTrabajo.Validate(Tipo, PartesTrabajo.Tipo::EMT);
-                                JobsSetup.Get();
-                                JobsSetup.TestField("Cliente EMT x defecto");
-                                PartesTrabajo.Validate(Cliente, JobsSetup."Cliente EMT x defecto");
-                                PartesTrabajo.Insert();
-                                Commit();
-                            end;
+                            Gtask.AsegurarParteMantenimiento(Rec);
+                            Commit();
                             Page.RunModal(Page::"Ordenes Trabajo", Rec);
                         end else
                             Page.RunModal(Page::"Incidencias Taller", Rec);
@@ -591,27 +577,13 @@ page 50117 "Lista Incidencias Taller"
                 Caption = 'Editar';
                 Image = Edit;
                 trigger OnAction()
-                var
-                    PartesTrabajo: Record "Time Sheet Header";
-                    JobsSetup: Record "Jobs Setup";
-                begin
-                    if IsPeticion then begin
-                        PartesTrabajo.SetRange("No.", Rec."Parte Trabajo");
-                        if (not PartesTrabajo.FindFirst()) or (Rec."Parte Trabajo" = '') then begin
-                            PartesTrabajo.Init();
-                            if Rec."Parte Trabajo" <> '' then
-                                PartesTrabajo."No." := Rec."Parte Trabajo";
-                            PartesTrabajo."No." := Rec."No.";
-                            Rec."Parte Trabajo" := PartesTrabajo."No.";
-                            Rec.Modify();
-                            PartesTrabajo.Validate(Tipo, PartesTrabajo.Tipo::EMT);
-                            JobsSetup.Get();
-                            JobsSetup.TestField("Cliente EMT x defecto");
-                            PartesTrabajo.Validate(Cliente, JobsSetup."Cliente EMT x defecto");
-                            PartesTrabajo.Insert();
+                    var
+                        Gtask: Codeunit Gtask;
+                    begin
+                        if IsPeticion then begin
+                            Gtask.AsegurarParteMantenimiento(Rec);
                             Commit();
-                        end;
-                        Page.RunModal(Page::"Ordenes Trabajo", Rec);
+                            Page.RunModal(Page::"Ordenes Trabajo", Rec);
                     end else
                         Page.RunModal(Page::"Incidencias Taller", Rec);
                 end;

@@ -352,6 +352,28 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
             }
 
         }
+        addlast(Processing)
+        {
+            action(CrearOrdenMantenimiento)
+            {
+                ApplicationArea = All;
+                Caption = 'Crear orden mantenimiento';
+                Image = CreateDocument;
+                ToolTip = 'Crea una orden de mantenimiento programado para este emplazamiento (Opis/EMT, Vallas o Otros).';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.CrearIncidenciaMantenimientoEmplazamiento(Rec);
+                    if NoIncidencia = '' then
+                        Message('No se ha podido crear la orden. Compruebe que el emplazamiento tiene recursos (Vallas/Otros) y periodicidad definida.')
+                    else
+                        Message('Orden de mantenimiento: %1', NoIncidencia);
+                end;
+            }
+        }
         addafter(SendEmail)
         {
             actionref("Ver Tareas_Promoted89509"; "Ver Tareas")

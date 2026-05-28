@@ -2,37 +2,26 @@ pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
 {
     layout
     {
-        modify(ABA)
+
+        modify("Fecha instalación")
         {
-            Caption = 'Check CERTIFICACIONES';
+            Caption = 'Detalle Log Parada';
+
+
+            trigger OnDrillDown()
+            var
+                DetalleLogParada: Page "Detalle Log Parada";
+            begin
+                DetalleLogParada.SetEmplazamiento(Rec);
+                DetalleLogParada.Run();
+            end;
+
+
         }
 
-        modify(SAE)
-        {
-            Caption = 'TIP';
-        }
 
 
 
-        addbefore(SAE)
-        {
-            field("Estado Parada"; Rec."Estado Parada")
-            {
-                Caption = 'Estado TIP';
-            }
-            field(Matricula; Rec.Contratado)
-            {
-                Caption = 'Matrícula';
-            }
-
-        }
-        addafter("Zona Limpieza")
-        {
-            field("Zona Revisión"; Rec."Zona Revisión")
-            {
-                Caption = 'Zona Revisión';
-            }
-        }
         addlast(Content)
         {
             group(GrupoActuacionesTIP)
@@ -84,6 +73,23 @@ pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
                     Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
                     Incidencias.SetRange("Es Peticion", true);
                     Page.Run(Page::"Lista Incidencias Taller", Incidencias);
+                end;
+            }
+            action(CrearOrdenMantenimiento)
+            {
+                ApplicationArea = All;
+                Caption = 'Crear orden mantenimiento';
+                Image = CreateDocument;
+                ToolTip = 'Crea una orden EMT de mantenimiento programado para esta parada.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.CrearIncidenciaMantenimientoEmplazamiento(Rec);
+                    if NoIncidencia <> '' then
+                        Message('Orden de mantenimiento: %1', NoIncidencia);
                 end;
             }
         }

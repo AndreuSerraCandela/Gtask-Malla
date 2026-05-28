@@ -1,40 +1,46 @@
-page 50127 "Mensaje WhatsApp Card"
+page 50129 "Mensajes WhatsApp"
 {
-    Caption = 'Mensaje WhatsApp';
-    PageType = Card;
+    Caption = 'Mensajes WhatsApp';
+    PageType = List;
     ApplicationArea = All;
     UsageCategory = None;
     SourceTable = "Mensaje WhatsApp";
+    CardPageId = "Mensaje WhatsApp Card";
     Editable = false;
 
     layout
     {
         area(content)
         {
-            group(General)
+            repeater(Rep)
             {
                 field("Fecha creación"; Rec."Fecha creación") { ApplicationArea = All; }
+                field("Teléfono"; Rec."Teléfono") { ApplicationArea = All; }
                 field("Texto mensaje"; Rec."Texto mensaje")
                 {
                     ApplicationArea = All;
                     MultiLine = true;
                 }
-                field("Mensaje enviado"; Rec."Mensaje enviado") { ApplicationArea = All; }
-                field("Teléfono"; Rec."Teléfono") { ApplicationArea = All; }
-                field("Nombre Usuario"; NombreUsuario(Rec."Id Usuario")) { ApplicationArea = All; }
                 field("Id Mensaje WA"; Rec."Id Mensaje WA") { ApplicationArea = All; }
                 field("Id Mensaje Original"; Rec."Id Mensaje Original") { ApplicationArea = All; }
-                field("Origen Tabla ID"; Rec."Origen Tabla ID") { ApplicationArea = All; }
-                // field("Nº registro adjuntos"; Rec."Nº registro adjuntos")
-                // {
-                //     ApplicationArea = All;
-                //     Editable = false;
-                // }
+                //field("Origen Tabla ID"; Rec."Origen Tabla ID") { ApplicationArea = All; }
+                field("Usuario"; NombreUsuario(Rec."Id Usuario"))
+                {
+                    ApplicationArea = All;
+                    Caption = 'Usuario';
+                    ToolTip = 'ID del usuario que creó el mensaje';
+
+                }
+                field("Mensaje enviado"; Rec."Mensaje enviado")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Mensaje enviado';
+                    ToolTip = 'Indica si el mensaje ha sido enviado';
+                }
             }
         }
         area(factboxes)
         {
-
             part(Adjuntos; "Doc. Attachment List FactBox")
             {
                 ApplicationArea = All;
@@ -67,14 +73,6 @@ page 50127 "Mensaje WhatsApp Card"
             }
         }
     }
-
-    trigger OnAfterGetCurrRecord()
-    begin
-        if (Rec."Nº registro adjuntos" = 0) and (Rec."Id Mensaje WA" <> '') then
-            Rec.AssignNroRegistroAdjuntos();
-
-    end;
-
     local procedure NombreUsuario(IdUsuario: Guid): Text
     var
         Usuario: Record UsuariosGtask;
@@ -83,5 +81,12 @@ page 50127 "Mensaje WhatsApp Card"
         Usuario.SetRange("Id Usuario", IdUsuario);
         if Usuario.FindFirst() then
             exit(Usuario.Nombre);
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        if (Rec."Nº registro adjuntos" = 0) and (Rec."Id Mensaje WA" <> '') then
+            Rec.AssignNroRegistroAdjuntos();
+
     end;
 }

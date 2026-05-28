@@ -23,11 +23,25 @@ page 50120 "Ordenes Trabajo"
                     ApplicationArea = All;
                     Editable = true;
                 }
+                field("Descripción Ampliada"; Description)
+                {
+                    MultiLine = true;
+                    Caption = 'Descripción Ampliada';
+
+                    ExtendedDatatype = RichContent;
+                    ApplicationArea = All;
+                    trigger OnValidate()
+                    begin
+                        Rec.SetWorkDescription(description);
+                    end;
+                }
                 field("Parte Trabajo"; Rec."Parte Trabajo")
                 {
                     ApplicationArea = All;
                     ToolTip = 'Número del parte / orden de trabajo EMT vinculado a la petición.';
                 }
+
+
             }
             group(Orden)
             {
@@ -140,6 +154,24 @@ page 50120 "Ordenes Trabajo"
         CargarCabeceraOrden();
     end;
 
+    trigger OnAfterGetRecord()
+    var
+        Usuario: Record UsuariosGtask;
+    begin
+        Description := Rec.GetWorkDescription();
+        If not IsNullGuid(Rec.Usuario) then begin
+            Usuario.SetRange("Id Usuario", Rec.Usuario);
+            If Usuario.FindFirst() then begin
+                NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
+            end;
+        end;
+
+    end;
+
+    var
+        Description: Text;
+        NombreUsuario: Text;
+
     trigger OnModifyRecord(): Boolean
     begin
         CargarCabeceraOrden();
@@ -154,15 +186,15 @@ page 50120 "Ordenes Trabajo"
         Estado: Option " ",Abierto,Cerrado,Facturado;
 
     local procedure CargarCabeceraOrden()
+    var
+
     begin
+
         OrdenExiste := false;
         Clear(TimeSheetHeader);
         if Rec."Parte Trabajo" <> '' then
-            if TimeSheetHeader.Get(Rec."Parte Trabajo") then begin
+            if TimeSheetHeader.Get(Rec."Parte Trabajo") then
                 OrdenExiste := true;
-                if TimeSheetHeader.Tipo <> TimeSheetHeader.Tipo::EMT then
-                    OrdenExiste := false;
-            end;
         StartingDate := TimeSheetHeader."Starting Date";
         EndingDate := TimeSheetHeader."Ending Date";
         Estado := TimeSheetHeader.Estado;

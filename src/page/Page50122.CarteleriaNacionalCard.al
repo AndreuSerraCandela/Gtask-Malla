@@ -1,4 +1,4 @@
-page 50122 "Cartelería Nacional Card"
+page 50124 "Cartelería Nacional Card"
 {
     PageType = Card;
     SourceTable = "Time Sheet Header";
@@ -129,7 +129,7 @@ page 50122 "Cartelería Nacional Card"
 
 
 }
-page 50123 "Partes de Trabajo y cartelería"
+page 50125 "Partes de Trabajo y cartelería"
 {
     PageType = List;
     SourceTable = "Time Sheet Header";
@@ -180,7 +180,7 @@ page 50123 "Partes de Trabajo y cartelería"
                         Rec.Tipo::Nacional:
                             Page.Run(Page::"Cartelería Nacional Card", Rec);
                         Rec.Tipo::Trabajo:
-                            Page.Run(Page::"Partes de Trabajo", Rec);
+                            Page.Run(Page::"Partes de Trabajo Cart", Rec);
                     end;
 
                 end;
@@ -230,7 +230,7 @@ page 50123 "Partes de Trabajo y cartelería"
                     Rec."Fecha Fin" := WorkDate();
                     Rec.Insert();
                     Commit();
-                    Page.RunModal(Page::"Partes de Trabajo", Rec);
+                    Page.RunModal(Page::"Partes de Trabajo Cart", Rec);
                 end;
             }
         }

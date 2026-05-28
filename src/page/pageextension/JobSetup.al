@@ -47,12 +47,47 @@ pageextension 92150 JobSetupTask extends "Jobs Setup"
                     ToolTip = 'Cliente EMT x defecto';
                 }
             }
+            group("Plantillas Mantenimiento")
+            {
+                Caption = 'Plantillas mantenimiento';
+
+                field("Plantilla Opis"; Rec."Plantilla Opis")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Parte plantilla por defecto para emplazamientos Opis (paradas bus / EMT) si el tipo de recurso no tiene plantilla propia.';
+                }
+                field("Plantilla Vallas"; Rec."Plantilla Vallas")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Parte plantilla por defecto para emplazamientos Vallas.';
+                }
+                field("Plantilla Otros"; Rec."Plantilla Otros")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Parte plantilla por defecto para emplazamientos Otros.';
+                }
+            }
             group("Debug")
             {
                 field("Es Debug"; Rec."Es Debug")
                 {
                     ApplicationArea = All;
                 }
+            }
+        }
+    }
+
+    actions
+    {
+        addlast(processing)
+        {
+            action(AbrirPartesPlantilla)
+            {
+                ApplicationArea = All;
+                Caption = 'Partes plantilla';
+                Image = Template;
+                RunObject = page "Partes Plantilla";
+                ToolTip = 'Mantiene las cabeceras de parte marcadas como plantilla.';
             }
         }
     }
