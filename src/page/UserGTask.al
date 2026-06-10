@@ -40,6 +40,10 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                 }
+                field(Grupo; Rec.Grupo)
+                {
+                    ApplicationArea = All;
+                }
                 field("Responsable"; Rec."Responsable")
                 {
                     ApplicationArea = All;
@@ -51,6 +55,7 @@ page 7001184 "UsuariosGtask"
                 field("Empleado"; Rec."Empleado")
                 {
                     ApplicationArea = All;
+                    ToolTip = 'Nº de empleado asociado al usuario GTask.';
                 }
                 field("Usuario EMT"; Rec."Usuario EMT")
                 {

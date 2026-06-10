@@ -35,6 +35,21 @@ pageextension 92169 BusExtension extends "Paradas Bus"
 
         addlast(Processing)
         {
+            action(PanelGerenciaParadasBus)
+            {
+                ApplicationArea = All;
+                Caption = 'Panel gerencia';
+                Image = Report;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                ToolTip = 'Abre el panel de indicadores de paradas bus, tareas de limpieza/revisión, mantenimiento y partes de trabajo.';
+
+                trigger OnAction()
+                begin
+                    Page.Run(Page::"Panel Gerencia Paradas Bus");
+                end;
+            }
             action(ConsultarIncidencias)
             {
                 ApplicationArea = All;
@@ -112,7 +127,12 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                 var
                     Paradas: Record Emplazamientos;
                     UserTask: Record "User Task";
+                    Control: Codeunit ControlProcesos;
                 begin
+                    If not Control.CompruebaPermisos(UserSecurityId(), 'BORRARTAREAS', CompanyName) then
+                        Error('No tiene permisos para borrar tareas');
+                    if not Confirm('¿Está seguro de que desea borrar las tareas de limpieza para los emplazamientos OPI de las zonas de limpieza?', false) then
+                        exit;
                     CurrPage.SetSelectionFilter(Paradas);
                     if Paradas.FindSet() then
                         repeat
@@ -133,7 +153,12 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                 var
                     Paradas: Record Emplazamientos;
                     UserTask: Record "User Task";
+                    Control: Codeunit ControlProcesos;
                 begin
+                    If not Control.CompruebaPermisos(UserSecurityId(), 'BORRARTAREAS', CompanyName) then
+                        Error('No tiene permisos para borrar tareas');
+                    if not Confirm('¿Está seguro de que desea borrar las tareas de revisión para los emplazamientos OPI de las zonas de revisión?', false) then
+                        exit;
                     CurrPage.SetSelectionFilter(Paradas);
                     if Paradas.FindSet() then
                         repeat

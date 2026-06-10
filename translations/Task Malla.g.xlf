@@ -274,9 +274,14 @@
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Email - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 91669665 - Field 2169576197 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Empleado</source>
+          <source>Nº empleado</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Empleado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 91669665 - Field 174010921 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Grupo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Grupo - Property Caption</note>
         </trans-unit>
         <trans-unit id="Table 91669665 - Field 3824700489 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Id Gtask</source>
@@ -2118,6 +2123,56 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Action ImprimirOrden - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 4176326594 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Panel gerencia Paradas Bus</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 284195533 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Filtros</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control Filters - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 3362414921 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Filtro BC sobre estado TIP, por ejemplo Activa|Baja.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control EstadoTipFiltro - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 3362414921 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Estado TIP</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control EstadoTipFiltro - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 2994312897 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Vacío = todas las zonas.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control ZonaLimpiezaFiltro - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 2994312897 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Zona limpieza</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control ZonaLimpiezaFiltro - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 1798258829 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Vacío = todas las zonas.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control ZonaRevisionFiltro - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Control 1798258829 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Zona revisión</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Control ZonaRevisionFiltro - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Action 1715708404 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ver paradas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Action OpenParadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 4176326594 - Action 3036198523 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Actualizar</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Action RefreshDashboard - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3540925655 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Parte plantilla</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2243,10 +2298,90 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Periodicidad Zona Limpieza - Control Tipo Periodicidad - Property ToolTip</note>
         </trans-unit>
+        <trans-unit id="Page 1986554116 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recurrencia de tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 2118376822 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Aviso por correo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control Aviso - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 3490690114 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Envía un correo al responsable el día de aviso (cola GTask).</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control Avisar - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 4156106008 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si ya se envió el aviso para esta ocurrencia.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control AvisoEnviado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 1863163732 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Número de días antes del vencimiento en que se enviará el aviso.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control DiasAntesAviso - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 401673021 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha calculada en la que se enviará el correo de aviso.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control FechaAviso - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 4097654849 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Campos que se copian a la siguiente ocurrencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control CamposCopiados - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 2445482498 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recurrencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control General - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 631499369 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ejemplos: 1D (diaria), 1W (semanal), 1M (mensual), 3M (trimestral).</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control FormulaRecurrencia - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 2978931755 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si la tarea se repetirá al finalizarse según la fórmula configurada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control RecurrenciaActiva - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 652272380 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha límite para generar nuevas ocurrencias. Vacío = sin límite.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control RecurrenciaFin - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 2016257630 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Indica si ya se generó la siguiente ocurrencia al finalizar esta tarea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control SiguienteOcurrenciaCreada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 3576782692 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Primera tarea de la serie recurrente.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control TareaRecurrenteOrigen - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Control 1985673789 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Resumen de la recurrencia guardada en la tarea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Control TextoRecurrencia - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 1986554116 - Action 1541153962 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Guardar</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Recurrencia Tarea Gtask - Action Guardar - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 91669665 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Usuarios Gtask</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 91669665 - Control 2169576197 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nº de empleado asociado al usuario GTask.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Control Empleado - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="Page 91669665 - Control 1841693126 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Nombre de usuario de la app EMT para vincular incidencias comunicadas por EMT.</source>
@@ -2412,6 +2547,16 @@
           <source>Órdenes de trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action OrdenesTrabajo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 3086975034 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Abre el panel de indicadores de paradas bus, tareas de limpieza/revisión, mantenimiento y partes de trabajo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action PanelGerenciaParadasBus - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 4279944175 - Action 3086975034 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
+          <source>Panel gerencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension BusExtension - Action PanelGerenciaParadasBus - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 4279944175 - Action 3845416969 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1906069484">
           <source>Crea órdenes de mantenimiento para emplazamientos Opis, Vallas y Otros con fecha de próximo mantenimiento vencida.</source>
@@ -3023,6 +3168,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension TaskList - Action Crear Tarea CMT - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Action 4139461949 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Configura la recurrencia, los campos personalizados que se copiarán y el aviso por correo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Action RecurrenciaGtask - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Action 4139461949 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Recurrencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Action RecurrenciaGtask - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 301352800 - Action 4179691570 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
           <source>Permitir Parte de Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3087,6 +3242,26 @@
           <source>Supervisor</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control Supervisor - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Control 1126060501 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Recurrencia y aviso</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control RecurrenciaAviso - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Control 401673021 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Día en que se enviará el correo de aviso al responsable.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control FechaAviso - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Control 2978931755 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Indica si la tarea tiene recurrencia configurada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control RecurrenciaActiva - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Control 1985673789 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Resumen de la recurrencia guardada en esta tarea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control TextoRecurrencia - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="PageExtension 301352800 - Control 1607971347 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
           <source>Categoría</source>
@@ -3618,6 +3793,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareascomercial - Field Responsable - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 3490690114 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Avisar por correo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Avisar - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 4156106008 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Aviso enviado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field AvisoEnviado - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 3010097039 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>User Task Group Assigned To</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3637,6 +3822,11 @@
           <source>Dependencia Creada</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field DependenciaCreada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 1863163732 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Días antes para avisar</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field DiasAntesAviso - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 1260617698 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Empresa Linea</source>
@@ -3659,7 +3849,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field fastPhoto - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 644023294 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
-          <source>Fecha Comunicado Cambio</source>
+          <source>Fecha Cambio</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Fecha Cambio - Property Caption</note>
         </trans-unit>
@@ -3667,6 +3857,21 @@
           <source>Fecha Comunicado Cambio</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Fecha Comunicado Cambio - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 401673021 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Día de aviso</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field FechaAviso - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 631499369 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Fórmula recurrencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field FormulaRecurrencia - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 174010921 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Grupo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Grupo - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 4082900970 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>IdQr</source>
@@ -3713,6 +3918,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field OrdenRetirada - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 2978931755 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Recurrencia activa</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field RecurrenciaActiva - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 652272380 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Recurrencia hasta</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field RecurrenciaFin - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 2569474088 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Reserva</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3728,6 +3943,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Servicio - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 2016257630 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Siguiente ocurrencia creada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field SiguienteOcurrenciaCreada - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 2594411452 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Supervisor</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3742,6 +3962,16 @@
           <source>Tarea Anterior</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field TareaAnterior - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 3576782692 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Tarea origen recurrencia</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field TareaRecurrenteOrigen - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 1985673789 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Recurrencia configurada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field TextoRecurrencia - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 3748575955 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Emplazamiento</source>

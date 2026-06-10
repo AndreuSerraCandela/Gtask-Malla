@@ -124,7 +124,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
         }
         field(50011; "Fecha Cambio"; DateTime)
         {
-            Caption = 'Fecha Comunicado Cambio';
+            Caption = 'Fecha Cambio';
             DataClassification = ToBeClassified;
         }
         field(50014; Mentioned; BLOB)
@@ -191,12 +191,257 @@ tableextension 92103 Tareasusuarios extends "User Task"
             Caption = 'Empresa Linea';
             DataClassification = ToBeClassified;
         }
+        field(50028; RecurrenciaActiva; Boolean)
+        {
+            Caption = 'Recurrencia activa';
+            DataClassification = ToBeClassified;
+
+            trigger OnValidate()
+            begin
+                if not RecurrenciaActiva then
+                    ActualizarTextoRecurrencia();
+            end;
+        }
+        field(50029; FormulaRecurrencia; DateFormula)
+        {
+            Caption = 'Fórmula recurrencia';
+            DataClassification = ToBeClassified;
+
+            trigger OnValidate()
+            begin
+                ActualizarTextoRecurrencia();
+            end;
+        }
+        field(50030; TextoRecurrencia; Text[250])
+        {
+            Caption = 'Recurrencia configurada';
+            DataClassification = ToBeClassified;
+            Editable = false;
+        }
+        field(50031; RecurrenciaFin; Date)
+        {
+            Caption = 'Recurrencia hasta';
+            DataClassification = ToBeClassified;
+        }
+        field(50032; TareaRecurrenteOrigen; Integer)
+        {
+            Caption = 'Tarea origen recurrencia';
+            DataClassification = ToBeClassified;
+            Editable = false;
+            TableRelation = "User Task".ID;
+        }
+        field(50033; Avisar; Boolean)
+        {
+            Caption = 'Avisar por correo';
+            DataClassification = ToBeClassified;
+
+            trigger OnValidate()
+            begin
+                if Avisar then
+                    ActualizarFechaAviso()
+                else begin
+                    Clear(FechaAviso);
+                    AvisoEnviado := false;
+                end;
+            end;
+        }
+        field(50034; DiasAntesAviso; Integer)
+        {
+            Caption = 'Días antes para avisar';
+            DataClassification = ToBeClassified;
+            MinValue = 0;
+
+            trigger OnValidate()
+            begin
+                ActualizarFechaAviso();
+            end;
+        }
+        field(50035; FechaAviso; Date)
+        {
+            Caption = 'Día de aviso';
+            DataClassification = ToBeClassified;
+            Editable = false;
+        }
+        field(50036; AvisoEnviado; Boolean)
+        {
+            Caption = 'Aviso enviado';
+            DataClassification = ToBeClassified;
+            Editable = false;
+        }
+        field(50037; SiguienteOcurrenciaCreada; Boolean)
+        {
+            Caption = 'Siguiente ocurrencia creada';
+            DataClassification = ToBeClassified;
+            Editable = false;
+        }
+        field(50038; Grupo; Code[20])
+        {
+            Caption = 'Grupo';
+            DataClassification = CustomerContent;
+
+        }
+        modify("Percent Complete")
+        {
+            trigger OnAfterValidate()
+            begin
+                if "Percent Complete" = 100 then
+                    Validate(Estado, Estado::Finalizado);
+            end;
+        }
     }
     trigger OnAfterDelete()
     var
         Gtask: Codeunit GTask;
     begin
         Gtask.DeleteTarea(Rec.Id_Tarea);
+    end;
+
+    trigger OnAfterModify()
+    begin
+        if (Estado = Estado::Finalizado) and RecurrenciaActiva and (not SiguienteOcurrenciaCreada) then
+            CrearSiguienteOcurrencia();
+    end;
+
+    procedure ActualizarFechaAviso()
+    begin
+        if not Avisar then begin
+            Clear(FechaAviso);
+            exit;
+        end;
+        if "Due DateTime" = 0DT then begin
+            Clear(FechaAviso);
+            exit;
+        end;
+        if DiasAntesAviso < 0 then
+            DiasAntesAviso := 0;
+        FechaAviso := CalcDate(StrSubstNo('<-%1D>', DiasAntesAviso), DT2Date("Due DateTime"));
+        if FechaAviso <> xRec.FechaAviso then
+            AvisoEnviado := false;
+    end;
+
+    local procedure ActualizarTextoRecurrencia()
+    begin
+        if not RecurrenciaActiva then begin
+            Clear(TextoRecurrencia);
+            exit;
+        end;
+        if Format(FormulaRecurrencia) <> '' then
+            TextoRecurrencia := CopyStr(Format(FormulaRecurrencia), 1, MaxStrLen(TextoRecurrencia))
+        else
+            Clear(TextoRecurrencia);
+        if RecurrenciaFin <> 0D then
+            TextoRecurrencia := CopyStr(TextoRecurrencia + ' · hasta ' + Format(RecurrenciaFin), 1, MaxStrLen(TextoRecurrencia));
+    end;
+
+    procedure CopiarCamposPersonalizadosDesde(Origen: Record "User Task")
+    begin
+        Supervisor := Origen.Supervisor;
+        Departamento := Origen.Departamento;
+        Servicio := Origen.Servicio;
+        Categoría := Origen.Categoría;
+        "User Task Group Assigned To" := Origen."User Task Group Assigned To";
+        Id_record := Origen.Id_record;
+        "Object ID" := Origen."Object ID";
+        "Object Type" := Origen."Object Type";
+        OrdenFijacion := Origen.OrdenFijacion;
+        "Job No." := Origen."Job No.";
+        Reserva := Origen.Reserva;
+        Resource := Origen.Resource;
+        IdQr := Origen.IdQr;
+        OrdenRetirada := Origen.OrdenRetirada;
+        ZonaLimpieza := Origen.ZonaLimpieza;
+        TipoTarea := Origen.TipoTarea;
+        EsPeriodica := Origen.EsPeriodica;
+        CrearParte := Origen.CrearParte;
+        EmpresaTarea := Origen.EmpresaTarea;
+        RecurrenciaActiva := Origen.RecurrenciaActiva;
+        FormulaRecurrencia := Origen.FormulaRecurrencia;
+        TextoRecurrencia := Origen.TextoRecurrencia;
+        RecurrenciaFin := Origen.RecurrenciaFin;
+        Avisar := Origen.Avisar;
+        DiasAntesAviso := Origen.DiasAntesAviso;
+        Priority := Origen.Priority;
+        Grupo := Origen.Grupo;
+    end;
+
+    procedure CrearSiguienteOcurrencia(): Boolean
+    var
+        Nueva: Record "User Task";
+        FechaBaseVenc: Date;
+        FechaBaseInicio: Date;
+        ProxVenc: Date;
+        ProxInicio: Date;
+        Gtask: Codeunit Gtask;
+        Recurso: Record Resource;
+        Emplaz: Record Emplazamientos;
+        NoRecurso: Code[20];
+        JobSetup: Record "Jobs Setup";
+    begin
+        if not RecurrenciaActiva or SiguienteOcurrenciaCreada then
+            exit(false);
+        if Format(FormulaRecurrencia) = '' then
+            exit(false);
+
+        FechaBaseVenc := DT2Date("Due DateTime");
+        if FechaBaseVenc = 0D then
+            FechaBaseVenc := DT2Date("Start DateTime");
+        if FechaBaseVenc = 0D then
+            FechaBaseVenc := WorkDate();
+
+        ProxVenc := CalcDate(FormulaRecurrencia, FechaBaseVenc);
+        if (RecurrenciaFin <> 0D) and (ProxVenc > RecurrenciaFin) then begin
+            SiguienteOcurrenciaCreada := true;
+            Modify(true);
+            exit(false);
+        end;
+
+        FechaBaseInicio := DT2Date("Start DateTime");
+        if FechaBaseInicio = 0D then
+            ProxInicio := ProxVenc
+        else
+            ProxInicio := CalcDate(FormulaRecurrencia, FechaBaseInicio);
+
+        Nueva.Init();
+        Nueva.Validate(Title, Title);
+        Nueva.SetDescription(GetDescription());
+        Nueva."Assigned To" := "Assigned To";
+        Nueva."Created By" := "Created By";
+        Nueva.Validate("Created DateTime", CurrentDateTime);
+        Nueva.CopiarCamposPersonalizadosDesde(Rec);
+        Nueva.Estado := Nueva.Estado::Pendiente;
+        Nueva."Percent Complete" := 0;
+        Clear(Nueva.Id_Tarea);
+        Nueva.AvisoEnviado := false;
+        Nueva.SiguienteOcurrenciaCreada := false;
+        Nueva.DependenciaCreada := false;
+        if TareaRecurrenteOrigen = 0 then
+            Nueva.TareaRecurrenteOrigen := ID
+        else
+            Nueva.TareaRecurrenteOrigen := TareaRecurrenteOrigen;
+        Nueva."Start DateTime" := CreateDateTime(ProxInicio, DT2Time("Start DateTime"));
+        Nueva."Due DateTime" := CreateDateTime(ProxVenc, DT2Time("Due DateTime"));
+        Nueva.ActualizarFechaAviso();
+        Nueva.Insert(true);
+        Nueva."No." := Format(Nueva.ID);
+        Nueva.Modify(true);
+
+        SiguienteOcurrenciaCreada := true;
+        Modify(true);
+
+        JobSetup.Get();
+        if JobSetup."Es Debug" then
+            exit(true);
+
+        NoRecurso := Resource;
+        if (NoRecurso = '') and (Id_record.TableNo = Database::Emplazamientos) then
+            if Emplaz.Get(Id_record) then
+                NoRecurso := Emplaz."Nº Emplazamiento";
+        if (NoRecurso = '') and (Id_record.TableNo = Database::Resource) then
+            if Recurso.Get(Id_record) then
+                NoRecurso := Recurso."No.";
+
+        Gtask.CrearTareaTecnico(NoRecurso, Nueva, Nueva.Departamento, Nueva.Servicio, Nueva.CrearParte);
+        exit(true);
     end;
 
     procedure GetMentioned(): Text

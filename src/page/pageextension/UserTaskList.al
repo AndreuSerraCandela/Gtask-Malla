@@ -2,6 +2,20 @@ pageextension 92157 "UserTaskList" extends "User Task List"
 {
     layout
     {
+        modify("Start DateTime")
+        {
+            Visible = true;
+        }
+        addafter("Due DateTime")
+        {
+
+            //fecha comunicado cambio
+            field("Fecha Finalización"; Rec."Fecha Comunicado Cambio")
+            {
+                ApplicationArea = All;
+                StyleExpr = EstadoStyle;
+            }
+        }
         addafter("Title")
         {
             field(Description; Rec.GetDescription())

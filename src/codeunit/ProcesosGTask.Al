@@ -34,6 +34,79 @@ codeunit 7001149 Procesos_GTask
         Rec."Fecha Cambio" := CurrentDateTime;
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterValidateEvent', 'Assigned To', false, false)]
+    local procedure OnAfterValidateAssignedTo(var Rec: Record "User Task"; var xRec: Record "User Task"; CurrFieldNo: Integer)
+    begin
+        ActualizarGrupoTareaDesdeUsuario(Rec);
+    end;
+
+
+
+    local procedure ActualizarGrupoTareaDesdeUsuario(var Rec: Record "User Task")
+    var
+        GrupoUsuario: Code[20];
+    begin
+        Clear(Rec.Grupo);
+        if IsNullGuid(Rec."Assigned To") then
+            exit;
+
+        if not BuscarGrupoUsuarioGtask(Rec."Assigned To", GrupoUsuario) then
+            exit;
+
+        Rec.Grupo := GrupoUsuario;
+    end;
+
+    local procedure BuscarGrupoUsuarioGtask(UserId: Guid; var GrupoUsuario: Code[20]): Boolean
+    var
+        UsuarioGtask: Record UsuariosGtask;
+        EmpresaUsuario: Text[30];
+    begin
+        Clear(GrupoUsuario);
+        if IsNullGuid(UserId) then
+            exit(false);
+
+        EmpresaUsuario := 'Malla Publicidad';
+        UsuarioGtask.ChangeCompany(EmpresaUsuario);
+        UsuarioGtask.SetRange("Id Usuario", UserId);
+        if UsuarioGtask.FindFirst() then begin
+            GrupoUsuario := UsuarioGtask.Grupo;
+            exit(true);
+        end;
+
+        UsuarioGtask.ChangeCompany(CompanyName);
+        UsuarioGtask.SetRange("Id Usuario", UserId);
+        if UsuarioGtask.FindFirst() then begin
+            GrupoUsuario := UsuarioGtask.Grupo;
+            exit(true);
+        end;
+
+        exit(false);
+    end;
+
+    procedure ActualizarGruposTareasExistentes(UserId: Guid; NuevoGrupo: Code[20]): Integer
+    var
+        Tarea: Record "User Task";
+        GrupoAnterior: Code[20];
+        TareasActualizadas: Integer;
+    begin
+        if IsNullGuid(UserId) then
+            exit(0);
+
+        Tarea.Reset();
+        Tarea.SetRange("Assigned To", UserId);
+        if Tarea.FindSet(true) then
+            repeat
+                GrupoAnterior := Tarea.Grupo;
+                Tarea.Grupo := NuevoGrupo;
+                if Tarea.Grupo <> GrupoAnterior then begin
+                    Tarea.Modify(true);
+                    TareasActualizadas += 1;
+                end;
+            until Tarea.Next() = 0;
+
+        exit(TareasActualizadas);
+    end;
+
     [EventSubscriber(ObjectType::Page, Page::"Crear Visita Emplazamiento", 'OnAfterFinishPage', '', false, false)]
     local procedure OnAfterFinishPage(var Task: Record "To-do")
     var
@@ -1328,7 +1401,7 @@ codeunit 7001149 Procesos_GTask
       SendTo: Text;
       CC: Text;
       Lista: Text;
-      BCC: Text; Nombre: Text; Eliminada: Boolean; IdTarea: Text; Incidencia: Boolean)
+      BCC: Text; Nombre: Text; Eliminada: Boolean; IdTarea: Text; Incidencia: Boolean; HideDialog: Boolean)
 
 
     var
@@ -1470,7 +1543,7 @@ codeunit 7001149 Procesos_GTask
                     until ficheros.Next() = 0;
             end;
         end;
-        if REmail.Send(true, emilesc::Gtasks) then begin
+        if REmail.Send(HideDialog, emilesc::Gtasks) then begin
 
         end;
     end;
@@ -1608,9 +1681,34 @@ codeunit 7001149 Procesos_GTask
                 User.SetRange("User Security ID", UserxbyCategory."User Security ID");
                 if User.FindFirst() then
                     if (User."Contact Email" <> '') and (User."Contact Email" <> EmailResponsabe) and (User."Contact Email" <> EmailSupervisor) then
-                        ListaCorreo := ListaCorreo + User."Contact Email" + ';';
+                        AgregarCorreoSinDuplicar(ListaCorreo, User."Contact Email");
             until UserxbyCategory.Next() = 0;
 
+    end;
+
+    local procedure AgregarCorreoSinDuplicar(var ListaCorreo: Text; Correo: Text)
+    var
+        CorreoTxt: Text;
+        ListaBusqueda: Text;
+        Patron: Text;
+    begin
+        CorreoTxt := DelChr(Correo, '<>', ' ');
+        if CorreoTxt = '' then
+            exit;
+
+        if ListaCorreo = '' then begin
+            ListaCorreo := CorreoTxt + ';';
+            exit;
+        end;
+
+        ListaBusqueda := ';' + LowerCase(ListaCorreo);
+        Patron := ';' + LowerCase(CorreoTxt) + ';';
+        if StrPos(ListaBusqueda, Patron) > 0 then
+            exit;
+
+        if CopyStr(ListaCorreo, StrLen(ListaCorreo), 1) <> ';' then
+            ListaCorreo += ';';
+        ListaCorreo += CorreoTxt + ';';
     end;
 
     internal procedure DevuelveCategoriaSupervisorResponsablePorZona(
@@ -3508,6 +3606,68 @@ codeunit 7001149 Procesos_GTask
         if BufferLine.TareaAnterior <> 0 then
             if UserTask.Get(BufferLine.TareaAnterior) then
                 Page.Run(Page::"User Task Card", UserTask);
+    end;
+
+    /// <summary>
+    /// Envía correos de aviso para tareas con FechaAviso = hoy. Pensado para la cola de trabajos (codeunit GTask).
+    /// </summary>
+    procedure EnviarAvisosTareasProgramadas()
+    var
+        UserTask: Record "User Task";
+        User: Record User;
+        EmailResponsable: Text;
+        EmailSupervisor: Text;
+        ListaCorreos: Text;
+        Motivo: Text;
+        FechaVenc: Text;
+    begin
+        UserTask.Reset();
+        UserTask.SetRange(Avisar, true);
+        UserTask.SetRange(AvisoEnviado, false);
+        UserTask.SetRange(FechaAviso, WorkDate());
+        UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
+        if not UserTask.FindSet() then
+            exit;
+
+        repeat
+            if UserTask."Due DateTime" = 0DT then
+                FechaVenc := 'sin fecha'
+            else
+                FechaVenc := Format(DT2Date(UserTask."Due DateTime"));
+
+            Email(UserTask, EmailResponsable, EmailSupervisor);
+            if EmailResponsable = '' then begin
+                User.SetRange("User Security ID", UserTask."Assigned To");
+                if User.FindFirst() then
+                    EmailResponsable := User."Contact Email";
+            end;
+            if EmailResponsable = '' then
+                continue;
+
+            User.SetRange("User Security ID", UserTask."Assigned To");
+            if not User.FindFirst() then
+                Clear(User."Full Name");
+
+            Motivo := StrSubstNo(
+                'Recordatorio: la tarea <b>%1</b> vence el %2. Revísela en Business Central.',
+                UserTask.Title, FechaVenc);
+            EnviaCorreo(
+                UserTask."No.", UserTask.GetDescription(), false, Motivo, true,
+                CopyStr('Aviso tarea: ' + UserTask.Title, 1, 250),
+                EmailResponsable, EmailSupervisor, ListaCorreos, '', User."Full Name",
+                false, UserTask.Id_Tarea, false, true);
+
+            UserTask.AvisoEnviado := true;
+            UserTask.Modify(true);
+        until UserTask.Next() = 0;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterValidateEvent', 'Due DateTime', false, false)]
+    local procedure UserTaskOnAfterValidateDueDateTime(var Rec: Record "User Task"; var xRec: Record "User Task"; CurrFieldNo: Integer)
+    begin
+        Rec.ActualizarFechaAviso();
+        if Rec.FechaAviso <> xRec.FechaAviso then
+            Rec.AvisoEnviado := false;
     end;
 
 }

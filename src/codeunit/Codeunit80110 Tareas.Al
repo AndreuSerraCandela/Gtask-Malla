@@ -17,6 +17,7 @@ codeunit 7001148 GTask
         EnviarCorreoFicheros();
         CrearTareasSinId();
         ProcesarMantenimientosVencidos();
+        Procesos_GTask.EnviarAvisosTareasProgramadas();
         // GetTareas();
 
     end;
@@ -2926,7 +2927,7 @@ codeunit 7001148 GTask
         User.SetRange("User Security ID", Rec."Assigned To");
         If User.FindFirst() Then begin
             User.FindFirst();
-            Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, 'Tarea Eliminada', EmailResponsable, EmailSupervisor, '', '', User."Full Name", true, Rec.Id_Tarea, false);
+            Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, 'Tarea Eliminada', EmailResponsable, EmailSupervisor, '', '', User."Full Name", true, Rec.Id_Tarea, false, true);
         end;
         DocumentAttachment.SetRange("Table ID", Database::"User Task");
         DocumentAttachment.SetRange("No.", Rec."No.");
@@ -3350,7 +3351,7 @@ codeunit 7001148 GTask
         end;
         Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
         Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
-        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
     end;
 
     internal procedure DupliCarTarea(
@@ -3495,7 +3496,7 @@ codeunit 7001148 GTask
         end;
         Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
         Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
-        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
     end;
 
 
@@ -3640,7 +3641,7 @@ codeunit 7001148 GTask
         end;
         Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
         Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
-        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
     end;
 
 
@@ -3803,7 +3804,7 @@ codeunit 7001148 GTask
         if Not JobSetup."Es Debug" then begin
             Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
             Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
-            Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+            Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
         end;
         exit(True);
     end;
@@ -4615,7 +4616,7 @@ codeunit 7001148 GTask
                 If UserTask.Get(Ficheros."Incoming Entry No.") then begin
                     User.Get(UserTask."Assigned To");
                     Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
-                    Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Ficheros."Nombre fichero", EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+                    Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Ficheros."Nombre fichero", EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
                 end;
 
             until Ficheros.Next() = 0;
@@ -4637,7 +4638,7 @@ codeunit 7001148 GTask
                     Desc := 'Parada nº ' + Incidencias.Recurso;
                 end;
                 Procesos_GTask.EnviaCorreo(Incidencias."No.", Desc + ' - ' + Incidencias.GetWorkDescription(), true, '', false, Incidencias."Descripción",
-                EmailResponsable, ListadeCorreos, EmailSupervisor, '', Incidencias.NombreUsuario(Incidencias.Usuario), false, '', true);
+                EmailResponsable, ListadeCorreos, EmailSupervisor, '', Incidencias.NombreUsuario(Incidencias.Usuario), false, '', true, true);
             until Incidencias.Next() = 0;
             Incidencias.ModifyAll("Enviar Correo", false);
         end;
@@ -4775,6 +4776,178 @@ codeunit 7001148 GTask
         JsonRoot.Add('value', JsonArray.AsToken());
         JsonRoot.WriteTo(Txt);
         exit(Txt);
+    end;
+
+    /// <summary>
+    /// Devuelve las tareas para el calendario compartido desde hoy hasta los meses indicados.
+    /// Filtra por el grupo del usuario GTask autenticado.
+    /// Si Meses es 0, usa 3 meses por defecto.
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetTareasCalendario(Meses: Integer; UsuarioGtask: Text): Text
+    var
+        Tareas: Record "User Task";
+        JsonRoot: JsonObject;
+        JsonArray: JsonArray;
+        JsonLinea: JsonObject;
+        DesdeDT: DateTime;
+        HastaDT: DateTime;
+        HastaFecha: Date;
+        Txt: Text;
+        GrupoUsuario: Code[20];
+    begin
+        if Meses <= 0 then
+            Meses := 3;
+
+        if not BuscarGrupoUsuarioCalendario(UsuarioGtask, GrupoUsuario) then
+            Error('No se ha encontrado grupo para el usuario GTask %1.', UsuarioGtask);
+
+        DesdeDT := CreateDateTime(Calcdate('<CM+1D-1M>', Today), 000000T);
+        HastaFecha := CalcDate(StrSubstNo('<+%1M>', Meses), Today);
+        HastaDT := CreateDateTime(HastaFecha, 235959T);
+
+        Clear(JsonArray);
+        Tareas.SetRange("start DateTime", DesdeDT, HastaDT);
+        Tareas.SetRange(Grupo, GrupoUsuario);
+        if Tareas.FindSet() then
+            repeat
+                Clear(JsonLinea);
+                AgregarTareaCalendarioJson(Tareas, JsonLinea);
+                JsonArray.Add(JsonLinea);
+            until Tareas.Next() = 0;
+
+        Clear(JsonRoot);
+        JsonRoot.Add('value', JsonArray.AsToken());
+        JsonRoot.Add('from', Format(DesdeDT, 0, 9));
+        JsonRoot.Add('to', Format(HastaDT, 0, 9));
+        JsonRoot.Add('months', Meses);
+        JsonRoot.Add('usuarioGtask', UsuarioGtask);
+        JsonRoot.Add('grupo', GrupoUsuario);
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure BuscarGrupoUsuarioCalendario(UsuarioGtask: Text; var GrupoUsuario: Code[20]): Boolean
+    var
+        Usuario: Record UsuariosGtask;
+    begin
+        Clear(GrupoUsuario);
+        UsuarioGtask := DelChr(UsuarioGtask, '=', ' ');
+        if UsuarioGtask = '' then
+            exit(false);
+
+        Usuario.Reset();
+        Usuario.SetRange("Id Gtask", CopyStr(UsuarioGtask, 1, MaxStrLen(Usuario."Id Gtask")));
+        if not Usuario.FindFirst() then begin
+            Usuario.Reset();
+            Usuario.SetRange(Email, CopyStr(UsuarioGtask, 1, MaxStrLen(Usuario.Email)));
+            if not Usuario.FindFirst() then begin
+                Usuario.Reset();
+                Usuario.SetRange("Usuario EMT", CopyStr(UsuarioGtask, 1, MaxStrLen(Usuario."Usuario EMT")));
+                if not Usuario.FindFirst() then
+                    exit(false);
+            end;
+        end;
+
+        GrupoUsuario := Usuario.Grupo;
+        exit(GrupoUsuario <> '');
+    end;
+
+    local procedure ObtenerLinkFichaTarea(Tarea: Record "User Task"): Text
+    var
+        Url: Text;
+    begin
+        Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
+        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
+            Url := 'https://bc270.malla.es/' + CopyStr(Url, 26);
+        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
+            Url := 'https://bc270.malla.es/' + CopyStr(Url, 26);
+        exit(Url);
+    end;
+
+    /// <summary>
+    /// Mueve una tarea de calendario a una nueva fecha. Conserva la hora original de inicio.
+    /// JSON: {"id":123,"fecha":"2026-06-15"}
+    /// </summary>
+    [ServiceEnabled]
+    procedure PostMoverTareaCalendario(JsonText: Text): Text
+    var
+        JsonObj: JsonObject;
+        JsonToken: JsonToken;
+        JsonResult: JsonObject;
+        JsonLinea: JsonObject;
+        Tarea: Record "User Task";
+        IdTarea: Integer;
+        FechaTexto: Text;
+        NuevaFecha: Date;
+        HoraInicio: Time;
+        Txt: Text;
+    begin
+        if (JsonText = '') or not JsonObj.ReadFrom(JsonText) then
+            Error('JSON inválido o vacío');
+
+        if not JsonObj.Get('id', JsonToken) then
+            Error('No se ha indicado id de tarea');
+        if not Evaluate(IdTarea, JsonToken.AsValue().AsText()) then
+            Error('Id de tarea inválido: %1', JsonToken.AsValue().AsText());
+
+        if not JsonObj.Get('fecha', JsonToken) then
+            Error('No se ha indicado nueva fecha');
+        FechaTexto := JsonToken.AsValue().AsText();
+        if not Evaluate(NuevaFecha, FechaTexto) then
+            Error('Fecha inválida: %1', FechaTexto);
+
+        if not Tarea.Get(IdTarea) then
+            Error('No se ha encontrado la tarea %1', IdTarea);
+
+        HoraInicio := DT2Time(Tarea."Start DateTime");
+        Tarea."Start DateTime" := CreateDateTime(NuevaFecha, HoraInicio);
+        Tarea.Modify(true);
+
+        Clear(JsonLinea);
+        AgregarTareaCalendarioJson(Tarea, JsonLinea);
+
+        Clear(JsonResult);
+        JsonResult.Add('success', true);
+        JsonResult.Add('task', JsonLinea.AsToken());
+        JsonResult.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure AgregarTareaCalendarioJson(var Tarea: Record "User Task"; var JsonLinea: JsonObject)
+    var
+        UsuarioGtask: Record UsuariosGtask;
+    begin
+        Tarea.CalcFields("Assigned To User Name", "Supervisor User Name");
+
+        JsonLinea.Add('id', Tarea.ID);
+        JsonLinea.Add('no', Tarea."No.");
+        JsonLinea.Add('title', Tarea.Title);
+        JsonLinea.Add('description', Tarea.GetDescription());
+        JsonLinea.Add('assignedTo', Format(Tarea."Assigned To"));
+        JsonLinea.Add('assignedToName', Tarea."Assigned To User Name");
+        UsuarioGtask.SetRange("Id Usuario", Tarea."Assigned To");
+        if UsuarioGtask.FindFirst() then
+            JsonLinea.Add('empleado', UsuarioGtask."Empleado")
+        else
+            JsonLinea.Add('empleado', '');
+        JsonLinea.Add('supervisor', Format(Tarea.Supervisor));
+        JsonLinea.Add('supervisorName', Tarea."Supervisor User Name");
+        UsuarioGtask.SetRange("Id Usuario", Tarea.Supervisor);
+        if UsuarioGtask.FindFirst() then
+            JsonLinea.Add('empleadosupervisor', UsuarioGtask."Empleado")
+        else
+            JsonLinea.Add('empleadosupervisor', '');
+        JsonLinea.Add('grupo', Tarea.Grupo);
+        JsonLinea.Add('categoria', Tarea."Categoría");
+        JsonLinea.Add('userTaskGroupAssignedTo', Tarea."User Task Group Assigned To");
+        JsonLinea.Add('start', Format(Tarea."Start DateTime", 0, 9));
+        JsonLinea.Add('due', Format(Tarea."due DateTime", 0, 9));
+        JsonLinea.Add('estado', Format(Tarea.Estado));
+        JsonLinea.Add('percentComplete', Tarea."Percent Complete");
+        JsonLinea.Add('priority', Format(Tarea.Priority));
+        JsonLinea.Add('idTareaGtask', Tarea.Id_Tarea);
+        JsonLinea.Add('link', ObtenerLinkFichaTarea(Tarea));
     end;
 
     /// <summary>
@@ -6948,26 +7121,26 @@ codeunit 7001148 GTask
                     document := JsonCampo.AsObject();
                     if document.Get('file', JsonCampo) then begin
                         Imagen += 1;
+                        DocuName := 'Imagen' + Format(Imagen) + '_' + Format(CurrentDateTime, 0, 9) + '.jpg';
                         FileBase64 := JsonCampo.AsValue().AsText();
                         If CopyStr(FileBase64, 1, 4) = 'http' then begin
                             ImpagenesTemp.Url := FileBase64;
                         end else begin
-                            //Si empieza por data:image/jpeg;base64, entonces es una imagen jpeg y hay 
-                            if CopyStr(FileBase64, 1, 23) = 'data:image/jpeg;base64,' then
-                                FileBase64 := CopyStr(FileBase64, 24, StrLen(FileBase64));
+                            if CopyStr(FileBase64, 1, 5) = 'data:' then
+                                if StrPos(FileBase64, ',') > 0 then
+                                    FileBase64 := CopyStr(FileBase64, StrPos(FileBase64, ',') + 1);
 #If CLEAN27
-                            ImpagenesTemp.Url := Control.FormBase64ToUrl(FileBase64, 'Imagen' + Format(Imagen) + '.jpg', IdImagen);
+                            ImpagenesTemp.Url := Control.FormBase64ToUrl(FileBase64, DocuName, IdImagen);
 #else
-                            ImpagenesTemp.Url := ImpagenesTemp.FormBase64ToUrl(FileBase64, 'Imagen' + Format(Imagen) + '.jpg', IdImagen);
+                            ImpagenesTemp.Url := ImpagenesTemp.FormBase64ToUrl(FileBase64, DocuName, IdImagen);
 #endif
                             ImpagenesTemp.Id := IdImagen;
                         end;
                         ImpagenesTemp."Nº Imagen" := Imagen;
-                        // Intentar obtener el nombre del JSON, si no existe usar el nombre por defecto
                         if document.Get('name', JsonCampo) then
-                            ImpagenesTemp.Nombre := JsonCampo.AsValue().AsText()
+                            ImpagenesTemp.Nombre := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(ImpagenesTemp.Nombre))
                         else
-                            ImpagenesTemp.Nombre := 'Imagen' + Format(Imagen) + '.jpg';
+                            ImpagenesTemp.Nombre := DocuName;
                         if document.Get('file_id', JsonCampo) then
                             If evaluate(ImpagenesTemp.Id, JsonCampo.AsValue().AsText()) Then;
                         If ImpagenesTemp.Id = 0 then ImpagenesTemp.Id := IdImagen;
@@ -7120,7 +7293,6 @@ codeunit 7001148 GTask
         end;
         If ImpagenesTemp.FindSet() then
             repeat
-                // si ya existe la imagen, entonces, le asigno nº de miagen siguiente
                 Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
                 Imagenes.SetRange("Es Incidencia", true);
                 Imagenes.SetRange(Url, ImpagenesTemp.Url);
@@ -7128,12 +7300,10 @@ codeunit 7001148 GTask
                     Imagenes.Reset;
                     Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
                     Imagenes.SetRange("Es Incidencia", true);
-                    Imagen := ImpagenesTemp."Nº Imagen";
-                    Imagenes.SetRange("Nº Imagen", ImpagenesTemp."Nº Imagen");
-                    If Imagenes.FindSet() then
-                        repeat
-                            Imagen += 1;
-                        until Imagenes.Next() = 0;
+                    if Imagenes.FindLast() then
+                        Imagen := Imagenes."Nº Imagen" + 1
+                    else
+                        Imagen := 1;
                     Imagenes.Init();
                     Imagenes."Nº Orden" := rDet."Nº Orden";
                     Imagenes."Nº Imagen" := Imagen;
@@ -7565,22 +7735,22 @@ codeunit 7001148 GTask
                     document := JsonCampo.AsObject();
                     if document.Get('file', JsonCampo) then begin
                         Imagen += 1;
+                        DocuName := 'Imagen' + Format(Imagen) + '_' + Format(CurrentDateTime, 0, 9) + '.jpg';
                         FileBase64 := JsonCampo.AsValue().AsText();
                         If CopyStr(FileBase64, 1, 4) = 'http' then begin
                             ImpagenesTemp.Url := FileBase64;
                         end else begin
-                            //Si empieza por data:image/jpeg;base64, entonces es una imagen jpeg y hay 
-                            if CopyStr(FileBase64, 1, 23) = 'data:image/jpeg;base64,' then
-                                FileBase64 := CopyStr(FileBase64, 24, StrLen(FileBase64));
-                            ImpagenesTemp.Url := Control.FormBase64ToUrl(FileBase64, 'Imagen' + Format(Imagen) + '.jpg', IdImagen);
+                            if CopyStr(FileBase64, 1, 5) = 'data:' then
+                                if StrPos(FileBase64, ',') > 0 then
+                                    FileBase64 := CopyStr(FileBase64, StrPos(FileBase64, ',') + 1);
+                            ImpagenesTemp.Url := Control.FormBase64ToUrl(FileBase64, DocuName, IdImagen);
                             ImpagenesTemp.Id := IdImagen;
                         end;
                         ImpagenesTemp."Nº Imagen" := Imagen;
-                        // Intentar obtener el nombre del JSON, si no existe usar el nombre por defecto
                         if document.Get('name', JsonCampo) then
-                            ImpagenesTemp.Nombre := JsonCampo.AsValue().AsText()
+                            ImpagenesTemp.Nombre := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(ImpagenesTemp.Nombre))
                         else
-                            ImpagenesTemp.Nombre := 'Imagen' + Format(Imagen) + '.jpg';
+                            ImpagenesTemp.Nombre := DocuName;
                         if document.Get('file_id', JsonCampo) then
                             If evaluate(ImpagenesTemp.Id, JsonCampo.AsValue().AsText()) Then;
                         If ImpagenesTemp.Id = 0 then ImpagenesTemp.Id := IdImagen;
@@ -7684,23 +7854,26 @@ codeunit 7001148 GTask
         commit;
         If ImpagenesTemp.FindSet() then
             repeat
-                // si ya existe la imagen, entonces, le asigno nº de miagen siguiente
                 Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
                 Imagenes.SetRange("Es Incidencia", true);
-                Imagen := ImpagenesTemp."Nº Imagen";
-                Imagenes.SetRange("Nº Imagen", ImpagenesTemp."Nº Imagen");
-                If Imagenes.FindSet() then
-                    repeat
-                        Imagen += 1;
-                    until Imagenes.Next() = 0;
-                Imagenes.Init();
-                Imagenes."Nº Orden" := rDet."Nº Orden";
-                Imagenes."Nº Imagen" := Imagen;
-                Imagenes.Id := ImpagenesTemp.Id;
-                Imagenes."Es Incidencia" := true;
-                Imagenes.Url := ImpagenesTemp.Url;
-                Imagenes.Nombre := ImpagenesTemp.Nombre;
-                Imagenes.Insert();
+                Imagenes.SetRange(Url, ImpagenesTemp.Url);
+                If not Imagenes.FindFirst() then begin
+                    Imagenes.Reset;
+                    Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
+                    Imagenes.SetRange("Es Incidencia", true);
+                    if Imagenes.FindLast() then
+                        Imagen := Imagenes."Nº Imagen" + 1
+                    else
+                        Imagen := 1;
+                    Imagenes.Init();
+                    Imagenes."Nº Orden" := rDet."Nº Orden";
+                    Imagenes."Nº Imagen" := Imagen;
+                    Imagenes.Id := ImpagenesTemp.Id;
+                    Imagenes."Es Incidencia" := true;
+                    Imagenes.Url := ImpagenesTemp.Url;
+                    Imagenes.Nombre := ImpagenesTemp.Nombre;
+                    Imagenes.Insert();
+                end;
             until ImpagenesTemp.Next() = 0;
 
         CompanyInfo.Get();
@@ -9217,7 +9390,7 @@ codeunit 7001148 GTask
         end;
         Gtask.CrearTareaTecnico('', UserTask, UserTask.Departamento, UserTask.Servicio, false);
         Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
-        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListaCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false);
+        Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListaCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
     end;
 
 

@@ -6,6 +6,13 @@ pageextension 92154 "UserTask" extends "User Task card"
         {
             Visible = false;
         }
+        addbefore("Percent Complete")
+        {
+            field(Estado; Rec.Estado)
+            {
+                ApplicationArea = All;
+            }
+        }
         addbefore("created by User Name")
         {
             field(Responsable; Rec."Assigned To User Name")
@@ -80,11 +87,43 @@ pageextension 92154 "UserTask" extends "User Task card"
             {
                 ApplicationArea = All;
             }
+
         }
         modify("User Task Group Assigned To")
         {
             Visible = false;
 
+        }
+        addafter("Due DateTime")
+        {
+            group(RecurrenciaAviso)
+            {
+                Caption = 'Recurrencia y aviso';
+
+                field(RecurrenciaActiva; Rec.RecurrenciaActiva)
+                {
+                    ApplicationArea = All;
+                    Editable = false;
+                    ToolTip = 'Indica si la tarea tiene recurrencia configurada.';
+                }
+                field(TextoRecurrencia; Rec.TextoRecurrencia)
+                {
+                    ApplicationArea = All;
+                    Editable = false;
+                    ToolTip = 'Resumen de la recurrencia guardada en esta tarea.';
+                }
+                field(FechaAviso; Rec.FechaAviso)
+                {
+                    ApplicationArea = All;
+                    Editable = false;
+                    ToolTip = 'Día en que se enviará el correo de aviso al responsable.';
+                }
+                field(Avisar; Rec.Avisar)
+                {
+                    ApplicationArea = All;
+                    Editable = false;
+                }
+            }
         }
         addafter("User Task Group Assigned To")
         {
@@ -119,6 +158,33 @@ pageextension 92154 "UserTask" extends "User Task card"
     }
     actions
     {
+        modify(Recurrence)
+        {
+            Visible = false;
+        }
+        modify(Recurrence_Promoted)
+        {
+            Visible = false;
+        }
+        addafter(Recurrence)
+        {
+            action(RecurrenciaGtask)
+            {
+                ApplicationArea = All;
+                Caption = 'Recurrencia';
+                Image = Refresh;
+                ToolTip = 'Configura la recurrencia, los campos personalizados que se copiarán y el aviso por correo.';
+
+                trigger OnAction()
+                var
+                    RecurrenciaPage: Page "Recurrencia Tarea Gtask";
+                begin
+                    RecurrenciaPage.SetRecord(Rec);
+                    RecurrenciaPage.RunModal();
+                    CurrPage.Update(false);
+                end;
+            }
+        }
         addafter("Go To Task Item")
         {
             //hABILITAR pARA CREAR PARTE DE TRABAJO
@@ -192,7 +258,7 @@ pageextension 92154 "UserTask" extends "User Task card"
                     Procesos_GTask.Email(Rec, EmailResponsable, EmailSupervisor);
                     User.SetRange("User Security ID", Rec."Assigned To");
                     User.FindFirst();
-                    Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false);
+                    Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false, false);
                 end;
             }
 
@@ -239,6 +305,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         }
         addbefore(Recurrence_Promoted)
         {
+            actionref(RecurrenciaGtask_Promoted; RecurrenciaGtask) { }
             actionref(Visitas_Ref; Visitas) { }
             actionref(CreateParte_Ref; CreateParte) { }
 
@@ -249,8 +316,6 @@ pageextension 92154 "UserTask" extends "User Task card"
 
     }
     trigger OnAfterGetRecord()
-    var
-        NullFrecuencia: DateFormula;
     begin
         If Rec.Estado = Rec.Estado::Pendiente then
             If not Rec.EsPeriodica then
@@ -259,6 +324,7 @@ pageextension 92154 "UserTask" extends "User Task card"
             Rec."No." := Format(Rec.ID);
             Rec.Modify();
         end;
+        Rec.ActualizarFechaAviso();
     end;
 
     Procedure Eventos(pCategoria: Code[20])

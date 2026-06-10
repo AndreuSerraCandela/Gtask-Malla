@@ -81,7 +81,7 @@ table 7001209 "UsuariosGtask"
         }
         field(50008; "Empleado"; Code[20])
         {
-            Caption = 'Empleado';
+            Caption = 'Nº empleado';
             DataClassification = ToBeClassified;
             TableRelation = Employee."No.";
         }
@@ -89,6 +89,18 @@ table 7001209 "UsuariosGtask"
         {
             Caption = 'Usuario EMT';
             DataClassification = ToBeClassified;
+        }
+        field(50010; Grupo; Code[20])
+        {
+            Caption = 'Grupo';
+            DataClassification = CustomerContent;
+            trigger OnValidate()
+            var
+                Procesos_GTask: Codeunit Procesos_GTask;
+            begin
+                // Pasar Grupo en memoria: en OnValidate aún no está guardado en BD.
+                Procesos_GTask.ActualizarGruposTareasExistentes("Id Usuario", Grupo);
+            end;
         }
     }
 

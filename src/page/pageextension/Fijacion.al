@@ -753,11 +753,11 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                             RecRef.GetTable(Usertask);
                             RecRef.Get(Usertask.RecordId);
                             TempBlob.CreateInStream(InStr);
-                            If DoccAttach.Get(Database::"User Task", Format(Usertask.iD), DoccAttach."Document Type"::Order, Det."Nº Reserva", Det."Nº Reserva")
+                            If DoccAttach.Get(Database::"User Task", Format(Usertask.iD), DoccAttach."Document Type"::Quote, Det."Nº Reserva", Det."Nº Reserva")
                             Then
                                 DoccAttach.Delete;
                             DoccAttach.Init();
-                            DoccAttach."Document Type" := DoccAttach."Document Type"::Order;
+                            DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                             DoccAttach."Table ID" := Database::"User Task";
                             DoccAttach."No." := Format(Usertask.Id);
                             DoccAttach."Line No." := DetTemp."Nº Reserva";
@@ -787,7 +787,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", Format(Usertask.Id));
                     DoccAttach.SetFilter("Line No.", '<>%1', 0);
-                    DoccAttach.SetRange(DoccAttach."Document Type", DoccAttach."Document Type"::Order);
+                    DoccAttach.SetRange(DoccAttach."Document Type", DoccAttach."Document Type"::Quote);
                     Message('Se generarán %1 tareas de retirada', DoccAttach.Count);
                     If DoccAttach.FindFirst() then
                         repeat
@@ -838,7 +838,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     DoccAttach.SetRange("Table ID", Database::"User Task");
                     DoccAttach.SetRange("No.", Usertask."No.");
                     DoccAttach.SetFilter("Line No.", '<>%1', 0);
-                    DoccAttach.SetRange(DoccAttach."Document Type", DoccAttach."Document Type"::Order);
+                    DoccAttach.SetRange(DoccAttach."Document Type", DoccAttach."Document Type"::Quote);
                     //If Opcion <> Opcion::Opi then
                     DoccAttach.DeleteAll(true);
                     DoccAttach.Reset();
@@ -986,29 +986,56 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                 trigger OnAction()
                 var
                     Usertask: Record "User Task";
+                    TareaCorreo: Record "User Task";
                     Procesos_GTask: Codeunit Procesos_GTask;
-                    Responsable: Text;
-                    Supervisor: Text;
+                    Proyecto: Record Job;
+                    rDet: Record "Orden fijación";
                     EmailResponsable: Text;
                     EmailSupervisor: Text;
                     ListaCorreos: Text;
+                    DescripcionCorreo: Text;
                     User: Record User;
                     DoccAttach: Record "Document Attachment";
                     IdDocPadre: Integer;
                 begin
-
                     Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
-                    //if Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then Error('No se puede reenviar correo para OPI');
-                    If Usertask.FindFirst() then
-                        repeat
-                            user.get(Usertask."Created By");
-                            DoccAttach.SetRange("Table ID", Database::"User Task");
-                            DoccAttach.SetRange("No.", Format(Usertask.OrdenFijacion));
-                            if DoccAttach.FindFirst() then
-                                IdDocPadre := DoccAttach.Id;
-                            Procesos_Gtask.DevuelveSupervisoryResponsable(Usertask."Assigned To", Usertask.Supervisor, 'TALLER', 'TALLER', Usertask."User Task Group Assigned To", EmailResponsable, EmailSupervisor, User, Usertask, ListaCorreos);
-                            EnviaCorreo(Usertask, true, '', false, 'Tarea Fijación', EmailResponsable, EmailSupervisor, ListaCorreos, 'julian@malla.es;xcastell@malla.es;lllompart@malla.es;andreuserra@malla.es', User."Full Name", IdDocPadre);
-                        until Usertask.Next() = 0;
+                    if not Usertask.FindFirst() then
+                        Error('No existe ninguna tarea para esta orden de fijación.');
+
+                    User.Get(Usertask."Created By");
+
+                    rDet.SetRange("Nº Orden", Rec."Nº Orden");
+                    rDet.FindFirst();
+                    Proyecto.ChangeCompany(CompanyName);
+                    if rDet.Empresa <> '' then
+                        Proyecto.ChangeCompany(rDet.Empresa);
+                    if Usertask.EmpresaTarea <> '' then
+                        Proyecto.ChangeCompany(Usertask.EmpresaTarea);
+                    Proyecto.Get(Rec."Nº Proyecto");
+                    if Proyecto."Nombre Comercial" = Proyecto."Bill-to Name" then
+                        Proyecto."Nombre Comercial" := '';
+
+                    DescripcionCorreo := 'Fijación soportes ' + Rec."Nº proyecto" + ' del cliente ' + Proyecto."Bill-to Name" + ' ' + Proyecto."Nombre Comercial";
+                    TareaCorreo := Usertask;
+                    TareaCorreo.SetDescription(DescripcionCorreo);
+
+                    DoccAttach.Reset();
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Format(Rec."Nº Orden"));
+                    DoccAttach.SetFilter("Document Type", '>%1', 0);
+                    if DoccAttach.FindFirst() then
+                        IdDocPadre := DoccAttach.Id;
+
+                    Procesos_Gtask.DevuelveSupervisoryResponsable(
+                        Usertask."Assigned To", Usertask.Supervisor, 'TALLER', 'TALLER',
+                        Usertask."User Task Group Assigned To", EmailResponsable, EmailSupervisor, User, Usertask, ListaCorreos);
+                    Procesos_Gtask.Email(TareaCorreo, EmailResponsable, EmailSupervisor);
+                    EnviaCorreo(
+                        TareaCorreo, true, '', false,
+                        'Tarea Fijación ' + Proyecto.Description,
+                        EmailResponsable, EmailSupervisor, ListaCorreos,
+                        'julian@malla.es;xcastell@malla.es;andreuserra@malla.es;lllompart@malla.es',
+                        User."Full Name", IdDocPadre);
                 end;
             }
             action("Etiquetas QR Seleccionadas")
