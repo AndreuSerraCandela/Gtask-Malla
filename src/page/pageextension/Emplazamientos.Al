@@ -63,32 +63,12 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                     Image = ViewJob;
                     trigger OnAction()
                     var
-                        Gtask: Codeunit GTask;
-                        UsuariodGtask: Record UsuariosGtask;
-                        Supervisor: Guid;
-                        Responsable: Guid;
-                        RecRef: RecordRef;
+                        UserTaskList: Page "User Task List";
+
                     begin
-                        Gtask.CrearCategorias(CompanyName);
-                        Commit();
-                        RecRef.GetTable(Rec);
-                        UsuariodGtask.ChangeCompany('Malla Publicidad');
-                        UsuariodGtask.SetRange(Departamento, 'TECNICO');
-                        UsuariodGtask.SetRange(Supervisor, true);
-                        if UsuariodGtask.FindFirst() then
-                            Supervisor := UsuariodGtask."Id Usuario";
-                        if not IsNullGuid(Supervisor) then begin
-                            UsuariodGtask.SetRange(Supervisor);
-                            UsuariodGtask.SetFilter("Id Usuario", '<>%1', Supervisor);
-                            if UsuariodGtask.FindFirst() then
-                                Responsable := UsuariodGtask."Id Usuario";
-                        end;
-                        if IsNullGuid(Responsable) then
-                            Responsable := Supervisor;
 
-                        Gtask.CrearTareaEmpazamiento(RecRef, Rec."Nº Emplazamiento" + ' ' + Rec."Descripción"
-                        , Responsable, Supervisor, 'TECNICO', 'TECNICO', false, '');
-
+                        UserTaskList.SetEmplazamiento(Rec.RecordId);
+                        UserTaskList.RunModal();
 
                     end;
                 }

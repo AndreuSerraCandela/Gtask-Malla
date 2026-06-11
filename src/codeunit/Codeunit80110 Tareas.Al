@@ -744,27 +744,7 @@ codeunit 7001148 GTask
                                 Tareas.SetDescription(JsonCampo.AsValue().AsText());
                                 Tareas.Get(Id);
                             end;
-                            // "expirationDate": {
-                            //     "date": "2023-11-02T10:31:04",
-                            //     "rule": null,
-                            //     "custom": false
-                            // },
-                            If JsonTarea.Get('expirationDate', JsonCampo)
-                            then begin
-                                JsonDetalleCampo := JsonCampo.AsObject();
-                                JsonDetalleCampo.Get('date', JsonCampo);
-                                Tareas."Due DateTime" := JsonCampo.AsValue().AsDateTime();
-                            end;
-                            //"daysToPerform": 0,
-                            If JsonTarea.Get('daysToPerform', JsonCampo) then begin
-                                Hasta := Variant2Date(Tareas."Due DateTime");
-                                DaystoPerform := JsonCampo.AsValue().AsText();
-                                If CopyStr(DaystoPerform, 1, 1) = '-' then
-                                    Desde := CalcDate('0D', Hasta)
-                                else
-                                    Desde := CalcDate('-' + JsonCampo.AsValue().AsText() + 'D', Hasta);
-                                Tareas."Start DateTime" := DaTi2Variant(Desde, Variant2Time(Tareas."Due DateTime"));
-                            end;
+                            AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
                             //Actualizar supervisor
                             if JsonTarea.Get('supervisor', JsonCampo) then begin
                                 UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
@@ -2727,6 +2707,7 @@ codeunit 7001148 GTask
         CompanyInfo: Record "Company Information";
     begin
         JsonFormater.WriteStartObject('');
+        If Recurso.Name = '' Then Recurso.Name := 'Sin Recurso';
         JsonFormater.WriteStringProperty('name', Recurso.Name);
         JsonFormater.WriteStringProperty('No', Recurso."No.");
         JsonFormater.WriteEndObject();
@@ -2734,6 +2715,7 @@ codeunit 7001148 GTask
         CompanyInfo.Get();
         Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'resource', Token(), RequestType::post, jSon);
         JSONMgt.InitializeObject(Json);
+        If Json = '' Then Exit;
         JSONMgt.ReadProperties();
         WHILE JSONMgt.GetNextProperty(Name, Value1) DO BEGIN
             CASE Name OF
@@ -3290,7 +3272,7 @@ codeunit 7001148 GTask
         //end;
         Commit();
         Page.RunModal(Page::"User Task Card", UserTask);
-        iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+        iF UserTask.EliminarTarea then begin
             UserTask.Get(UserTask.ID);
             Commit();
             If Confirm('¿Desea borrar la tarea?') then begin
@@ -3308,7 +3290,7 @@ codeunit 7001148 GTask
                 Commit();
                 UserTask.Get(UserTask.ID);
                 Page.RunModal(Page::"User Task Card", UserTask);
-                iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                iF UserTask.EliminarTarea then begin
                     UserTask.Get(UserTask.ID);
                     Commit();
                     If Confirm('¿Desea borrar la tarea?') then begin
@@ -3437,7 +3419,7 @@ codeunit 7001148 GTask
         //end;
         Commit();
         Page.RunModal(Page::"User Task Card", UserTask);
-        iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+        iF UserTask.EliminarTarea then begin
             UserTask.Get(UserTask.ID);
             Commit();
             If Confirm('¿Desea borrar la tarea?') then begin
@@ -3455,7 +3437,7 @@ codeunit 7001148 GTask
                 Commit();
                 UserTask.Get(UserTask.ID);
                 Page.RunModal(Page::"User Task Card", UserTask);
-                iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                iF UserTask.EliminarTarea then begin
                     UserTask.Get(UserTask.ID);
                     Commit();
                     If Confirm('¿Desea borrar la tarea?') then begin
@@ -3508,7 +3490,7 @@ codeunit 7001148 GTask
        Depatamento: code[20];
        Servicio: code[20];
        Adjuntar: Boolean;
-       Adjunto: Text)
+       Adjunto: Text; Categoria: code[20])
     var
         UserTask: Record "User Task";
         User: Record User;
@@ -3525,7 +3507,7 @@ codeunit 7001148 GTask
         TempBlob: Codeunit "Temp Blob";
         ListadeCorreos: Text;
         UserTaskCard: Page "User Task Card";
-        Categoria: code[20];
+
     begin
         Gtask.CrearCategorias(CompanyName);
         Commit();
@@ -3540,6 +3522,8 @@ codeunit 7001148 GTask
         UserTask."Supervisor" := Supervisor;
         UserTask.Departamento := Depatamento;
         UserTask.Servicio := Servicio;
+        If Categoria <> '' then
+            UserTask."User Task Group Assigned To" := Categoria;
         UserTask.Validate("Created DateTime", CurrentDateTime);
         If Date2DWY(WorkDate(), 1) = 5 then begin
             Usertask."Start DateTime" := CreateDateTime(CalcDate('3D', WorkDate()), 080000T);
@@ -3574,13 +3558,18 @@ codeunit 7001148 GTask
         UserTask.Insert(true);
         // if not IsNullGuid(UserTask.Supervisor) then begin
         //     UserTask."Created By" := Supervisor;
+        If Categoria <> '' then
+            UserTask."User Task Group Assigned To" := Categoria;
+        if Categoria <> '' then
+            UserTask."Categoría" := Categoria;
+        UserTask.Estado := UserTask.Estado::Pendiente;
         UserTask."No." := Format(UserTask.ID);
         UserTask.Modify();
         //end;
         Commit();
         UserTaskCard.SetRecord(UserTask);
         UserTaskCard.RunModal();
-        iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+        iF UserTask.EliminarTarea then begin
             UserTask.Get(UserTask.ID);
             Commit();
             If Confirm('¿Desea borrar la tarea?') then begin
@@ -3601,7 +3590,7 @@ codeunit 7001148 GTask
                 Commit();
                 UserTask.Get(UserTask.ID);
                 Page.RunModal(Page::"User Task Card", UserTask);
-                iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                iF UserTask.EliminarTarea then begin
                     UserTask.Get(UserTask.ID);
                     Commit();
                     If Confirm('¿Desea borrar la tarea?') then begin
@@ -3684,6 +3673,9 @@ codeunit 7001148 GTask
         UserTaskCard: Page "User Task Card";
         JobSetup: Record "Jobs Setup";
         UserTaskOld: Record "User Task";
+        FechaTarea: Date;
+        HoraInicio: Time;
+        HoraFin: Time;
 
     //Operario: Guid;
     begin
@@ -3802,7 +3794,14 @@ codeunit 7001148 GTask
             tm.Delete();
         end;
         if Not JobSetup."Es Debug" then begin
+            FechaTarea := DT2Date(UserTask."Start DateTime");
+            HoraInicio := DT2Time(UserTask."Start DateTime");
+            HoraFin := DT2Time(UserTask."Due DateTime");
             Gtask.CrearTareaTecnico(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
+            UserTask.Get(UserTask.ID);
+            UserTask."Start DateTime" := CreateDateTime(FechaTarea, HoraInicio);
+            UserTask."Due DateTime" := CreateDateTime(FechaTarea, HoraFin);
+            UserTask.Modify(true);
             Procesos_GTask.Email(UserTask, EmailResponsable, EmailSupervisor);
             Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
         end;
@@ -4122,6 +4121,72 @@ codeunit 7001148 GTask
             exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T0<Hours24>:<Minutes,2>:<Seconds,2>'))
         else
             exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'));
+    end;
+
+    /// <summary>
+    /// Aplica expirationDate y daysToPerform devueltos por GTask sin desplazar un día la fecha de inicio
+    /// ni sobrescribir la hora de inicio (p. ej. limpieza 08:00–13:00 el mismo día).
+    /// BC envía daysToPerform = (Due - Start) + 1; 1 = mismo día calendario.
+    /// </summary>
+    local procedure AplicarFechasDesdeGtaskJson(var Tareas: Record "User Task"; var JsonTarea: JsonObject)
+    var
+        JsonCampo: JsonToken;
+        JsonDetalleCampo: JsonObject;
+    begin
+        if JsonTarea.Get('expirationDate', JsonCampo) then begin
+            JsonDetalleCampo := JsonCampo.AsObject();
+            if JsonDetalleCampo.Get('date', JsonCampo) then
+                AplicarExpirationDateDesdeGtask(Tareas, JsonCampo);
+        end;
+        if JsonTarea.Get('daysToPerform', JsonCampo) then
+            AplicarDaysToPerformDesdeGtask(Tareas, JsonCampo.AsValue().AsText());
+    end;
+
+    local procedure AplicarExpirationDateDesdeGtask(var Tareas: Record "User Task"; JsonFecha: JsonToken)
+    var
+        NuevaDue: DateTime;
+        HoraDue: Time;
+        FechaDue: Date;
+    begin
+        NuevaDue := JsonFecha.AsValue().AsDateTime();
+        FechaDue := DT2Date(NuevaDue);
+        if FechaDue = 0D then
+            exit;
+        HoraDue := DT2Time(Tareas."Due DateTime");
+        if HoraDue = 0T then
+            HoraDue := DT2Time(NuevaDue);
+        Tareas."Due DateTime" := CreateDateTime(FechaDue, HoraDue);
+    end;
+
+    local procedure AplicarDaysToPerformDesdeGtask(var Tareas: Record "User Task"; DaysToPerformTxt: Text)
+    var
+        Hasta: Date;
+        Desde: Date;
+        DiasPerform: Integer;
+        HoraInicio: Time;
+    begin
+        if CopyStr(DaysToPerformTxt, 1, 1) = '-' then begin
+            Hasta := DT2Date(Tareas."Due DateTime");
+            if Hasta = 0D then
+                exit;
+            Desde := CalcDate('0D', Hasta);
+        end else begin
+            if not Evaluate(DiasPerform, DaysToPerformTxt) then
+                exit;
+            if DiasPerform <= 0 then
+                exit;
+            Hasta := DT2Date(Tareas."Due DateTime");
+            if Hasta = 0D then
+                exit;
+            if DiasPerform = 1 then
+                Desde := Hasta
+            else
+                Desde := CalcDate(StrSubstNo('<-%1D>', DiasPerform - 1), Hasta);
+        end;
+        HoraInicio := DT2Time(Tareas."Start DateTime");
+        if HoraInicio = 0T then
+            HoraInicio := 080000T;
+        Tareas."Start DateTime" := CreateDateTime(Desde, HoraInicio);
     end;
 
 
@@ -6152,27 +6217,7 @@ codeunit 7001148 GTask
                                 // Tareas.SetDescription(JsonCampo.AsValue().AsText());
                                 // Tareas.Get(Id);
                             end;
-                            // "expirationDate": {
-                            //     "date": "2023-11-02T10:31:04",
-                            //     "rule": null,
-                            //     "custom": false
-                            // },
-                            If JsonTarea.Get('expirationDate', JsonCampo)
-                            then begin
-                                JsonDetalleCampo := JsonCampo.AsObject();
-                                JsonDetalleCampo.Get('date', JsonCampo);
-                                Tareas."Due DateTime" := JsonCampo.AsValue().AsDateTime();
-                            end;
-                            //"daysToPerform": 0,
-                            If JsonTarea.Get('daysToPerform', JsonCampo) then begin
-                                Hasta := Variant2Date(Tareas."Due DateTime");
-                                DaystoPerform := JsonCampo.AsValue().AsText();
-                                If CopyStr(DaystoPerform, 1, 1) = '-' then
-                                    Desde := CalcDate('0D', Hasta)
-                                else
-                                    Desde := CalcDate('-' + JsonCampo.AsValue().AsText() + 'D', Hasta);
-                                Tareas."Start DateTime" := DaTi2Variant(Desde, Variant2Time(Tareas."Due DateTime"));
-                            end;
+                            AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
                             //Actualizar supervisor
                             if JsonTarea.Get('supervisor', JsonCampo) then begin
                                 UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
@@ -9352,7 +9397,7 @@ codeunit 7001148 GTask
                 Commit();
                 UserTask.Get(UserTask.ID);
                 Page.RunModal(Page::"User Task Card", UserTask);
-                iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                iF UserTask.EliminarTarea then begin
                     UserTask.Get(UserTask.ID);
                     Commit();
                     If Confirm('¿Desea borrar la tarea?') then begin

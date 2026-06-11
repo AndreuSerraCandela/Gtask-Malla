@@ -322,6 +322,88 @@ pageextension 92157 "UserTaskList" extends "User Task List"
             //             until UserTask.Next() = 0;
             //     end;
             // }
+            group(Emplazamiento)
+            {
+                Caption = 'Crear Tareas Emplazamientos';
+                action("Crear Tarea Emplazamiento")
+                {
+                    ApplicationArea = All;
+                    Image = ViewJob;
+                    Visible = Emplazamiento;
+                    trigger OnAction()
+                    var
+                        Gtask: Codeunit GTask;
+                        UsuariodGtask: Record UsuariosGtask;
+                        Supervisor: Guid;
+                        Responsable: Guid;
+                        RecRef: RecordRef;
+                        Emplazamientos: Record Emplazamientos;
+                        Categoria: code[20];
+                    begin
+                        Gtask.CrearCategorias(CompanyName);
+                        Commit();
+                        Emplazamientos.Get(EmplazaMintoId);
+                        RecRef.GetTable(Emplazamientos);
+                        UsuariodGtask.ChangeCompany('Malla Publicidad');
+                        UsuariodGtask.SetRange(Departamento, 'TECNICO');
+                        UsuariodGtask.SetRange(Supervisor, true);
+                        if UsuariodGtask.FindFirst() then
+                            Supervisor := UsuariodGtask."Id Usuario";
+                        if not IsNullGuid(Supervisor) then begin
+                            UsuariodGtask.SetRange(Supervisor);
+                            UsuariodGtask.SetFilter("Id Usuario", '<>%1', Supervisor);
+                            if UsuariodGtask.FindFirst() then
+                                Responsable := UsuariodGtask."Id Usuario";
+                        end;
+                        if IsNullGuid(Responsable) then
+                            Responsable := Supervisor;
+
+                        Gtask.CrearTareaEmpazamiento(RecRef, Emplazamientos."Nº Emplazamiento" + ' ' + Emplazamientos."Descripción"
+                        , Responsable, Supervisor, 'TECNICO', 'TECNICO', false, '', Categoria);
+
+
+                    end;
+                }
+                //Crear Tarea Pago Emplazamiento
+                action("Crear Tarea Pago Emplazamiento")
+                {
+                    ApplicationArea = All;
+                    Image = ViewJob;
+                    Visible = Emplazamiento;
+                    trigger OnAction()
+                    var
+                        Gtask: Codeunit GTask;
+                        UsuariodGtask: Record UsuariosGtask;
+                        Supervisor: Guid;
+                        Responsable: Guid;
+                        RecRef: RecordRef;
+                        Emplazamientos: Record Emplazamientos;
+                    begin
+                        Gtask.CrearCategorias(CompanyName);
+                        Commit();
+                        Emplazamientos.Get(EmplazaMintoId);
+                        RecRef.GetTable(Emplazamientos);
+                        UsuariodGtask.ChangeCompany('Malla Publicidad');
+                        UsuariodGtask.SetRange(Departamento, 'TECNICO');
+                        UsuariodGtask.SetRange(Supervisor, true);
+                        if UsuariodGtask.FindFirst() then
+                            Supervisor := UsuariodGtask."Id Usuario";
+                        if not IsNullGuid(Supervisor) then begin
+                            UsuariodGtask.SetRange(Supervisor);
+                            UsuariodGtask.SetFilter("Id Usuario", '<>%1', Supervisor);
+                            if UsuariodGtask.FindFirst() then
+                                Responsable := UsuariodGtask."Id Usuario";
+                        end;
+                        if IsNullGuid(Responsable) then
+                            Responsable := Supervisor;
+
+                        Gtask.CrearTareaEmpazamiento(RecRef, Emplazamientos."Nº Emplazamiento" + ' ' + Emplazamientos."Descripción"
+                        , Responsable, Supervisor, 'TECNICO', 'TECNICO', false, '', 'PAGOS EMPLAZAMIENTOS');
+
+
+                    end;
+                }
+            }
         }
         addbefore("User Task Groups_Promoted")
         {
@@ -330,6 +412,12 @@ pageextension 92157 "UserTaskList" extends "User Task List"
             actionref("Tareas_Asignadas_ref"; "Tareas Asignadas") { }
             actionref("Tareas_Creadas_ref"; "Tareas creadas") { }
             actionref(CreateParte_Ref; CreateParte) { }
+            group(Emplazamientos)
+            {
+                Caption = 'Crear Tareas Emplazamientos';
+                actionref("Crear Tarea Emplazamiento_ref"; "Crear Tarea Emplazamiento") { }
+                actionref("Crear Tarea Pago Emplazamiento_ref"; "Crear Tarea Pago Emplazamiento") { }
+            }
         }
     }
     trigger OnOpenPage()
@@ -339,6 +427,8 @@ pageextension 92157 "UserTaskList" extends "User Task List"
 
     var
         EstadoStyle: Text;
+        Emplazamiento: Boolean;
+        EmplazaMintoId: RecordId;
 
     trigger OnAfterGetRecord()
     begin
@@ -353,5 +443,15 @@ pageextension 92157 "UserTaskList" extends "User Task List"
                 EstadoStyle := 'Unfavorable';
         end;
     end;
+
+    procedure SetEmplazamiento(EmplazamientoId: RecordId)
+    begin
+        Emplazamiento := true;
+        EmplazaMintoId := EmplazamientoId;
+        Rec.SetRange(Id_Record, EmplazamientoId);
+    end;
+
+
+
 
 }

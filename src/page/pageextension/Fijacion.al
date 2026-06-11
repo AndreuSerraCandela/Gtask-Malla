@@ -386,7 +386,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     end;
                     Commit();
                     Page.RunModal(Page::"User Task Card", UserTask);
-                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                    iF UserTask.EliminarTarea then begin
                         UserTask.Get(UserTask.ID);
                         Commit();
                         If Confirm('¿Desea borrar la tarea?') then begin
@@ -769,7 +769,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
 
                     Commit();
                     Page.RunModal(Page::"User Task Card", UserTask);
-                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                    iF UserTask.EliminarTarea then begin
                         UserTask.Get(UserTask.ID);
                         Commit();
                         If Confirm('¿Desea borrar la tarea?') then begin
@@ -950,7 +950,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                         Error('No existe una tarea para esta orden')
                     else
                         Page.RunModal(Page::"User Task List", Usertask);
-                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                    iF UserTask.EliminarTarea then begin
                         Commit();
                         Usertask.Get(Usertask.ID);
                         UserTask.Delete(true);

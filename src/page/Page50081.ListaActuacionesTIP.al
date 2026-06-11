@@ -77,6 +77,7 @@ page 50081 "Lista Actuaciones TIP"
                     NuevaActuacion.FechaHora := CurrentDateTime;
                     NuevaActuacion."Fecha Actuacion" := CurrentDateTime;
                     NuevaActuacion.Insert(true);
+                    Commit();
                     Page.RunModal(Page::"Incidencias Taller", NuevaActuacion);
                     CurrPage.Update(false);
                 end;

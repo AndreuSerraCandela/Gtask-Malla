@@ -53,7 +53,7 @@ pageextension 92159 SolicitudesExt extends "Ficha Solicitudes"
                     UserTask.Modify();
                     Commit();
                     Page.RunModal(Page::"User Task Card", UserTask);
-                    iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                    iF UserTask.EliminarTarea then begin
                         UserTask.Get(UserTask.ID);
                         Commit();
                         If Confirm('¿Desea borrar la tarea?') then begin
@@ -70,7 +70,7 @@ pageextension 92159 SolicitudesExt extends "Ficha Solicitudes"
                             Commit();
                             UserTask.Get(UserTask.ID);
                             Page.RunModal(Page::"User Task Card", UserTask);
-                            iF UserTask.Estado = UserTask.Estado::Cancelado then begin
+                            iF UserTask.EliminarTarea then begin
                                 UserTask.Get(UserTask.ID);
                                 Commit();
                                 If Confirm('¿Desea borrar la tarea?') then begin

@@ -288,6 +288,12 @@ tableextension 92103 Tareasusuarios extends "User Task"
                     Validate(Estado, Estado::Finalizado);
             end;
         }
+        //Eliminar Tarea
+        field(50039; EliminarTarea; Boolean)
+        {
+            Caption = 'Eliminar Tarea';
+            DataClassification = ToBeClassified;
+        }
     }
     trigger OnAfterDelete()
     var

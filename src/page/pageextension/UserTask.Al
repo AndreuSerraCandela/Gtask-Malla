@@ -134,12 +134,31 @@ pageextension 92154 "UserTask" extends "User Task card"
                 trigger OnValidate()
                 begin
                     Eventos(Rec."Categoría");
+                    ActualizarChecklist();
+                    CurrPage.Update(false);
                 end;
             }
             field(Job; Rec."Job No.")
             {
                 Caption = 'Nº Proyecto';
                 ApplicationArea = All;
+            }
+        }
+
+        addlast(Content)
+        {
+            group(Checklist)
+            {
+                Caption = 'Checklist';
+                Visible = MostrarChecklist;
+
+                part(ChecklistTareaUsuario; "Checklist Tarea Usuario")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Checklist';
+                    SubPageLink = Id = field(ID), "Categoría" = field("User Task Group Assigned To");
+                    UpdatePropagation = Both;
+                }
             }
         }
 
@@ -319,12 +338,22 @@ pageextension 92154 "UserTask" extends "User Task card"
     begin
         If Rec.Estado = Rec.Estado::Pendiente then
             If not Rec.EsPeriodica then
-                Rec.Estado := Rec.Estado::Cancelado;
+                Rec.EliminarTarea := true;
         if Rec."No." = '' then begin
             Rec."No." := Format(Rec.ID);
             Rec.Modify();
         end;
         Rec.ActualizarFechaAviso();
+        ActualizarChecklist();
+    end;
+
+    trigger OnOpenPage()
+    begin
+        if Rec."Categoría" <> '' then begin
+            Eventos(Rec."Categoría");
+            ActualizarChecklist();
+            CurrPage.Update(false);
+        end;
     end;
 
     Procedure Eventos(pCategoria: Code[20])
@@ -369,6 +398,26 @@ pageextension 92154 "UserTask" extends "User Task card"
         pListadeCorreos := ListadeCorreos;
     end;
 
+    local procedure ActualizarChecklist()
+    var
+        ChecklistTareaUsuario: Record "Checklist Tarea Usuario";
+        CategoriaChecklist: Code[20];
+    begin
+        MostrarChecklist := false;
+
+        CategoriaChecklist := Rec."User Task Group Assigned To";
+        if CategoriaChecklist = '' then
+            CategoriaChecklist := Rec."Categoría";
+        if CategoriaChecklist = '' then
+            exit;
+
+        MostrarChecklist := ChecklistTareaUsuario.TienePlantilla(CategoriaChecklist);
+        if not MostrarChecklist then
+            exit;
+
+        ChecklistTareaUsuario.CrearDesdePlantilla(Rec.ID, CategoriaChecklist);
+    end;
+
     local procedure FinishPage(Borrar: Text)
     var
         Gtask: Codeunit Gtask;
@@ -376,7 +425,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         Resource: Record Resource;
     begin
         If Borrar = 'Delete' then
-            REC.Estado := Rec.Estado::Cancelado
+            REC.EliminarTarea := true
         else
             Rec.Estado := Rec.Estado::Pendiente;
         Rec.Modify();
@@ -405,6 +454,7 @@ pageextension 92154 "UserTask" extends "User Task card"
         EmailSupervisor: Text;
         User: Record User;
         ListadeCorreos: Text;
+        MostrarChecklist: Boolean;
 
 
 }

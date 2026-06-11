@@ -3,6 +3,51 @@
   <file datatype="xml" source-language="en-US" target-language="en-US" original="Task Malla">
     <body>
       <group id="body">
+        <trans-unit id="Table 1276711099 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Checklist Tarea Usuario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 3010097039 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Categoría</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Categoría - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 4113018130 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Completado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Completado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 2911674845 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Completado por</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Completado por - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 2615446671 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descripción</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Descripción - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 2800861409 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha completado</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Fecha Completado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 415504711 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Id tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Id - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 1363296737 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nº Línea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Nº Línea - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Table 1276711099 - Field 4279955139 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Obligatorio</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Checklist Tarea Usuario - Field Obligatorio - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Incidencias</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -622,6 +667,11 @@
           <source>Informe Chat</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Chat Tareas - Action Informe Chat - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 1276711099 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Checklist</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Checklist Tarea Usuario - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2163432038 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Crear Chat</source>
@@ -2603,6 +2653,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Categorias - Action Sincronizar - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 3377152574 - Control 727532163 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2618634653">
+          <source>Checklist</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Categorias - Control ChecklistTareaUsuario - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 1983004292 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2958453812">
           <source>Categorías</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3273,6 +3328,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control Job - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Control 3851288392 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Checklist</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control Checklist - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 301352800 - Control 727532163 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
+          <source>Checklist</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTask - Control ChecklistTareaUsuario - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 301352800 - Control 3786280800 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 9309876">
           <source>Documentos Adjuntos</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3292,6 +3357,21 @@
           <source>Permitir Parte de Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action CreateParte - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 897351230 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Crear Tareas Emplazamientos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Emplazamiento - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 1664428226 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Crear Tarea Emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Crear Tarea Emplazamiento - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 3655959905 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Crear Tarea Pago Emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Crear Tarea Pago Emplazamiento - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2984827402 - Action 3842264601 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
           <source>Finalizar Todas las Tareas de Limpieza</source>
@@ -3317,6 +3397,11 @@
           <source>Tareas Supervisadas</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Tareas Supervisadas - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 2295858475 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Crear Tareas Emplazamientos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Emplazamientos - Property Caption</note>
         </trans-unit>
         <trans-unit id="PageExtension 2984827402 - Control 870350816 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
           <source>Responsable de la tarea</source>
@@ -3827,6 +3912,11 @@
           <source>Días antes para avisar</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field DiasAntesAviso - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="TableExtension 2225073607 - Field 3522754590 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
+          <source>Eliminar Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field EliminarTarea - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 1260617698 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
           <source>Empresa Linea</source>

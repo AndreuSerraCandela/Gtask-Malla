@@ -31,6 +31,7 @@ pageextension 92172 "TaskList" extends "Task List"
                 end;
 
             }
+
         }
     }
     trigger OnOpenPage()
@@ -38,8 +39,17 @@ pageextension 92172 "TaskList" extends "Task List"
         // Rec.SetRange("Assigned To", UserSecurityId());
     end;
 
+    procedure SetEmplazamiento(EmplazamientoId: RecordId)
+    begin
+        Emplazamiento := true;
+        EmplazaMintoId := EmplazamientoId;
+    end;
+
+
     var
         EstadoStyle: Text;
+        Emplazamiento: Boolean;
+        EmplazaMintoId: RecordId;
 
 
 

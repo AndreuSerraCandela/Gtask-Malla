@@ -15,6 +15,18 @@ pageextension 92163 Categorias extends "User Task Group"
             //     ApplicationArea = All;
             // }
         }
+        addafter(Control4)
+        {
+
+            part(ChecklistTareaUsuario; "Checklist Tarea Usuario")
+            {
+                ApplicationArea = All;
+                Caption = 'Checklist';
+                SubPageLink = Id = const(0), "Categoría" = field(Code);
+                UpdatePropagation = Both;
+            }
+
+        }
         // modify(Control4)
         // {
         //     Visible = false;
