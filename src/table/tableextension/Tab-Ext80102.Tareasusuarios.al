@@ -100,6 +100,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
             trigger OnValidate()
             var
                 Categorias: Record "User Task Group Member";
+                Procesos_GTask: Codeunit Procesos_GTask;
             begin
                 Categorias.ChangeCompany('Malla Publicidad');
                 "User Task Group Assigned To" := Categoría;
@@ -109,7 +110,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
                 if Categorias.FindFirst() then
                     "Assigned To" := Categorias."User Security ID";
                 "User Task Group Assigned To" := "Categoría";
-
+                Procesos_GTask.ActualizarGrupoTarea(Rec, false);
             end;
         }
         field(50009; Estado; Enum "Task Enum")
@@ -367,7 +368,6 @@ tableextension 92103 Tareasusuarios extends "User Task"
         Avisar := Origen.Avisar;
         DiasAntesAviso := Origen.DiasAntesAviso;
         Priority := Origen.Priority;
-        Grupo := Origen.Grupo;
     end;
 
     procedure CrearSiguienteOcurrencia(): Boolean
@@ -382,6 +382,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
         Emplaz: Record Emplazamientos;
         NoRecurso: Code[20];
         JobSetup: Record "Jobs Setup";
+        Procesos_GTask: Codeunit Procesos_GTask;
     begin
         if not RecurrenciaActiva or SiguienteOcurrenciaCreada then
             exit(false);
@@ -427,6 +428,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
         Nueva."Start DateTime" := CreateDateTime(ProxInicio, DT2Time("Start DateTime"));
         Nueva."Due DateTime" := CreateDateTime(ProxVenc, DT2Time("Due DateTime"));
         Nueva.ActualizarFechaAviso();
+        Procesos_GTask.ActualizarGrupoTarea(Nueva, false);
         Nueva.Insert(true);
         Nueva."No." := Format(Nueva.ID);
         Nueva.Modify(true);

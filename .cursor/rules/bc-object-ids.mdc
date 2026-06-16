@@ -1,0 +1,35 @@
+---
+description: Reservar IDs de objetos BC en objetos.malla.es
+globs: "**/*.{al,Page.al,Table.al,Codeunit.al,Report.al,Query.al,Enum.al,XmlPort.al}"
+alwaysApply: false
+---
+
+# IDs de objetos Business Central
+
+Al crear un objeto BC nuevo (page, table, codeunit, report, etc.) que necesite ID en rango de licencia:
+
+1. **No inventes números.** Reserva siempre en objetos.malla.es.
+2. Ejecuta en terminal (ajusta extensión y nombre):
+
+```powershell
+.\scripts\next-object.ps1 -Type page -Extension Malla -Name "NombreDelObjeto"
+```
+
+O con curl:
+
+```bash
+curl -s "https://objetos.malla.es/api/objects/next?page&extension=Malla&name=NombreDelObjeto&format=plain"
+```
+
+3. Usa el número devuelto en el código AL (`page 50077 "..."`).
+4. Si cancelas el objeto, libera la reserva:
+
+```bash
+curl -s -X DELETE "https://objetos.malla.es/api/objects/reserve?type=page&id=50077"
+```
+
+Extension: usa el `name` de `app.json` de la extensión (ej. `Malla`, `Task Malla`). Parámetro `name` puede ser el nombre del objeto AL o `TBD`.
+
+Copia esta regla y `scripts/next-object.ps1` al repo AL donde trabajes con Cursor.
+
+Tipos soportados en la URL: `page`, `table`, `codeunit`, `report`, `query`, `enum`, `xmlport`, etc. (`?page`, `?table`, `?codeunit`...).

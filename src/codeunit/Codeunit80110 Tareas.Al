@@ -1087,6 +1087,7 @@ codeunit 7001148 GTask
                 JsonFormater.WriteStringProperty('IdQr', Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva));
             Tarea.IdQr := Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva);
         end;
+        AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         CompanyInfo.Get();
@@ -1316,6 +1317,7 @@ codeunit 7001148 GTask
         if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
             Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
         JsonFormater.WriteStringProperty('link', Url);
+        AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         CompanyInfo.Get();
@@ -1671,6 +1673,63 @@ codeunit 7001148 GTask
         Exit('');
     end;
 
+    local procedure ObtenerLineasChecklistTarea(Tarea: Record "User Task"; var ChecklistTareaUsuario: Record "Checklist Tarea Usuario"): Boolean
+    var
+        Categoria: Code[20];
+        ChecklistTareaUsuarioAux: Record "Checklist Tarea Usuario";
+    begin
+        if Tarea.ID = 0 then
+            exit(false);
+
+        Categoria := Tarea."User Task Group Assigned To";
+        if Categoria = '' then
+            Categoria := Tarea."Categoría";
+        if Categoria = '' then
+            exit(false);
+
+        if not ChecklistTareaUsuarioAux.TieneChecklistTarea(Tarea.ID, Categoria) then
+            exit(false);
+
+        ChecklistTareaUsuario.Reset();
+        ChecklistTareaUsuario.SetRange(Id, Tarea.ID);
+        ChecklistTareaUsuario.SetRange("Categoría", Categoria);
+        exit(ChecklistTareaUsuario.FindSet());
+    end;
+
+    procedure AgregarChecklistTareaAJson(var JsonFormater: Codeunit "Json Text Reader/Writer"; Tarea: Record "User Task")
+    var
+        ChecklistTareaUsuario: Record "Checklist Tarea Usuario";
+    begin
+        if not ObtenerLineasChecklistTarea(Tarea, ChecklistTareaUsuario) then
+            exit;
+
+        JsonFormater.WriteStartArray('checklist');
+        repeat
+            JsonFormater.WriteStartObject('');
+            JsonFormater.WriteStringProperty('text', ChecklistTareaUsuario."Descripción");
+            JsonFormater.WriteEndObject();
+        until ChecklistTareaUsuario.Next() = 0;
+        JsonFormater.WriteEndArray();
+    end;
+
+    procedure AgregarChecklistTareaAJsonObject(var JsonObjt: JsonObject; Tarea: Record "User Task")
+    var
+        ChecklistTareaUsuario: Record "Checklist Tarea Usuario";
+        ChecklistArray: JsonArray;
+        ChecklistItem: JsonObject;
+    begin
+        if not ObtenerLineasChecklistTarea(Tarea, ChecklistTareaUsuario) then
+            exit;
+
+        Clear(ChecklistArray);
+        repeat
+            Clear(ChecklistItem);
+            ChecklistItem.Add('text', ChecklistTareaUsuario."Descripción");
+            ChecklistArray.Add(ChecklistItem);
+        until ChecklistTareaUsuario.Next() = 0;
+        JsonObjt.Add('checklist', ChecklistArray);
+    end;
+
     /// <summary>
     /// CrearTarea.
     /// </summary>
@@ -1831,6 +1890,7 @@ codeunit 7001148 GTask
         if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
             Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
         JsonFormater.WriteStringProperty('link', Url);
+        AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         CompanyInfo.Get();
@@ -2259,6 +2319,7 @@ codeunit 7001148 GTask
         if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
             Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
         JsonFormater.WriteStringProperty('link', Url);
+        AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         CompanyInfo.Get();
@@ -4504,6 +4565,7 @@ codeunit 7001148 GTask
         if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
             Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
         JsonFormater.WriteStringProperty('link', Url);
+        AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
         CompanyInfo.Get();

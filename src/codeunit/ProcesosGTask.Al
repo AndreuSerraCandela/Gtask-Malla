@@ -34,50 +34,71 @@ codeunit 7001149 Procesos_GTask
         Rec."Fecha Cambio" := CurrentDateTime;
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterInsertEvent', '', false, false)]
+    local procedure UserTaskOnAfterInsert(var Rec: Record "User Task"; RunTrigger: Boolean)
+    begin
+        if not RunTrigger then
+            exit;
+        ActualizarGrupoTarea(Rec, true);
+    end;
+
     [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterValidateEvent', 'Assigned To', false, false)]
     local procedure OnAfterValidateAssignedTo(var Rec: Record "User Task"; var xRec: Record "User Task"; CurrFieldNo: Integer)
     begin
-        ActualizarGrupoTareaDesdeUsuario(Rec);
+        ActualizarGrupoTarea(Rec, false);
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterValidateEvent', 'Categoría', false, false)]
+    local procedure OnAfterValidateCategoria(var Rec: Record "User Task"; var xRec: Record "User Task"; CurrFieldNo: Integer)
+    begin
+        ActualizarGrupoTarea(Rec, false);
+    end;
 
+    [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterValidateEvent', 'User Task Group Assigned To', false, false)]
+    local procedure OnAfterValidateUserTaskGroup(var Rec: Record "User Task"; var xRec: Record "User Task"; CurrFieldNo: Integer)
+    begin
+        ActualizarGrupoTarea(Rec, false);
+    end;
 
-    local procedure ActualizarGrupoTareaDesdeUsuario(var Rec: Record "User Task")
+    procedure ActualizarGrupoTarea(var Rec: Record "User Task"; Persistir: Boolean): Boolean
     var
         GrupoUsuario: Code[20];
+        GrupoAnterior: Code[20];
     begin
+        GrupoAnterior := Rec.Grupo;
         Clear(Rec.Grupo);
-        if IsNullGuid(Rec."Assigned To") then
-            exit;
 
-        if not BuscarGrupoUsuarioGtask(Rec."Assigned To", GrupoUsuario) then
-            exit;
+        if not IsNullGuid(Rec."Assigned To") then
+            if BuscarGrupoUsuarioGtask(Rec."Assigned To", GrupoUsuario) then
+                Rec.Grupo := GrupoUsuario;
 
-        Rec.Grupo := GrupoUsuario;
+        if Persistir and (Rec.Id <> 0) and (Rec.Grupo <> GrupoAnterior) then
+            Rec.Modify(true);
+
+        exit(Rec.Grupo <> GrupoAnterior);
     end;
 
     local procedure BuscarGrupoUsuarioGtask(UserId: Guid; var GrupoUsuario: Code[20]): Boolean
     var
         UsuarioGtask: Record UsuariosGtask;
-        EmpresaUsuario: Text[30];
     begin
         Clear(GrupoUsuario);
         if IsNullGuid(UserId) then
             exit(false);
 
-        EmpresaUsuario := 'Malla Publicidad';
-        UsuarioGtask.ChangeCompany(EmpresaUsuario);
         UsuarioGtask.SetRange("Id Usuario", UserId);
         if UsuarioGtask.FindFirst() then begin
             GrupoUsuario := UsuarioGtask.Grupo;
-            exit(true);
+            if GrupoUsuario <> '' then
+                exit(true);
         end;
 
-        UsuarioGtask.ChangeCompany(CompanyName);
+        UsuarioGtask.Reset();
+        UsuarioGtask.ChangeCompany('Malla Publicidad');
         UsuarioGtask.SetRange("Id Usuario", UserId);
         if UsuarioGtask.FindFirst() then begin
             GrupoUsuario := UsuarioGtask.Grupo;
-            exit(true);
+            exit(GrupoUsuario <> '');
         end;
 
         exit(false);
@@ -97,7 +118,10 @@ codeunit 7001149 Procesos_GTask
         if Tarea.FindSet(true) then
             repeat
                 GrupoAnterior := Tarea.Grupo;
-                Tarea.Grupo := NuevoGrupo;
+                if NuevoGrupo <> '' then
+                    Tarea.Grupo := NuevoGrupo
+                else
+                    Clear(Tarea.Grupo);
                 if Tarea.Grupo <> GrupoAnterior then begin
                     Tarea.Modify(true);
                     TareasActualizadas += 1;
@@ -517,6 +541,7 @@ codeunit 7001149 Procesos_GTask
                 Rec.Departamento := UserGtaskMalla.Departamento;
                 Rec.Supervisor := UserGtaskMalla.Supervisor;
                 Rec.Responsable := UserGtaskMalla.Responsable;
+
             end;
         END;
     end;
@@ -769,6 +794,7 @@ codeunit 7001149 Procesos_GTask
             Dias := HastaF - DesdeF;
             JsonObjt.Add('daysToPerform', Dias + 1);
             JsonObjt.Add('bc', true);
+            Gtask.AgregarChecklistTareaAJsonObject(JsonObjt, Tareas);
 
             JsonObjt.WriteTo(Json);
             Clear(RestApi);
@@ -1548,6 +1574,166 @@ codeunit 7001149 Procesos_GTask
         end;
     end;
 
+
+    internal procedure EnviaCorreoEmplazamiento(
+         "No.": Text;
+         Descrpcion: Text;
+         Adjunto: Boolean;
+         Motivo: Text;
+         Notificacion: Boolean;
+         Asunto: Text;
+         SendTo: Text;
+         CC: Text;
+         Lista: Text;
+         BCC: Text; Nombre: Text; Eliminada: Boolean; IdTarea: Text; Incidencia: Boolean; HideDialog: Boolean; RecId: RecordId)
+
+
+    var
+        Mail: Codeunit Mail;
+        Body: Text;
+        Customer: Record 18;
+        BigText: Text;
+        REmail: Record "Email Item" temporary;
+        emilesc: Enum "Email Scenario";
+        rInf: Record "Company Information";
+        Funciones: Codeunit "Funciones Correo PDF";
+        AttachmentStream: InStream;
+        out: OutStream;
+        Secuencia: Integer;
+        ficheros: Record "Document Attachment";
+        SalesHeader: Record "Sales Header";
+        Recref: RecordRef;
+        base64: Text;
+        Cbase64: Codeunit "Base64 Convert";
+        OutStream: OutStream;
+        Tempblob: Codeunit "Temp Blob";
+        Incidencias: Record Incidencias;
+        Imagenes: Record "Imagenes Orden fijación";
+        Emplazamientos: Record Emplazamientos;
+    begin
+        rInf.Get();
+        if not Emplazamientos.Get(RecId) then Emplazamientos.Init();
+
+        If Notificacion Then begin
+            BigText := Motivo;
+        end else begin
+            //Andres Serra Candela
+            If StrPos(Nombre, ' ') > 0 then
+                Nombre := CopyStr(Nombre, 1, Strpos(Nombre, ' ') - 1);
+            if Time < 140000T then
+                BigText := ('Buenos días ' + Nombre + ':')
+            else if Time < 200000T then
+                BigText := ('Buenas tardes ' + Nombre + ':')
+            else
+                BigText := ('Buenas noches ' + Nombre + ':');
+            //BigText := ('Estimado:');
+            BigText := BigText + '<br> </br>';
+            BigText := BigText + '<br> </br>';
+            if Eliminada then
+                BigText := BigText + ('Se ha eliminado la Tarea: <b>' + Descrpcion + ' </b> ')
+            else begin
+                if Incidencia then
+                    BigText := BigText + ('Se ha creado la Incidencia: <b>' + Descrpcion + ' </b> ')
+                else
+                    BigText := BigText + ('Se ha creado la Tarea: <b>' + Descrpcion + ' </b> ');
+            end;
+            //BigText := BigText + (', ha cambiado de estado a: <b>' + Format(Estado) + ' .</b>');
+            if Motivo <> '' then
+                BigText := BigText + ('<br> </br>' + 'Motivo: ' + Motivo);
+
+            BigText := BigText + '<br> </br>';
+        end;
+
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Aprovechamos la ocasión para enviarte un cordial saludo');
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Atentamente');
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Dpto. Medios');
+        BigText := BigText + '<br> </br>';
+
+        BigText := BigText + (rInf.Name);
+        //"Plaintext Formatted":=TRUE;
+        // SendMsg.AppendBody(BigText);
+        // CLEAR(BigText);
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        REmail.AddAttachment(Funciones.CargaPie(Base64), 'emailfoot.png');
+        BigText := BigText + '<img src="data:image/png;base64,' + base64 + '" />';//"emailFoot.png" />';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<font face="Franklin Gothic Book" sice=2 color=#A6A6A6>';
+        BigText := BigText + ('<b>SI NO DESEA RECIBIR MAS INFORMACION, CONTESTE ESTE E-MAIL INDICANDOLO EXPRESAMENTE</b>');
+        BigText := BigText + '</font>';
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + '<font face="Franklin Gothic Book" size=1 color=#A6A6A6>';
+        BigText := BigText + ('En cumplimiento de lo establecido en el REGLAMENTO (UE) 2016/679, de 27 de abril de 2016, con plenos efectos desde el 25 de mayo de 2018, le recordamos que sus datos personales son');
+        BigText := BigText + ('objeto de tratamiento por parte de MALLA S.A. Le informamos también que tiene la posibilidad de ejercer los derechos de acceso, rectificación, supresión, oposición, limitación del');
+        BigText := BigText + (' tratamiento y portabilidad de sus datos, mediante comunicación escrita a la dirección de correo electrónico <a href="mailto:lopd@malla.es" rel="noreferrer" target="_blank" heap-ignore="true"><span style="color:blue">lopd@malla.es</span></a>, o bien, a nuestra dirección postal (' + rInf.Name + ')');
+        BigText := BigText + (rInf.Address + '. ' + rInf."Post Code" + '. ' + rInf.City + '. España');
+        BigText := BigText + '<br> </br>';
+        BigText := BigText + ('Este correo y sus archivos asociados son privados y confidenciales y va dirigido exclusivamente a su destinatario. Si recibe este correo sin ser el destinatario del mismo, le rogamos proceda');
+        BigText := BigText + (' a su eliminación y lo ponga en conocimiento del emisor. La difusión por cualquier medio del contenido de este correo podría ser sancionada conforme a lo previsto en las leyes españolas.');
+        BigText := BigText + ('No se autoriza la utilización con fines comerciales o para su incorporación a ficheros automatizados de las direcciones del emisor o del destinatario');
+        BigText := BigText + '</font>';
+        //REmail.Subject := 'Pago contrato ' + NContrato;
+        REmail.Subject := Asunto;
+        REmail."Send To" := SendTo;
+        If Lista <> '' then begin
+            //Eliminar ; final
+            If CopyStr(Lista, StrLen(Lista), 1) = ';' then
+                Lista := CopyStr(Lista, 1, StrLen(Lista) - 1);
+            If CC <> '' then
+                CC := Lista + ';' + CC
+            else
+                CC := Lista;
+        end;
+
+        if CC <> '' then
+            REmail."Send CC" := CC;
+        if BCC <> '' then
+            REmail."Send BCC" := BCC;
+        REmail.SetBodyText(BigText);
+        REmail."From Name" := UserId;
+        If Adjunto then begin
+
+            // If Contratostemp.FindFirst() then
+            //     repeat
+            if Incidencia then begin
+                If not Incidencias.Get("No.") Then Incidencias.init();
+                Imagenes.SetRange("Nº Orden", Incidencias."Nº Orden");
+                Imagenes.SetRange("Es Incidencia", true);
+                If Imagenes.FindSet() Then begin
+                    repeat
+                        base64 := ficheros.ToBase64StringOcr(Imagenes.Url);
+                        Clear(Cbase64);
+                        Tempblob.CreateOutStream(OutStream);
+                        Cbase64.FromBase64(base64, OutStream);
+                        Tempblob.CreateInStream(AttachmentStream);
+                        REmail.AddAttachment(AttachmentStream, Imagenes.nombre);
+                    until Imagenes.Next() = 0;
+                end;
+            end else begin
+                ficheros.SetRange("Table ID", Database::"User Task");
+                ficheros.SetRange("No.", "No.");
+                If ficheros.FindLast() then
+                    repeat
+                        base64 := ficheros.ToBase64StringOcr(ficheros.url);
+                        Clear(Cbase64);
+                        Tempblob.CreateOutStream(OutStream);
+                        Cbase64.FromBase64(base64, OutStream);
+                        Tempblob.CreateInStream(AttachmentStream);
+                        REmail.AddAttachment(AttachmentStream, ficheros."File Name" + '.' + ficheros."File Extension");
+                    until ficheros.Next() = 0;
+            end;
+        end;
+        REmail.AddSourceDocument(Database::Emplazamientos, Emplazamientos.SystemId);
+        if REmail.Send(HideDialog, emilesc::Emplazamientos) then begin
+
+        end;
+    end;
 
 
     local procedure GetSetDocattchmentParteTrabajo(Table: Integer; RecordId: RecordId)

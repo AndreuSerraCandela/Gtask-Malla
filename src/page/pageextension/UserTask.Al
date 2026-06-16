@@ -277,7 +277,10 @@ pageextension 92154 "UserTask" extends "User Task card"
                     Procesos_GTask.Email(Rec, EmailResponsable, EmailSupervisor);
                     User.SetRange("User Security ID", Rec."Assigned To");
                     User.FindFirst();
-                    Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false, false);
+                    If Rec.RecordId.TableNo = Database::Emplazamientos Then
+                        Procesos_GTask.EnviaCorreoEmplazamiento(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false, false, Rec.RecordId)
+                    else
+                        Procesos_GTask.EnviaCorreo(Rec."No.", Rec.GetDescription(), true, '', false, Rec.Title, EmailResponsable, EmailSupervisor, '', '', User."Full Name", false, Rec.Id_Tarea, false, false);
                 end;
             }
 
