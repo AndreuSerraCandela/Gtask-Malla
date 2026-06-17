@@ -9500,7 +9500,298 @@ codeunit 7001148 GTask
         Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListaCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
     end;
 
+    /// <summary>
+    /// Lista partes diarios de un empleado.
+    /// Entrada: {"empleado":"...","fecha_desde":"YYYY-MM-DD","fecha_hasta":"YYYY-MM-DD"}
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetPartesDiario(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonOut: JsonObject;
+        JsonArray: JsonArray;
+        JsonParte: JsonObject;
+        Parte: Record "Partes de Trabajo";
+        EmpleadoNo: Code[20];
+        FechaDesde: Date;
+        FechaHasta: Date;
+        ResultText: Text;
+    begin
+        Clear(JsonArray);
+        if ParseJsonRequestParteDiario(JsonText, JsonIn) then begin
+            EmpleadoNo := ObtenerTextoJsonParteDiario(JsonIn, 'empleado');
+            FechaDesde := ObtenerFechaJsonParteDiario(JsonIn, 'fecha_desde', 0D);
+            FechaHasta := ObtenerFechaJsonParteDiario(JsonIn, 'fecha_hasta', 99991231D);
+            if EmpleadoNo <> '' then begin
+                Parte.SetRange(Empleado, EmpleadoNo);
+                if (FechaDesde <> 0D) and (FechaHasta <> 99991231D) then
+                    Parte.SetRange("Fecha Parte", FechaDesde, FechaHasta)
+                else begin
+                    if FechaDesde <> 0D then
+                        Parte.SetFilter("Fecha Parte", '>=%1', FechaDesde);
+                    if FechaHasta <> 99991231D then
+                        Parte.SetFilter("Fecha Parte", '<=%1', FechaHasta);
+                end;
+                if Parte.FindSet() then
+                    repeat
+                        Clear(JsonParte);
+                        AgregarParteDiarioCompletoAJson(Parte, JsonParte);
+                        JsonArray.Add(JsonParte);
+                    until Parte.Next() = 0;
+            end;
+        end;
+        Clear(JsonOut);
+        JsonOut.Add('value', JsonArray.AsToken());
+        JsonOut.WriteTo(ResultText);
+        exit(ResultText);
+    end;
 
+    /// <summary>
+    /// Devuelve un parte diario por número.
+    /// Entrada: {"no_parte":"..."}
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetParteDiario(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonOut: JsonObject;
+        Parte: Record "Partes de Trabajo";
+        NoParte: Code[20];
+        ResultText: Text;
+    begin
+        Clear(JsonOut);
+        if ParseJsonRequestParteDiario(JsonText, JsonIn) then begin
+            NoParte := CopyStr(ObtenerTextoJsonParteDiario(JsonIn, 'no_parte'), 1, MaxStrLen(NoParte));
+            if (NoParte <> '') and Parte.Get(NoParte) then
+                AgregarParteDiarioCompletoAJson(Parte, JsonOut);
+        end;
+        JsonOut.WriteTo(ResultText);
+        exit(ResultText);
+    end;
+
+    /// <summary>
+    /// Crea o actualiza un parte diario y su detalle.
+    /// Entrada: no_parte (opcional), empleado, fecha_parte, hora_entrada, hora_salida, texto_trabajo, empresa, tareas[], residuos[]
+    /// </summary>
+    [ServiceEnabled]
+    procedure PostParteDiario(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonOut: JsonObject;
+        Parte: Record "Partes de Trabajo";
+        NoParte: Code[20];
+        EmpleadoNo: Code[20];
+        FechaParte: Date;
+        EsNuevo: Boolean;
+        ResultText: Text;
+    begin
+        if not ParseJsonRequestParteDiario(JsonText, JsonIn) then
+            Error('JSON inválido o vacío');
+
+        NoParte := CopyStr(ObtenerTextoJsonParteDiario(JsonIn, 'no_parte'), 1, MaxStrLen(NoParte));
+        EmpleadoNo := CopyStr(ObtenerTextoJsonParteDiario(JsonIn, 'empleado'), 1, MaxStrLen(EmpleadoNo));
+        FechaParte := ObtenerFechaJsonParteDiario(JsonIn, 'fecha_parte', 0D);
+
+        EsNuevo := (NoParte = '') or not Parte.Get(NoParte);
+        if EsNuevo then begin
+            Parte.Init();
+            Parte.Insert(true);
+            NoParte := Parte."Nº Parte";
+        end;
+
+        if FechaParte <> 0D then
+            Parte.Validate("Fecha Parte", FechaParte);
+        if ObtenerTextoJsonParteDiario(JsonIn, 'hora_entrada') <> '' then
+            Parte.Validate("Hora Entrada", ParseHoraParteDiario(ObtenerTextoJsonParteDiario(JsonIn, 'hora_entrada')));
+        if ObtenerTextoJsonParteDiario(JsonIn, 'hora_salida') <> '' then
+            Parte.Validate("Hora Salida", ParseHoraParteDiario(ObtenerTextoJsonParteDiario(JsonIn, 'hora_salida')));
+        if ObtenerTextoJsonParteDiario(JsonIn, 'texto_trabajo') <> '' then
+            Parte."Texto Trabajo" := CopyStr(ObtenerTextoJsonParteDiario(JsonIn, 'texto_trabajo'), 1, MaxStrLen(Parte."Texto Trabajo"));
+        if ObtenerTextoJsonParteDiario(JsonIn, 'empresa') <> '' then
+            Parte.Empresa := CopyStr(ObtenerTextoJsonParteDiario(JsonIn, 'empresa'), 1, MaxStrLen(Parte.Empresa));
+        if EmpleadoNo <> '' then
+            Parte.Validate(Empleado, EmpleadoNo);
+
+        Parte.Modify(true);
+        SincronizarDetalleParteDesdeJson(NoParte, JsonIn);
+
+        Parte.Get(NoParte);
+        Clear(JsonOut);
+        AgregarParteDiarioCompletoAJson(Parte, JsonOut);
+        JsonOut.WriteTo(ResultText);
+        exit(ResultText);
+    end;
+
+    local procedure ParseJsonRequestParteDiario(JsonText: Text; var JsonIn: JsonObject): Boolean
+    var
+        Wrapper: JsonObject;
+        JsonToken: JsonToken;
+        InnerText: Text;
+    begin
+        Clear(JsonIn);
+        if JsonText = '' then
+            exit(false);
+        if not Wrapper.ReadFrom(JsonText) then
+            exit(false);
+        if Wrapper.Get('JsonText', JsonToken) or Wrapper.Get('jsonText', JsonToken) then begin
+            InnerText := JsonToken.AsValue().AsText();
+            if InnerText = '' then
+                exit(false);
+            exit(JsonIn.ReadFrom(InnerText));
+        end;
+        JsonIn := Wrapper;
+        exit(true);
+    end;
+
+    local procedure ObtenerTextoJsonParteDiario(JsonIn: JsonObject; Campo: Text): Text
+    var
+        JsonToken: JsonToken;
+    begin
+        if JsonIn.Get(Campo, JsonToken) then
+            exit(JsonToken.AsValue().AsText());
+        exit('');
+    end;
+
+    local procedure ObtenerFechaJsonParteDiario(JsonIn: JsonObject; Campo: Text; ValorDefecto: Date): Date
+    var
+        FechaTexto: Text;
+        Fecha: Date;
+    begin
+        FechaTexto := ObtenerTextoJsonParteDiario(JsonIn, Campo);
+        if FechaTexto = '' then
+            exit(ValorDefecto);
+        Fecha := ValorDefecto;
+        if Evaluate(Fecha, FechaTexto) then
+            exit(Fecha);
+        exit(ValorDefecto);
+    end;
+
+    local procedure ParseHoraParteDiario(HoraTexto: Text): Time
+    var
+        Hora: Time;
+    begin
+        if HoraTexto = '' then
+            exit(0T);
+        if Evaluate(Hora, HoraTexto) then
+            exit(Hora);
+        if StrLen(HoraTexto) = 5 then
+            if Evaluate(Hora, HoraTexto + ':00') then
+                exit(Hora);
+        exit(0T);
+    end;
+
+    local procedure AgregarParteDiarioCompletoAJson(Parte: Record "Partes de Trabajo"; var JsonParte: JsonObject)
+    var
+        JsonTareas: JsonArray;
+        JsonResiduos: JsonArray;
+    begin
+        JsonParte.Add('no_parte', Parte."Nº Parte");
+        JsonParte.Add('fecha_parte', Format(Parte."Fecha Parte", 0, 9));
+        JsonParte.Add('hora_entrada', Format(Parte."Hora Entrada"));
+        JsonParte.Add('hora_salida', Format(Parte."Hora Salida"));
+        JsonParte.Add('horas', Parte.Horas);
+        JsonParte.Add('empresa', Parte.Empresa);
+        JsonParte.Add('empleado', Parte.Empleado);
+        JsonParte.Add('texto_trabajo', Parte."Texto Trabajo");
+        AgregarLineasDetalleParteAJson(Parte."Nº Parte", JsonTareas, JsonResiduos);
+        JsonParte.Add('tareas', JsonTareas.AsToken());
+        JsonParte.Add('residuos', JsonResiduos.AsToken());
+    end;
+
+    local procedure AgregarLineasDetalleParteAJson(NoParte: Code[20]; var JsonTareas: JsonArray; var JsonResiduos: JsonArray)
+    var
+        DetalleParte: Record "Detalle Parte";
+        JsonLinea: JsonObject;
+    begin
+        Clear(JsonTareas);
+        Clear(JsonResiduos);
+        DetalleParte.SetRange("Nº Parte", NoParte);
+        if DetalleParte.FindSet() then
+            repeat
+                Clear(JsonLinea);
+                JsonLinea.Add('no_linea', DetalleParte."Nº Linea");
+                case DetalleParte.Tipo of
+                    DetalleParte.Tipo::Tarea:
+                        begin
+                            JsonLinea.Add('no_tarea', DetalleParte."Nº Tarea");
+                            JsonLinea.Add('descripcion', DetalleParte.Descripcion);
+                            JsonTareas.Add(JsonLinea);
+                        end;
+                    DetalleParte.Tipo::Residuo:
+                        begin
+                            JsonLinea.Add('descripcion', DetalleParte.Descripcion);
+                            JsonLinea.Add('descripcion_eliminacion', DetalleParte."Descripcion elim. residuos");
+                            JsonResiduos.Add(JsonLinea);
+                        end;
+                end;
+            until DetalleParte.Next() = 0;
+    end;
+
+    local procedure SincronizarDetalleParteDesdeJson(NoParte: Code[20]; JsonIn: JsonObject)
+    var
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonLinea: JsonObject;
+        DetalleParte: Record "Detalle Parte";
+        LineNo: Integer;
+        i: Integer;
+        NoTarea: Integer;
+        TieneTareas: Boolean;
+        TieneResiduos: Boolean;
+    begin
+        TieneTareas := JsonIn.Get('tareas', JsonToken);
+        TieneResiduos := JsonIn.Get('residuos', JsonToken);
+        if not TieneTareas and not TieneResiduos then
+            exit;
+
+        if TieneTareas then begin
+            DetalleParte.SetRange("Nº Parte", NoParte);
+            DetalleParte.SetRange(Tipo, DetalleParte.Tipo::Tarea);
+            DetalleParte.DeleteAll();
+            JsonIn.Get('tareas', JsonToken);
+            JsonArray := JsonToken.AsArray();
+            LineNo := 10000;
+            for i := 0 to JsonArray.Count() - 1 do begin
+                JsonArray.Get(i, JsonToken);
+                JsonLinea := JsonToken.AsObject();
+                DetalleParte.Init();
+                DetalleParte."Nº Parte" := NoParte;
+                DetalleParte.Tipo := DetalleParte.Tipo::Tarea;
+                DetalleParte."Nº Linea" := LineNo;
+                if JsonLinea.Get('no_tarea', JsonToken) then begin
+                    if Evaluate(NoTarea, JsonToken.AsValue().AsText()) then
+                        DetalleParte.Validate("Nº Tarea", NoTarea);
+                end;
+                if JsonLinea.Get('descripcion', JsonToken) then
+                    DetalleParte.Descripcion := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(DetalleParte.Descripcion));
+                DetalleParte.Insert(true);
+                LineNo += 10000;
+            end;
+        end;
+
+        if TieneResiduos then begin
+            DetalleParte.SetRange("Nº Parte", NoParte);
+            DetalleParte.SetRange(Tipo, DetalleParte.Tipo::Residuo);
+            DetalleParte.DeleteAll();
+            JsonIn.Get('residuos', JsonToken);
+            JsonArray := JsonToken.AsArray();
+            LineNo := 10000;
+            for i := 0 to JsonArray.Count() - 1 do begin
+                JsonArray.Get(i, JsonToken);
+                JsonLinea := JsonToken.AsObject();
+                DetalleParte.Init();
+                DetalleParte."Nº Parte" := NoParte;
+                DetalleParte.Tipo := DetalleParte.Tipo::Residuo;
+                DetalleParte."Nº Linea" := LineNo;
+                if JsonLinea.Get('descripcion', JsonToken) then
+                    DetalleParte.Descripcion := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(DetalleParte.Descripcion));
+                if JsonLinea.Get('descripcion_eliminacion', JsonToken) then
+                    DetalleParte."Descripcion elim. residuos" := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(DetalleParte."Descripcion elim. residuos"));
+                DetalleParte.Insert(true);
+                LineNo += 10000;
+            end;
+        end;
+    end;
 
 
     #endregion Serivices

@@ -88,7 +88,7 @@ page 50112 "Incidencias Taller"
             {
                 Caption = 'Imagenes Asociadas';
                 ApplicationArea = All;
-                SubPageLink = "Nº Orden" = field("Nº Orden");
+                SubPageLink = "Nº Orden" = field("Nº Orden"), "Es Incidencia" = const(true);
                 SubPageView = where("Es Incidencia" = const(true), "Nº Orden" = filter(<> 0));
                 Visible = true;
             }
@@ -96,7 +96,7 @@ page 50112 "Incidencias Taller"
             {
                 Caption = 'Imagenes No Asociadas';
                 ApplicationArea = All;
-                SubPageLink = "Nº Orden" = const(0);
+                SubPageLink = "Nº Orden" = const(0), "Es Incidencia" = const(true);
                 SubPageView = where("Es Incidencia" = const(true));
                 Visible = true;
             }
@@ -577,13 +577,13 @@ page 50117 "Lista Incidencias Taller"
                 Caption = 'Editar';
                 Image = Edit;
                 trigger OnAction()
-                    var
-                        Gtask: Codeunit Gtask;
-                    begin
-                        if IsPeticion then begin
-                            Gtask.AsegurarParteMantenimiento(Rec);
-                            Commit();
-                            Page.RunModal(Page::"Ordenes Trabajo", Rec);
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    if IsPeticion then begin
+                        Gtask.AsegurarParteMantenimiento(Rec);
+                        Commit();
+                        Page.RunModal(Page::"Ordenes Trabajo", Rec);
                     end else
                         Page.RunModal(Page::"Incidencias Taller", Rec);
                 end;

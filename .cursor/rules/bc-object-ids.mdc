@@ -12,13 +12,13 @@ Al crear un objeto BC nuevo (page, table, codeunit, report, etc.) que necesite I
 2. Ejecuta en terminal (ajusta extensión y nombre):
 
 ```powershell
-.\scripts\next-object.ps1 -Type page -Extension Malla -Name "NombreDelObjeto"
+.\scripts\next-object.ps1 -Type page -Extension "NombreExtension" -Name "NombreDelObjeto"
 ```
 
 O con curl:
 
 ```bash
-curl -s "https://objetos.malla.es/api/objects/next?page&extension=Malla&name=NombreDelObjeto&format=plain"
+curl -s "https://objetos.malla.es/api/objects/next?page&extension=NombreExtensiona&name=NombreDelObjeto&format=plain"
 ```
 
 3. Usa el número devuelto en el código AL (`page 50077 "..."`).

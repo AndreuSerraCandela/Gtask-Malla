@@ -84,6 +84,15 @@ table 7001209 "UsuariosGtask"
             Caption = 'Nº empleado';
             DataClassification = ToBeClassified;
             TableRelation = Employee."No.";
+            trigger OnValidate()
+            var
+                Employee: Record Employee;
+            begin
+                if not Employee.Get(Employee."No.") then
+                    Exit;
+                Employee.UserGtask := Rec."Id Gtask";
+            end;
+
         }
         field(50009; "Usuario EMT"; Text[100])
         {

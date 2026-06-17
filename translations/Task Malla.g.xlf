@@ -1038,6 +1038,46 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Log Parada - Action Category_Process - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 256492028 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Detalle Parte Residuo</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Residuo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 256492028 - Control 1475260075 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la descripción del residuo.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Residuo - Control Descripcion - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 256492028 - Control 479233302 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la descripción de la eliminación de residuos.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Residuo - Control Descripcion elim. residuos - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 256492028 - Control 164330021 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Residuo - Control Nº Linea - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 674463780 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Detalle Parte Tarea</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Tarea - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 674463780 - Control 1475260075 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la descripción de la tarea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Tarea - Control Descripcion - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 674463780 - Control 164330021 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número de línea.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Tarea - Control Nº Linea - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 674463780 - Control 1635838761 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la tarea de usuario asociada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Tarea - Control Nº Tarea - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="Page 1561396197 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Ficha Zona Limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1723,6 +1763,51 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Ordenes de Trabajo - Action MensajesWhatsAppLista - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2888174078 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Partes diario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 2169576197 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Empleado asociado al parte.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Empleado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 1116050679 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Empresa del parte.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Empresa - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 3370342237 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fecha del parte.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Fecha Parte - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 492182223 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Hora de entrada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Hora Entrada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 2225914274 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Hora de salida.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Hora Salida - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 3501779713 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Horas trabajadas.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Horas - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 1253978938 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Número del parte diario.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Nº Parte - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2888174078 - Control 2162380381 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descripción del trabajo realizado.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Partes Diario - Control Texto Trabajo - Property ToolTip</note>
+        </trans-unit>
         <trans-unit id="Page 2539053734 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Líneas Parte de Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -2222,6 +2307,66 @@
           <source>Actualizar</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Panel Gerencia Paradas Bus - Action RefreshDashboard - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Parte Diario</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 2445482498 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>General</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control General - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 2169576197 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Empleado del parte. Al asignarlo se añaden las tareas finalizadas del día.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Empleado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 1116050679 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la empresa.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Empresa - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 3370342237 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la fecha del parte.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Fecha Parte - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 492182223 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la hora de entrada.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Hora Entrada - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 2225914274 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica la hora de salida.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Hora Salida - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 3501779713 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica las horas trabajadas.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Horas - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 1253978938 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el número del parte diario.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Nº Parte - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 2162380381 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Especifica el texto descriptivo del trabajo realizado.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Texto Trabajo - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 1878277764 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Residuos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Residuos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2706793222 - Control 2843956220 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Tareas</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Parte Diario - Control Tareas - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3540925655 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Parte plantilla</source>

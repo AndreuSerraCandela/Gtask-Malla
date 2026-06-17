@@ -56,6 +56,23 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                     ToolTip = 'Nº de empleado asociado al usuario GTask.';
+                    trigger OnAssistEdit()
+                    var
+                        Employee: Record Employee;
+                        EmployeeList: Page "Employee List";
+                    begin
+                        Rec.TestField("Id Gtask");
+                        Employee.ChangeCompany('Malla Publicidad');
+                        EmployeeList.LookupMode := true;
+                        if EmployeeList.RunModal() = Action::LookupOK then begin
+                            EmployeeList.SetSelectionFilter(Employee);
+                            if Employee.FindSet() then
+                                repeat
+                                    Employee.UserGtask := Rec."Id Gtask";
+                                    Employee.Modify(true);
+                                until Employee.Next() = 0;
+                        end;
+                    end;
                 }
                 field("Usuario EMT"; Rec."Usuario EMT")
                 {

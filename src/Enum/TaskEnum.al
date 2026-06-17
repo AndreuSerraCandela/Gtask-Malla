@@ -17,7 +17,7 @@ enum 50020 "Task Enum"
         Caption = 'Cancelado';
     }
 }
-enum 50021 "Tipo Incidencia"
+enum 50026 "Tipo Incidencia"
 {
     value(0; "Incidencias Mobiliario Urbano") { Caption = 'Mobiliario Urbano'; }
     value(1; "Incidencias EMT") { Caption = 'EMT'; }
