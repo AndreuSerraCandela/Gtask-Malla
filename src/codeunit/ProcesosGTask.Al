@@ -1767,8 +1767,9 @@ codeunit 7001149 Procesos_GTask
         UserGtaskMalla.SetRange("Id Usuario", User."User Security Id");
         If not UserGtaskMalla.FindFirst() then Error('Usuario %1 no encontrado en Gtask', User."User Name");
         If IsnullGuid(Responsable) then begin
+            //Primero mira en la propia empesa
             UserGtaskMalla.Reset();
-            UserxbyCategory.ChangeCompany('Malla Publicidad');
+            UserxbyCategory.ChangeCompany(CompanyName);
             UserxbyCategory.SetRange(Departamento, Departamento);
             UserxbyCategory.SetRange("User Task Group Code", Categoria);
             UserxbyCategory.SetRange(Responsable, true);
@@ -1787,8 +1788,30 @@ codeunit 7001149 Procesos_GTask
                         Responsable := UserGtaskMalla."Id Usuario";
                 end;
             end;
+            if IsNullGuid(Responsable) then begin
+                UserGtaskMalla.Reset();
+                UserxbyCategory.ChangeCompany('Malla Publicidad');
+                UserxbyCategory.SetRange(Departamento, Departamento);
+                UserxbyCategory.SetRange("User Task Group Code", Categoria);
+                UserxbyCategory.SetRange(Responsable, true);
+                UserxbyCategory.SetRange("Copiado en Mail", false);
+                If UserxbyCategory.FindFirst() then begin
+                    Responsable := UserxbyCategory."User Security ID";
+
+                end else begin
+                    UserxbyCategory.SetRange("Copiado en Mail");
+                    If UserxbyCategory.FindFirst() then begin
+                        Responsable := UserxbyCategory."User Security ID";
+                    end else begin
+                        UserGtaskMalla.SetRange(Departamento);
+                        UserGtaskMalla.SetRange(Responsable, true);
+                        If UserGtaskMalla.FindFirst() then
+                            Responsable := UserGtaskMalla."Id Usuario";
+                    end;
+                end;
+            end;
         end;
-        UserxbyCategory.ChangeCompany('Malla Publicidad');
+        UserxbyCategory.ChangeCompany(CompanyName);
         UserxbyCategory.SetRange(Departamento, Servicio);
         UserxbyCategory.SetRange("User Task Group Code", Categoria);
         UserxbyCategory.SetRange(Supervisor, true);
@@ -1807,6 +1830,29 @@ codeunit 7001149 Procesos_GTask
                 UserGtaskMalla.SetRange(Responsable);
                 If UserGtaskMalla.FindFirst() then
                     Supervisor := UserGtaskMalla."Id Usuario";
+            end;
+        end;
+        if IsNullGuid(Supervisor) then begin
+            UserxbyCategory.ChangeCompany('Malla Publicidad');
+            UserxbyCategory.SetRange(Departamento, Servicio);
+            UserxbyCategory.SetRange("User Task Group Code", Categoria);
+            UserxbyCategory.SetRange(Supervisor, true);
+            UserxbyCategory.SetRange("Copiado en Mail", false);
+            UserxbyCategory.SetRange(Responsable);
+            If UserxbyCategory.FindFirst() then begin
+                Supervisor := UserxbyCategory."User Security ID";
+
+            end else begin
+                UserxbyCategory.SetRange("Copiado en Mail");
+                If UserxbyCategory.FindFirst() then begin
+                    Supervisor := UserxbyCategory."User Security ID";
+                end else begin
+                    UserGtaskMalla.SetRange(Departamento);
+                    UserGtaskMalla.SetRange(Supervisor, true);
+                    UserGtaskMalla.SetRange(Responsable);
+                    If UserGtaskMalla.FindFirst() then
+                        Supervisor := UserGtaskMalla."Id Usuario";
+                end;
             end;
         end;
         User.SetRange("User Security ID", Supervisor);
@@ -1840,7 +1886,10 @@ codeunit 7001149 Procesos_GTask
         // If not IsNullGuid(UserTask.Supervisor) then
         //     UserTask."Created By" := Supervisor
         // else
-        UserTask.Validate("Created By", User."User Security Id");
+        if User."License Type" <> User."License Type"::"Full User" Then
+            UserTask.Validate("Created By", UserSecurityId())
+        else
+            UserTask.Validate("Created By", User."User Security Id");
         // UserxbyCategory.Reset();
         // UserxbyCategory.SetRange(Departamento, Servicio);
         // UserxbyCategory.SetRange("User Task Group Code", Categoria);

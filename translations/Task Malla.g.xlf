@@ -3498,6 +3498,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Avanzar Nueva Tarea - Property Caption</note>
         </trans-unit>
+        <trans-unit id="PageExtension 2984827402 - Action 586038098 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
+          <source>Crear Tarea GTask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension UserTaskList - Action Crear Tarea GTask - Property Caption</note>
+        </trans-unit>
         <trans-unit id="PageExtension 2984827402 - Action 4179691570 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2346246418">
           <source>Permitir Parte de Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -3588,10 +3593,10 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">PageExtension Usuarios x Categoría - Control Enviar Whatsapp - Property Caption</note>
         </trans-unit>
-        <trans-unit id="PageExtension 2520884420 - Control 1546832578 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2102368412">
+        <trans-unit id="PageExtension 2520884420 - Control 2155580000 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 2102368412">
           <source>Specifies a user that is a member of the group.</source>
           <note from="Developer" annotates="general" priority="2"></note>
-          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Usuarios x Categoría - Control Usuario - Property ToolTip</note>
+          <note from="Xliff Generator" annotates="general" priority="3">PageExtension Usuarios x Categoría - Control Usuario GTask - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="PageExtension 50910241 - Action 564287857 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Page 1048803034">
           <source>Abre la ficha de la zona de limpieza para editar datos y frecuencia.</source>

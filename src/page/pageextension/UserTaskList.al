@@ -137,6 +137,33 @@ pageextension 92157 "UserTaskList" extends "User Task List"
                     Rec.Modify();
                 end;
             }
+            action("Crear Tarea GTask")
+            {
+                ApplicationArea = All;
+                Caption = 'Crear Tarea GTask';
+                Image = SendTo;
+
+                trigger OnAction()
+                var
+                    UserTask: Record "User Task";
+                    Gtask: Codeunit GTask;
+                    Creadas: Integer;
+                    Omitidas: Integer;
+                begin
+                    CurrPage.SetSelectionFilter(UserTask);
+                    if UserTask.FindSet() then
+                        repeat
+                            if UserTask.Id_Tarea = '' then begin
+                                Gtask.CrearTareaTecnico(Rec.Resource, UserTask, UserTask.Departamento, UserTask.Servicio, false);
+                                Creadas += 1;
+                            end else
+                                Omitidas += 1;
+                        until UserTask.Next() = 0;
+
+                    CurrPage.Update(false);
+                    Message('Tareas creadas en GTask: %1. Tareas omitidas por tener Id_Tarea: %2.', Creadas, Omitidas);
+                end;
+            }
 
             action("Avanzar Nueva Tarea")
             {

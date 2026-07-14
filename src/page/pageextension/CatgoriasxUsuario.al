@@ -15,28 +15,24 @@ pageextension 92152 "Usuarios x Categoría" extends "User Task Group Members"
             //         ApplicationArea = All;
             //     }
 
-            field(Usuario; Rec.Usuario)
+            field("Usuario GTask"; Procdure_User())
             {
-                ApplicationArea = Basic, Suite;
+                ApplicationArea = ALL;
                 ToolTip = 'Specifies a user that is a member of the group.';
 
                 trigger OnAssistEdit()
                 var
                     User: Record UsuariosGtask;
-                    Users: Page UsuariosGtask;
+                //Users: Page UsuariosGtask;
                 begin
                     User.ChangeCompany('Malla Publicidad');
-                    User.SetRange("Id Usuario", Rec."User Security ID");
-                    if User.FindFirst() then
-                        Users.SetRecord(User);
-
-                    Users.LookupMode := true;
-                    if Users.RunModal() = ACTION::LookupOK then begin
-                        Users.GetRecord(User);
+                    if Page.RunModal(Page::"UsuariosGtask", User) = ACTION::LookupOK then begin
                         Rec."User Security ID" := User."Id Usuario";
                         CurrPage.Update(true);
                     end;
                 end;
+
+
 
             }
 
@@ -64,4 +60,10 @@ pageextension 92152 "Usuarios x Categoría" extends "User Task Group Members"
 
         }
     }
+
+    local procedure Procdure_User(): Text
+    begin
+        Rec.CalcFields(Usuario);
+        exit(Rec.Usuario);
+    end;
 }
