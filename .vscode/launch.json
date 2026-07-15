@@ -36,5 +36,24 @@
             "port": 49049,
             "debugServer": 49049
         }
+        ,
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "externo",
+            "server": "https://bc270.malla.es/POWERBI",
+            "serverInstance": "POWERBI",
+            "authentication": "UserPassword",
+            "startupCompany": "Malla Publicidad",
+            "tenant": "default",
+            "environmentType": "OnPrem",
+            "schemaUpdateMode": "ForceSync",
+            "breakOnError": true,
+            "launchBrowser": true,
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+            "port": 49049,
+            "debugServer": 49049
+        }
     ]
 }

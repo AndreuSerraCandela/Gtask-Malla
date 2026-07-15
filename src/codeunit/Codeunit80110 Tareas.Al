@@ -6998,6 +6998,7 @@ codeunit 7001148 GTask
                     end;
                 end;
                 If userGtask <> '' then begin
+                    UserGtaskMalla.ChangeCompany('Malla Publicidad');
                     UserGtaskMalla.SetRange("Id Gtask", userGtask);
                     If UserGtaskMalla.FindFirst() then begin
                         Tareas.Estado := Tareas.Estado::Finalizado;
