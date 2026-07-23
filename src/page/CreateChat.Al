@@ -366,6 +366,8 @@ page 50105 "Create Chat"
     end;
 
     trigger OnOpenPage()
+    var
+        Emplazamientos: Record Emplazamientos;
     begin
         IsOnMobile := ClientTypeManagement.GetCurrentClientType() = CLIENTTYPE::Phone;
 
@@ -377,6 +379,13 @@ page 50105 "Create Chat"
             SegmentDescEditable := false;
 
         IsMeeting := (Rec.Type = Rec.Type::Meeting);
+        if Rec.GetFilter("Contact No.") <> '' then begin
+            Emplazamientos.SetRange("Nº Emplazamiento", Rec.GetFilter("Contact No."));
+            if Emplazamientos.FindFirst() then begin
+                Rec."Wizard Contact Name" := Emplazamientos."Descripción";
+                Rec."Contact No." := Emplazamientos."Nº Emplazamiento";
+            end;
+        end;
     end;
 
     trigger OnQueryClosePage(CloseAction: Action): Boolean

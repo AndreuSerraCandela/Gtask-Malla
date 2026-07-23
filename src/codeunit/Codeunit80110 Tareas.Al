@@ -4954,7 +4954,60 @@ codeunit 7001148 GTask
         exit(Txt);
     end;
 
-    local procedure BuscarGrupoUsuarioCalendario(UsuarioGtask: Text; var GrupoUsuario: Code[20]): Boolean
+
+    /// <summary>
+    /// Devuelve todos los usuarios GTask del mismo grupo que el usuario indicado.
+    /// Salida: { "value": [ { "id", "nombre", "empleado", "email" } ], "grupo", "usuarioGtask", "count" }
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetUsuariosGrupo(UsuarioGtask: Text): Text
+    var
+        Usuario: Record UsuariosGtask;
+        JsonRoot: JsonObject;
+        JsonArray: JsonArray;
+        JsonLinea: JsonObject;
+        Txt: Text;
+        GrupoUsuario: Code[20];
+        NombreCompleto: Text;
+        Contador: Integer;
+    begin
+        Clear(JsonArray);
+        Contador := 0;
+
+        if not BuscarGrupoUsuarioCalendario(UsuarioGtask, GrupoUsuario) then
+            Error('No se ha encontrado grupo para el usuario GTask %1.', UsuarioGtask);
+
+        Usuario.Reset();
+        Usuario.SetRange(Grupo, GrupoUsuario);
+        if Usuario.FindSet() then
+            repeat
+                if Usuario."Id Gtask" <> '' then begin
+                    Clear(JsonLinea);
+                    NombreCompleto := DelChr(Usuario.Nombre + ' ' + Usuario.Apellido, '<>', ' ');
+                    if NombreCompleto = '' then
+                        NombreCompleto := Usuario.Email;
+                    if NombreCompleto = '' then
+                        NombreCompleto := Usuario."Id Gtask";
+
+                    JsonLinea.Add('id', Usuario."Id Gtask");
+                    JsonLinea.Add('nombre', NombreCompleto);
+                    JsonLinea.Add('empleado', Format(Usuario.Empleado));
+                    JsonLinea.Add('email', Usuario.Email);
+                    JsonArray.Add(JsonLinea);
+                    Contador += 1;
+                end;
+            until Usuario.Next() = 0;
+
+        Clear(JsonRoot);
+        JsonRoot.Add('value', JsonArray.AsToken());
+        JsonRoot.Add('grupo', GrupoUsuario);
+        JsonRoot.Add('usuarioGtask', UsuarioGtask);
+        JsonRoot.Add('count', Contador);
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    procedure BuscarGrupoUsuarioCalendario(UsuarioGtask: Text; var GrupoUsuario: Code[20]): Boolean
     var
         Usuario: Record UsuariosGtask;
     begin

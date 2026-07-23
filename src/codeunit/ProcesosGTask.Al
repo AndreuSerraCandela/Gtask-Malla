@@ -60,6 +60,136 @@ codeunit 7001149 Procesos_GTask
         ActualizarGrupoTarea(Rec, false);
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::Solicitudes, 'OnAfterValidateEvent', 'Presentación', false, false)]
+    local procedure SolicitudesOnAfterValidatePresentacion(var Rec: Record Solicitudes; var xRec: Record Solicitudes; CurrFieldNo: Integer)
+    begin
+        if Rec.Presentación = 0D then
+            exit;
+        if xRec.Presentación <> 0D then
+            exit;
+        CrearTareaSolicitudSilenciosa(Rec, 'Solicitud Presentada', Rec.Presentación);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::Solicitudes, 'OnAfterValidateEvent', 'Fecha Tasas Recibidas', false, false)]
+    local procedure SolicitudesOnAfterValidateFechaTasasRecibidas(var Rec: Record Solicitudes; var xRec: Record Solicitudes; CurrFieldNo: Integer)
+    begin
+        if Rec."Fecha Tasas Recibidas" = 0D then
+            exit;
+        if xRec."Fecha Tasas Recibidas" <> 0D then
+            exit;
+        CrearTareaSolicitudSilenciosa(Rec, 'Solicitud Tasas Recibidas', Rec."Fecha Tasas Recibidas");
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::Solicitudes, 'OnAfterValidateEvent', 'Fecha Tasas Pagadas', false, false)]
+    local procedure SolicitudesOnAfterValidateFechaTasasPagadas(var Rec: Record Solicitudes; var xRec: Record Solicitudes; CurrFieldNo: Integer)
+    begin
+        if Rec."Fecha Tasas Pagadas" = 0D then
+            exit;
+        if xRec."Fecha Tasas Pagadas" <> 0D then
+            exit;
+        CrearTareaSolicitudSilenciosa(Rec, 'Solicitud Tasas Pagadas', Rec."Fecha Tasas Pagadas");
+    end;
+
+    /// <summary>
+    /// Crea/actualiza la tarea GTask de una solicitud y envía el correo, sin preguntas ni páginas.
+    /// Si ya existe tarea: cambia el Title y envía correo. Si no: crea tarea + GTask + correo.
+    /// </summary>
+    procedure CrearTareaSolicitudSilenciosa(var Solicitud: Record Solicitudes; Motivo: Text; FechaReferencia: Date)
+    var
+        GtaskLocal: Codeunit GTask;
+        UserTask: Record "User Task";
+        User: Record User;
+        DoccAttach: Record "Document Attachment";
+        DoccAttach2: Record "Document Attachment";
+        EmailResponsable: Text[250];
+        EmailSupervisor: Text[250];
+        Responsable: Guid;
+        Supervisor: Guid;
+        ListaCorreos: Text;
+        Asunto: Text;
+        Titulo: Text[250];
+    begin
+        if not User.Get(UserSecurityId()) then
+            exit;
+        if Motivo = '' then
+            Motivo := 'Solicitud';
+        if FechaReferencia = 0D then
+            FechaReferencia := WorkDate();
+
+        Titulo := CopyStr(Motivo + ': ' + Format(Solicitud."Nº Autorización"), 1, MaxStrLen(Titulo));
+        Asunto := CopyStr(Motivo + ' ' + Format(Solicitud."Nº Autorización"), 1, MaxStrLen(Asunto));
+
+        UserTask.SetRange(Id_record, Solicitud.RecordId);
+        if UserTask.FindFirst() then begin
+            UserTask.Validate(Title, Titulo);
+            UserTask.Modify(true);
+            Email(UserTask, EmailResponsable, EmailSupervisor);
+            EnviaCorreo(
+                UserTask."No.", UserTask.GetDescription(), true, '', false,
+                Asunto, EmailResponsable, EmailSupervisor, ListaCorreos, '',
+                User."Full Name", false, UserTask.Id_Tarea, false, true);
+            exit;
+        end;
+
+        GtaskLocal.CrearCategorias(CompanyName);
+
+        UserTask.Init();
+        UserTask.Validate(Title, Titulo);
+        UserTask.SetDescription(Solicitud.GetWorkDescription());
+        UserTask."Created By" := UserSecurityId();
+        UserTask.Validate("Created DateTime", CurrentDateTime);
+        if Date2DWY(FechaReferencia, 1) = 5 then begin
+            UserTask."Start DateTime" := CreateDateTime(FechaReferencia, 080000T);
+            UserTask."Due DateTime" := CreateDateTime(CalcDate('3D', FechaReferencia), 130000T);
+        end else begin
+            UserTask."Start DateTime" := CreateDateTime(FechaReferencia, 080000T);
+            UserTask."Due DateTime" := CreateDateTime(CalcDate('1D', FechaReferencia), 130000T);
+        end;
+
+        DevuelveSupervisoryResponsable(
+            Responsable, Supervisor, 'JURIDICO', 'JURIDICO', 'Solicitud',
+            EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
+
+        UserTask.Validate(Priority, UserTask.Priority::High);
+        UserTask.Validate("Object Type", UserTask."Object Type"::Page);
+        UserTask.Validate("Object ID", Page::"Ficha Solicitudes");
+        UserTask.Id_record := Solicitud.RecordId;
+        UserTask.Insert(true);
+        UserTask."No." := Format(UserTask.ID);
+        UserTask.Modify();
+
+        if IsNullGuid(UserTask.Supervisor) or IsNullGuid(UserTask."Assigned To")
+            or (UserTask."User Task Group Assigned To" = '')
+            or (UserTask.Departamento = '')
+            or (UserTask.Servicio = '')
+        then begin
+            UserTask.Delete();
+            exit;
+        end;
+
+        // Misma fuente de adjuntos que la acción "Crear Tarea" de Ficha Solicitudes.
+        DoccAttach.SetRange("Table ID", Database::Reclamaciones);
+        DoccAttach.SetRange("Line No.", Solicitud."Nº Solicitud");
+        if DoccAttach.FindSet() then
+            repeat
+                DoccAttach2 := DoccAttach;
+                DoccAttach2."Table ID" := Database::"User Task";
+                DoccAttach2."No." := UserTask."No.";
+                DoccAttach2."Line No." := 0;
+                if DoccAttach2.Insert() then;
+            until DoccAttach.Next() = 0;
+
+        Clear(GtaskLocal);
+        GtaskLocal.CrearTareaTecnico('', UserTask, UserTask.Departamento, UserTask.Servicio, false);
+        UserTask.Get(UserTask.ID);
+        Email(UserTask, EmailResponsable, EmailSupervisor);
+
+        EnviaCorreo(
+            UserTask."No.", UserTask.GetDescription(), true, '', false,
+            Asunto, EmailResponsable, EmailSupervisor, ListaCorreos, '',
+            User."Full Name", false, UserTask.Id_Tarea, false, true);
+    end;
+
     procedure ActualizarGrupoTarea(var Rec: Record "User Task"; Persistir: Boolean): Boolean
     var
         GrupoUsuario: Code[20];
@@ -172,14 +302,46 @@ codeunit 7001149 Procesos_GTask
 
     [EventSubscriber(ObjectType::Table, Database::"To-Do", 'OnBeforeRunCreateTaskPage', '', false, false)]
     local procedure OnBeforeRunCreateTaskPage(var Task: Record "To-do"; var IsHandled: Boolean)
+    var
+        Emplazamientos: Record Emplazamientos;
+        UserSetup: Record "User Setup";
     begin
         If Task."Tabla" = Database::"User Task" then begin
             IsHandled := true;
             Task.SetRange("Id_Tabla", Task."Id_Tabla");
+            if Task.GetFilter("Contact No.") <> '' then begin
+                Emplazamientos.SetRange("Nº Emplazamiento", Task.GetFilter("Contact No."));
+                if Emplazamientos.FindFirst() then begin
+                    Task."Wizard Contact Name" := Emplazamientos."Descripción";
+                    Task."Contact No." := Emplazamientos."Nº Emplazamiento";
+
+                    If UserSetup.Get(UserId) Then
+                        Task."Salesperson Code" := UserSetup."Salespers./Purch. Code";
+                    Task.Date := Today;
+                    Task.Emplazamiento := true;
+                    Task.Modify();
+                    Commit();
+                end;
+            end;
+
             if PAGE.RunModal(PAGE::"Create Chat", Task) = ACTION::OK then;
         end else begin
             if Not Task.Emplazamiento Then exit;
             IsHandled := true;
+            Task.SetRange("Id_Tabla", Task."Id_Tabla");
+            if Task.GetFilter("Contact No.") <> '' then begin
+                Emplazamientos.SetRange("Nº Emplazamiento", Task.GetFilter("Contact No."));
+                if Emplazamientos.FindFirst() then begin
+                    Task."Wizard Contact Name" := Emplazamientos."Descripción";
+                    Task."Contact No." := Emplazamientos."Nº Emplazamiento";
+                    If UserSetup.Get(UserId) Then
+                        Task."Salesperson Code" := UserSetup."Salespers./Purch. Code";
+                    Task.Date := Today;
+                    Task.Emplazamiento := true;
+                    Task.Modify();
+                    Commit();
+                end;
+            end;
             if PAGE.RunModal(PAGE::"Crear Visita Emplazamiento", Task) = ACTION::OK then;
         end;
 
@@ -781,6 +943,8 @@ codeunit 7001149 Procesos_GTask
                 JsonObjt.Add('department', Departament);
                 JsonObjt.Add('service', service);
                 JsonObjt.Add('date', Gtask.Hora(Tareas."Start DateTime"));
+                //startDate
+                JsonObjt.Add('startDate', Gtask.Hora(Tareas."Start DateTime"));
             end;
             DesdeF := Variant2Date(Tareas."Start DateTime");
             if DesdeF = 0D then begin
@@ -3903,6 +4067,49 @@ codeunit 7001149 Procesos_GTask
         Rec.ActualizarFechaAviso();
         if Rec.FechaAviso <> xRec.FechaAviso then
             Rec.AvisoEnviado := false;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"User Task", OnBeforeRunReportOrPageLink, '', false, false)]
+    local procedure OnBeforeRunReportOrPageLink(var UserTask: Record "User Task"; var IsHandled: Boolean)
+    var
+        Emplazamientos: Record Emplazamientos;
+        emplazamiento: Code[20];
+    begin
+        If UserTask."Object ID" = Page::"Ficha emplazamiento" then begin
+            IsHandled := true;
+            If Emplazamientos.Get(UserTask.Id_record) then begin
+                if Emplazamientos."Nº Emplazamiento" <> '' then begin
+                    Emplazamientos.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
+                    Emplazamientos.SetRange("Tipo Emplazamiento", Emplazamientos."Tipo Emplazamiento");
+                    Page.Run(Page::"Ficha emplazamiento", Emplazamientos);
+
+                end;
+            end else begin
+                //Emplazamientos: 7059
+                //1234567890123456
+                Emplazamiento := Copystr(Format(UserTask.Id_record), 17, 10);
+                Emplazamientos.SetRange("Nº Emplazamiento", Emplazamiento);
+                if Emplazamientos.FindFirst() then
+                    Emplazamiento := Emplazamientos."Nº Emplazamiento"
+                else
+                    Emplazamiento := '0' + Emplazamiento;
+                Emplazamientos.SetRange("Nº Emplazamiento", emplazamiento);
+                if Emplazamientos.FindFirst() then
+                    Page.Run(Page::"Ficha emplazamiento", Emplazamientos);
+            end;
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"To-do", 'OnAfterSetFilterFromTask', '', false, false)]
+    local procedure OnAfterSetFilterFromTask(var ToTask: Record "To-do"; var FromTask: Record "To-do")
+    var
+        Emplazamiento: Record Emplazamientos;
+    begin
+        if FromTask."Contact No." <> '' then begin
+            Emplazamiento.SetRange("Nº Emplazamiento", FromTask."Contact No.");
+            if Emplazamiento.FindFirst() then
+                ToTask.SetRange("Contact No.", Emplazamiento."Nº Emplazamiento");
+        end;
     end;
 
 }

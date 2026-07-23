@@ -315,7 +315,17 @@ pageextension 92154 "UserTask" extends "User Task card"
                         Page::"Ficha emplazamiento":
                             begin
                                 If Emplazamientos.Get(Rec.Id_record) then
-                                    Emplazamiento := Emplazamientos."Nº Emplazamiento";
+                                    Emplazamiento := Emplazamientos."Nº Emplazamiento"
+                                else begin
+                                    //Emplazamientos: 7059
+                                    //1234567890123456
+                                    Emplazamiento := Copystr(Format(Rec.Id_record), 17, 10);
+                                    Emplazamientos.SetRange("Nº Emplazamiento", Emplazamiento);
+                                    if Emplazamientos.FindFirst() then
+                                        Emplazamiento := Emplazamientos."Nº Emplazamiento"
+                                    else
+                                        Emplazamiento := '0' + Emplazamiento;
+                                end;
                             end;
                     End;
                     Visitas.CargarEmplazamiento("Emplazamiento", Rec.RecordID);
