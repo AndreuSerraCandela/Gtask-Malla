@@ -144,6 +144,12 @@ table 7001250 "Incidencias"
             TableRelation = "Time Sheet Header"."No." where("Es Plantilla" = const(true));
             DataClassification = CustomerContent;
         }
+        field(29; "Tipo Intervención"; Enum "Tipo Intervención")
+        {
+            Caption = 'Tipo intervención';
+            DataClassification = CustomerContent;
+            InitValue = Correctivo;
+        }
     }
     keys
     {

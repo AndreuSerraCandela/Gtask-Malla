@@ -147,7 +147,6 @@ pageextension 92151 CompantInfoTask extends "Company Information"
         MallaCrossBitmap: DotNet Bitmap;
         Graphics: DotNet Graphics;
         ImageFormat: DotNet ImageFormat;
-        Rect: DotNet Rectangle;
         InStream: InStream;
         OutStream: OutStream;
         SizeX: Integer;
@@ -168,7 +167,7 @@ pageextension 92151 CompantInfoTask extends "Company Information"
         OffsetX := Round((QRImageBitmap.Width() - SizeX) / 2, 1);
         OffsetY := Round((QRImageBitmap.Height() - SizeY) / 2, 1);
 
-        Graphics.DrawImage(MallaCrossBitmap, Rect.Rectangle(OffsetX, OffsetY, SizeX, SizeY));
+        Graphics.DrawImage(MallaCrossBitmap, OffsetX, OffsetY, SizeX, SizeY);
         QRImageBitmap.Save(OutStream, ImageFormat.Bmp());
 
         Graphics.Dispose();

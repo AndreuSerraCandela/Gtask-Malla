@@ -1,5 +1,6 @@
 pageextension 92173 ZonasLimpiezaExt extends "Zonas Limpieza"
 {
+    Caption = 'Zonas Tareas';
     layout
     {
         addlast(General)
@@ -32,6 +33,7 @@ pageextension 92173 ZonasLimpiezaExt extends "Zonas Limpieza"
             {
                 ApplicationArea = All;
             }
+
         }
         modify("Periodicidad Invierno")
         {

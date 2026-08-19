@@ -33,3 +33,16 @@ enum 50025 "SubTipo Incidencia"
     value(5; "Otras") { }
     //Limpieza,Electrica,Poda,Tip,Otras
 }
+enum 50027 "Tipo Intervención"
+{
+    Extensible = true;
+
+    value(0; Correctivo)
+    {
+        Caption = 'Correctivo';
+    }
+    value(1; Preventivo)
+    {
+        Caption = 'Preventivo';
+    }
+}

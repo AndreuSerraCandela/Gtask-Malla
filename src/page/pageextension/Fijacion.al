@@ -87,6 +87,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Observaciones: Text;
                     ficheros: Record "Document Attachment";
                     IdDocPadre: Integer;
+                    ArrayTareas: JsonArray;
 
                 begin
                     UserSetups.ChangeCompany('Malla Publicidad');
@@ -455,10 +456,12 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Message('Se han generado %1 tareas de fijación', UserTaskNew.Count);
                     Page.RunModal(Page::"User Task List", UsertaskNew);
                     Commit();
+                    Clear(ArrayTareas);
                     If UserTaskNew.FindFirst() Then
                         repeat
-                            Gtask.CrearTareaFijacion(Rec, UsertaskNew, Opcion, false);
+                            Gtask.AddTareaFijacion(Rec, UsertaskNew, Opcion, false, ArrayTareas);
                         until UserTaskNew.Next() = 0;
+                    Gtask.CrearTareaFijacionArray(Rec, ArrayTareas);
 
                     // end else begin
                     //     Clear(Gtask);
@@ -932,6 +935,473 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                     Usertask.Delete();
                     Usertask.Reset();
                     If Usertask.Get(IdBorrar) Then UserTask.Delete();
+                end;
+            }
+            action("Crear Tarea Old")
+            {
+                Image = TaskPage;
+                ApplicationArea = All;
+                Caption = 'Crear Tarea Antiguo';
+                trigger OnAction()
+                var
+                    TipoOrden: Label 'Vallas,Opis,Otros';
+                    rDet: Record "Orden fijación";
+                    Cab: Record "Cab Orden fijación";
+                    Resource: Record "Resource";
+                    Opcion: Option " ",Valla,Opi,Otros;
+                    Usertask: Record "User Task";
+                    Proyecto: Record "Job";
+                    TipoIncidencia: Record "User Task Group";
+                    Gtask: Codeunit "Gtask";
+                    Procesos_GTask: Codeunit Procesos_GTask;
+                    TM: Record "Tenant Media";
+                    DoccAttach: Record "Document Attachment";
+                    DoccAttachTask: Record "Document Attachment";
+                    DoccAttach2: Record "Document Attachment";
+                    DoccAttach3: Record "Document Attachment";
+                    Outstr: OutStream;
+                    RecRef: RecordRef;
+                    InStr: InStream;
+                    Imagenes: Record "Imagenes Orden fijación";
+                    Det: Record "Orden fijación";
+                    DetTemp: Record "Orden fijación" temporary;
+                    im: Record "Imagenes Orden fijación";
+                    Rep: Report "Etiqueta orden fijacion Opis";
+                    Rep2: Report "Etiqueta fijacion soportes";
+                    TempBlob: Codeunit "Temp Blob";
+                    User: Record User;
+                    EmailResponsable: Text;
+                    EmailSupervisor: Text;
+                    UserSetups: Record UsuariosGtask;
+                    Responsable: Guid;
+                    Supervisor: Guid;
+                    ListaCorreos: Text;
+                    Id: Integer;
+                    UserTaskNew: Record "User Task";
+                    Observaciones: Text;
+                    ficheros: Record "Document Attachment";
+                    IdDocPadre: Integer;
+
+                begin
+                    UserSetups.ChangeCompany('Malla Publicidad');
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Format(Rec."Nº Orden"));
+                    DoccAttach.DeleteAll();
+                    Usertask.SetRange(OrdenFijacion, Rec."Nº Orden");
+                    If Usertask.FindFirst() then
+                        Error('Ya existe una tarea para esta orden');
+                    UserSetups.SetRange(Departamento, 'TALLER');
+                    UserSetups.FindFirst();
+                    rDet.Setrange("Nº Orden", Rec."Nº Orden");
+                    Opcion := Opcion::" ";
+                    if Rec."Tipo soporte" = Rec."Tipo soporte"::Valla then Opcion := Opcion::Valla;
+                    if Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then Opcion := Opcion::Opi;
+                    if Rec."Tipo soporte" = Rec."Tipo soporte"::Otros then Opcion := Opcion::Otros;
+                    If (rDet.FindFirst()) and (Opcion = Opcion::" ") then begin
+                        Resource.ChangeCompany(CompanyName);
+                        if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                        Resource.Get(rDet."Nº Recurso");
+                        Opcion := Opcion::" ";
+                        If Resource."Tipo Recurso" in ['VALLA', 'VALLAS', 'P.PEATOAL'] then
+                            Opcion := Opcion::Valla;
+                        if Resource."Tipo Recurso" in ['OPI', 'OPIS', 'LUM1,5X1,1', 'OPI ROT.', 'PLANIMETRO', 'RELOJ'] then
+                            Opcion := Opcion::Opi;
+                        if Resource."Tipo Recurso" in ['INDICADOR', 'VPEATON', 'MEDIANERA'] then
+                            Opcion := Opcion::Otros;
+                    end;
+                    if Opcion = Opcion::" " then
+                        Opcion := StrMenu(TipoOrden, Opcion, 'Seleccione el tipo de tarea a crear');
+                    Usertask.Init();
+                    Proyecto.ChangeCompany(CompanyName);
+                    if rDet.Empresa <> '' then Proyecto.ChangeCompany(rDet.Empresa);
+                    Proyecto.Get(rDet."Nº Proyecto");
+
+                    if Proyecto."Nombre Comercial" = Proyecto."Bill-to Name" then Proyecto."Nombre Comercial" := '';
+                    UserTask.Validate(Title, Proyecto.Description);
+                    UserTask.SetDescription('Fijación soportes ' + Rec."Nº proyecto" + ' del cliente ' + Proyecto."Bill-to Name" + ' ' + Proyecto."Nombre Comercial");
+                    UserTask."Created By" := UserSecurityId();
+                    UserTask.Validate("Created DateTime", CurrentDateTime);
+                    Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
+                    Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
+                    if not TipoIncidencia.Get('FIJACION') then begin
+                        TipoIncidencia.Init();
+                        TipoIncidencia."Code" := 'FIJACION';
+                        TipoIncidencia."Description" := 'Fijación';
+                        TipoIncidencia.Insert();
+
+                    end;
+                    If Rec."Material Fijación" <> "Material de Fijación"::"Sin Especificar" then begin
+                        TipoIncidencia.SetRange("Material Fijación", Rec."Material Fijación");
+                        if not TipoIncidencia.FindFirst() then begin
+                            TipoIncidencia.Init();
+
+                            Case Rec."Material Fijación" Of
+                                "Material de Fijación"::Lona:
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Lona';
+                                        TipoIncidencia."Code" := 'FIJA_LONA';
+                                    END;
+                                "Material de Fijación"::Papel:
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Papel';
+                                        TipoIncidencia."Code" := 'FIJA_PAPEL';
+                                    END;
+                                "Material de Fijación"::Vinilo:
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Vinilo';
+                                        TipoIncidencia."Code" := 'FIJA_VINILO';
+                                    END;
+                                "Material de Fijación"::"Vinilo y lona":
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Vinilo';
+                                        TipoIncidencia."Code" := 'FIJA_VINILO';
+                                    END;
+                                "Material de Fijación"::"Vinilo y papel":
+                                    begin
+                                        TipoIncidencia."Description" := 'Fijación Vinilo';
+                                        TipoIncidencia."Code" := 'FIJA_VINILO';
+                                    END;
+
+                            End;
+                            TipoIncidencia.Insert();
+                        end;
+
+                    end else begin
+                        If Rec."Tipo soporte" = Rec."Tipo soporte"::OPI then begin
+                            TipoIncidencia.SetRange("Code", 'FIJA_OPIS');
+                            If Not TipoIncidencia.FindFirst() then begin
+                                TipoIncidencia.Init();
+                                TipoIncidencia."Code" := 'FIJA_OPIS';
+                                TipoIncidencia."Description" := 'Fijación Opis';
+                                TipoIncidencia.Insert();
+                            end;
+                        end;
+                        If Rec."Tipo soporte" = Rec."Tipo soporte"::OTROS then begin
+                            TipoIncidencia.SetRange("Code", 'FIJA_OTROS');
+                            If Not TipoIncidencia.FindFirst() then begin
+                                TipoIncidencia.Init();
+                                TipoIncidencia."Code" := 'FIJA_OTROS';
+                                TipoIncidencia."Description" := 'Fijación Otros';
+                                TipoIncidencia.Insert();
+                            end;
+                        end;
+                    end;
+                    User.Get(UserSecurityId());
+                    Procesos_Gtask.DevuelveSupervisoryResponsable(Responsable, Supervisor, 'TALLER', 'TALLER', TipoIncidencia.Code, EmailResponsable, EmailSupervisor, User, UserTask, ListaCorreos);
+                    UserSetups.Reset();
+                    //UserTask.Validate("User Task Group Assigned To", 'FIJACION');
+                    UserTask.Validate(Priority, Usertask.Priority::High);
+                    UserTask.Validate("Object Type", Usertask."Object Type"::Page);
+                    UserTask.Validate("Object ID", Page::"Ficha Orden Fijacion");
+                    UserTask.Validate("Due DateTime", CreateDateTime(Rec."Fecha fijación", 080000T));
+                    Usertask."Start DateTime" := CreateDateTime(Rec."Fecha fijación", 080000T);
+                    Usertask."Due DateTime" := CreateDateTime(Rec."Fecha fijación", 130000T);
+                    Usertask.Id_record := Rec.RecordId;
+                    Usertask.OrdenFijacion := Rec."Nº Orden";
+                    UserTask.Insert(true);
+                    Usertask."No." := Format(Usertask.ID);
+                    UserTask."Supervisor" := Supervisor;
+                    UserTask."User Task Group Assigned To" := TipoIncidencia."Code";
+                    UserTask."No." := Format(UserTask.ID);
+                    // If not IsNullGuid(UserTask.Supervisor) then
+                    //     UserTask."Created By" := Usertask.Supervisor;
+                    Usertask.OrdenFijacion := Rec."Nº Orden";
+                    Usertask.Departamento := 'TALLER';
+                    Usertask.Servicio := 'TALLER';
+                    Usertask."Job No." := Rec."Nº Proyecto";
+                    Usertask.Modify();
+                    DoccAttach2.SetRange("Table ID", Database::"Cab Orden fijación");
+                    DoccAttach2.SetRange("Line No.", Rec."Nº Orden");
+                    If DoccAttach2.FindFirst() then
+                        repeat
+                            DoccAttach := DoccAttach2;
+                            DoccAttach."Table ID" := Database::"User Task";
+                            DoccAttach."No." := Format(Rec."Nº Orden");
+                            DoccAttach."Document Type" := DoccAttach."Document Type"::Vallas;
+                            DoccAttach."Line No." := 0;
+                            If DoccAttach.Insert() Then;
+                        until DoccAttach2.Next() = 0;
+                    //Inserto los report
+                    If Opcion = Opcion::Valla then begin
+                        imprimir(Imagenes, IdDocPadre, 'Valla', Usertask, rDet);
+                        Det.Reset();
+                        Det.SetRange("Nº Orden", Rec."Nº Orden");
+                        If Det.FindFirst() Then
+                            repeat
+                                DetTemp := Det;
+                                DetTemp.Insert;
+                            until Det.Next() = 0;
+                        Det.DeleteAll();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det.DeleteAll();
+                                Det := DetTemp;
+                                Det.Insert;
+                                Clear(TempBlob);
+                                Clear(Outstr);
+                                Clear(RecRef);
+                                TempBlob.CreateOutStream(Outstr);
+                                RecRef.GetTable(Cab);
+                                Clear(Rep2);
+                                Observaciones := Rec.GetWorkDescription();
+                                Rep2.CargaObservaciones(Observaciones, Rec."Título");
+                                Rep2.SetTableView(Rec);
+                                Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                //Report.SaveAs(Report::"Etiqueta orden fijacion Vallas", '', ReportFormat::Pdf, Outstr, RecRef);
+                                RecRef.Close();
+                                Clear(RecRef);
+                                RecRef.GetTable(Usertask);
+                                RecRef.Get(Usertask.RecordId);
+                                TempBlob.CreateInStream(InStr);
+                                DoccAttach.Init();
+                                DoccAttach."Table ID" := Database::"User Task";
+                                DoccAttach."No." := Format(Rec."Nº Orden");
+                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Line No." := Det."Nº Reserva";
+                                DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
+                            Until DetTemp.Next() = 0;
+                        Det.DeleteAll();
+                        DetTemp.Reset();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det := DetTemp;
+                                Det.Insert;
+                            Until DetTemp.Next() = 0;
+                        //DoccAttach.Insert();
+
+                    end;
+                    if Opcion = Opcion::Opi then begin
+                        imprimir(Imagenes, IdDocPadre,
+                        'Opi', Usertask, rDet);
+                        Det.Reset();
+                        Det.SetRange("Nº Orden", Rec."Nº Orden");
+                        If Det.FindFirst() Then
+                            repeat
+                                DetTemp := Det;
+                                DetTemp.Insert;
+                            until Det.Next() = 0;
+                        Det.DeleteAll();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det.DeleteAll();
+                                Det := DetTemp;
+                                Det.Insert;
+                                Clear(TempBlob);
+                                Clear(Outstr);
+                                Clear(RecRef);
+                                TempBlob.CreateOutStream(Outstr);
+                                Clear(Rep);
+                                Observaciones := Rec.GetWorkDescription();
+                                Imagenes.SetRange("Nº Orden", Rec."Nº Orden");
+                                Imagenes.SetRange("Es Qr", false);
+                                Imagenes.SetRange("Valla Fijada", false);
+                                RecRef.GetTable(Imagenes);
+                                im.SetRange("Nº Orden", DetTemp."Nº Orden");
+                                im.SetRange("Nº Imagen", DetTemp."Nº Imagen");
+                                im.SetRange("Valla Fijada", False);
+                                Rep.SetTableView(im);
+                                Rep.Filtra(DetTemp."Nº Orden", DetTemp."Nº Imagen");
+                                Rep.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                //Report.SaveAs(Report::"Etiqueta orden fijacion Vallas", '', ReportFormat::Pdf, Outstr, RecRef);
+                                RecRef.Close();
+                                Clear(RecRef);
+                                RecRef.GetTable(Usertask);
+                                RecRef.Get(Usertask.RecordId);
+                                TempBlob.CreateInStream(InStr);
+                                DoccAttach.Init();
+                                DoccAttach."Table ID" := Database::"User Task";
+                                DoccAttach."Document Type" := 0;
+                                DoccAttach."No." := Format(Rec."Nº Orden");
+                                DoccAttach."Line No." := Det."Nº Reserva";
+                                DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
+                            Until DetTemp.Next() = 0;
+                        Det.DeleteAll();
+                        DetTemp.Reset();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det := DetTemp;
+                                Det.Insert;
+                            Until DetTemp.Next() = 0;
+                        //DoccAttach.Insert();
+                        //tm.Delete();
+
+                    end;
+                    if Opcion = Opcion::Otros then begin
+                        imprimir(Imagenes, IdDocPadre, 'Otros', Usertask, rDet);
+                        Det.Reset();
+                        Det.SetRange("Nº Orden", Rec."Nº Orden");
+                        //DoccAttach.Insert();
+                        If Det.FindFirst() Then
+                            repeat
+                                DetTemp := Det;
+                                DetTemp.Insert;
+                            until Det.Next() = 0;
+                        Det.DeleteAll();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det.DeleteAll();
+                                Det := DetTemp;
+                                Det.Insert;
+                                Clear(TempBlob);
+                                Clear(Outstr);
+                                Clear(RecRef);
+                                TempBlob.CreateOutStream(Outstr);
+                                Cab.SetRange("Nº Orden", Rec."Nº Orden");
+                                RecRef.GetTable(Cab);
+                                Resource.ChangeCompany(CompanyName);
+                                if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                                Resource.GET(rDet."Nº Recurso");
+                                Clear(Rep2);
+                                Observaciones := Rec.GetWorkDescription();
+                                Rep2.CargaObservaciones(Observaciones, Resource.Medidas + ' ' + Rec."Título");
+                                Rep2.SetTableView(Cab);
+                                Rep2.SaveAs('', ReportFormat::Pdf, Outstr, RecRef);
+                                RecRef.Close();
+                                Clear(RecRef);
+                                RecRef.GetTable(Usertask);
+                                RecRef.Get(Usertask.RecordId);
+                                TempBlob.CreateInStream(InStr);
+                                DoccAttach.Init();
+                                DoccAttach."Table ID" := Database::"User Task";
+                                DoccAttach."No." := Format(Rec."Nº Orden");
+                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Line No." := Det."Nº Reserva";
+                                DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
+                            Until DetTemp.Next() = 0;
+                        Det.DeleteAll();
+                        DetTemp.Reset();
+                        if DetTemp.FindFirst() then
+                            repeat
+                                Det := DetTemp;
+                                Det.Insert;
+                            Until DetTemp.Next() = 0;
+                        //DoccAttach.Insert();
+
+                    end;
+                    Commit();
+                    Page.RunModal(Page::"User Task Card", UserTask);
+                    iF UserTask.EliminarTarea then begin
+                        UserTask.Get(UserTask.ID);
+                        Commit();
+                        If Confirm('¿Desea borrar la tarea?') then begin
+                            UserTask.Delete();
+                            exit;
+                        end;
+                    end;
+
+                    Commit();
+                    UserTask.Get(UserTask.ID);
+                    Id := UserTask.ID;
+                    //If Opcion <> Opcion::Opi Then begin
+                    DoccAttach.Reset();
+                    rDet.Reset;
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Usertask."No.");
+                    DoccAttach.SetRange("Document Type", 0);
+                    DoccAttach.SetFilter("Line No.", '<>%1', 0);
+                    If DoccAttach.Count = 0 Then DoccAttach.SetRange("No.", Format(Rec."Nº Orden"));
+                    Message('Se generarán %1 tareas de fijación', DoccAttach.Count);
+                    If DoccAttach.FindFirst() then
+                        repeat
+
+                            rDet.Reset();
+                            rDet.SetRange("Nº Orden", Rec."Nº Orden");
+                            rDet.SetRange("Nº Reserva", DoccAttach."Line No.");
+                            rDet.FindFirst();
+                            Resource.ChangeCompany(CompanyName);
+                            Proyecto.ChangeCompany(CompanyName);
+                            if rDet.Empresa <> '' then Resource.ChangeCompany(rDet.Empresa);
+                            if rDet.Empresa <> '' then Proyecto.ChangeCompany(rDet.Empresa);
+                            Proyecto.Get(rDet."Nº Proyecto");
+                            Resource.Get(rDet."Nº Recurso");
+                            UserTaskNew.FindLast();
+                            Id := UserTaskNew.ID + 1;
+                            UserTaskNew := Usertask;
+                            UsertaskNew.Id := Id;
+                            UsertaskNew."Parent ID" := UserTask.Id;
+                            UserTaskNew.Insert();
+                            UserTaskNew.Get(ID);
+                            UserTaskNew.Title := Copystr('Fijación ' + Resource.Name + ' ' + Usertask.Title, 1, MaxStrLen(UserTaskNew.Title));
+                            UserTaskNew.SetDescription('Fijación ' + Resource.Name + ' nº ' + Resource."No." + ' del proyecto ' + rDet."Nº proyecto" + ' del cliente ' + Proyecto."Bill-to Name" + ' ' + Proyecto."Nombre Comercial");
+                            If Opcion = Opcion::Opi then begin
+                                UserTaskNew.fastPhoto := true;
+                                UserTaskNew.Resource := Resource."No.";
+                            end;
+                            if rDet.Empresa <> '' then
+                                UserTaskNew.EmpresaTarea := rDet.Empresa
+                            else
+                                UserTaskNew.EmpresaTarea := CompanyName;
+                            Usertasknew.Reserva := DoccAttach."Line No.";
+                            UserTaskNew."Job No." := Proyecto."No.";
+                            UserTaskNew."No." := Format(UsertaskNew.ID);
+                            UserTaskNew.Estado := UserTask.Estado::Pendiente;
+                            UserTaskNew.Modify();
+                            Clear(Gtask);
+                            DoccAttachTask := DoccAttach;
+                            DoccAttachTask."No." := UsertaskNew."No.";
+                            DoccAttachTask.Insert();
+                        //Generar Una vez Revisadas las tareas
+                        //Gtask.CrearTareaFijacion(Rec, UsertaskNew);
+                        until DoccAttach.Next() = 0;
+                    Commit();
+                    UserTaskNew.SetRange(OrdenFijacion, Rec."Nº Orden");
+                    UserTaskNew.SetFilter(Reserva, '<>%1', 0);
+                    Message('Se han generado %1 tareas de fijación', UserTaskNew.Count);
+                    Page.RunModal(Page::"User Task List", UsertaskNew);
+                    Commit();
+                    If UserTaskNew.FindFirst() Then
+                        repeat
+                            Gtask.CrearTareaFijacion(Rec, UsertaskNew, Opcion, false);
+                        until UserTaskNew.Next() = 0;
+
+
+                    // end else begin
+                    //     Clear(Gtask);
+                    //     Gtask.CrearTareaFijacion(Rec, Usertask);
+                    // end;
+                    DoccAttach.Reset();
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetRange("No.", Usertask."No.");
+                    DoccAttach.SetRange("Document Type", 0);
+                    DoccAttach.SetFilter("Line No.", '<>%1', 0);
+                    //If Opcion <> Opcion::Opi then
+                    DoccAttach.DeleteAll(true);
+                    DoccAttach.Reset();
+                    Procesos_Gtask.Email(UserTask, EmailResponsable, EmailSupervisor);
+                    DoccAttach.Reset();
+                    DoccAttach.SetRange("Table ID", Database::"User Task");
+                    DoccAttach.SetFilter("Document Type", '<>%1', 0);
+                    DoccAttach.SetRange(Id, IdDocPadre);
+                    if not DoccAttach.FindFirst() then begin
+                        DoccAttachTemp.FindFirst();
+                        repeat
+                            DoccAttach := DoccAttachTemp;
+                            If DoccAttach.Insert() then;
+                        until DoccAttachTemp.Next() = 0;
+                    end;
+                    ficheros.SetRange("Table ID", Database::"User Task");
+                    ficheros.SetFilter("Document Type", '>%1', 0);
+                    ficheros.SetRange(Id, IdDocPadre);
+                    If not ficheros.FindLast() then begin
+                        // si no hay adjunto, vuelve a generar el pdf y, lo adjunta a la rtarea
+                        ficheros := DoccAttachTemp;
+                        If ficheros.insert() then;
+                        Commit();
+                    end;
+                    EnviaCorreo(Usertask, true, '', false
+                    , 'Tarea Fijación ' + Proyecto.Description,
+                    EmailResponsable, EmailSupervisor, ListaCorreos,
+                    'julian@malla.es;xcastell@malla.es;andreuserra@malla.es;lllompart@malla.es', User."Full Name", IdDocPadre);
+                    //If Opcion <> 2 then 
+                    Usertask.Delete();
+                    UserTaskNew.Reset();
+                    UserTaskNew.SetRange("Parent ID", UserTask.Id);
+                    UserTaskNew.ModifyAll("Parent ID", 0, false);
+                    Det.Reset();
+                    Det.SetRange("Nº Orden", Rec."Nº Orden");
+                    det.ModifyAll("Tiene Task", true);
+
+
                 end;
             }
             action("Ver Tareas")

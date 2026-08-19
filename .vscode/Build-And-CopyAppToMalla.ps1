@@ -37,7 +37,17 @@ if (-not $CopyOnly) {
     }
 
     Write-Host "Compilando con: $alcExe"
-    & $alcExe /project:$WorkspaceFolder /packagecachepath:$packageCache
+    $assemblyPaths = @(
+        (Join-Path $WorkspaceFolder '.netpackages'),
+        'C:\Windows\assembly',
+        'C:\net'
+    ) | Where-Object { Test-Path $_ }
+    $assemblyArg = ($assemblyPaths | ForEach-Object { $_ }) -join ';'
+    if ($assemblyArg) {
+        & $alcExe /project:$WorkspaceFolder /packagecachepath:$packageCache /assemblyprobingpaths:$assemblyArg
+    } else {
+        & $alcExe /project:$WorkspaceFolder /packagecachepath:$packageCache
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Error "La compilación falló (código $LASTEXITCODE)."
         exit $LASTEXITCODE

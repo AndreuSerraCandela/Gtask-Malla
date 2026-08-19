@@ -61,9 +61,9 @@ pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
             action(OrdenesTrabajo)
             {
                 ApplicationArea = All;
-                Caption = 'Órdenes de trabajo';
+                Caption = 'Mantenimientos';
                 Image = OrderList;
-                ToolTip = 'Abre las órdenes de trabajo (incidencias tipo petición) de esta parada';
+                ToolTip = 'Abre los mantenimientos (órdenes de trabajo preventivas) de esta parada';
 
                 trigger OnAction()
                 var
@@ -71,8 +71,7 @@ pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
                 begin
                     Incidencias.SetRange(Recurso, Rec."Nº Emplazamiento");
                     Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
-                    Incidencias.SetRange("Es Peticion", true);
-                    Page.Run(Page::"Lista Incidencias Taller", Incidencias);
+                    Page.Run(Page::"Lista Mantenimientos", Incidencias);
                 end;
             }
             action(CrearOrdenMantenimiento)

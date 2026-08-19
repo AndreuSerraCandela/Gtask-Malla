@@ -166,3 +166,20 @@ tableextension 50103 "Imagenes Orden fijación Ext" extends "Imagenes Orden fija
         }
     }
 }
+
+tableextension 50104 "Cab Orden Fijacion Ext" extends "Cab Orden fijación"
+{
+    trigger OnBeforeDelete()
+    begin
+        VerificarSinTareasAsociadas();
+    end;
+
+    local procedure VerificarSinTareasAsociadas()
+    var
+        UserTask: Record "User Task";
+    begin
+        UserTask.SetRange(OrdenFijacion, Rec."Nº Orden");
+        if UserTask.FindFirst() then
+            Error('No se puede borrar la orden de fijación %1 porque tiene tareas asociadas.', Rec."Nº Orden");
+    end;
+}

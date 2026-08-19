@@ -40,6 +40,10 @@ page 50120 "Ordenes Trabajo"
                     ApplicationArea = All;
                     ToolTip = 'Número del parte / orden de trabajo EMT vinculado a la petición.';
                 }
+                field("Tipo Intervención"; Rec."Tipo Intervención")
+                {
+                    ApplicationArea = All;
+                }
 
 
             }

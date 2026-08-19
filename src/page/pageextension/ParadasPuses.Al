@@ -27,6 +27,11 @@ pageextension 92169 BusExtension extends "Paradas Bus"
             {
                 Caption = 'Zona Revisión';
             }
+            field("Zona Mantenimiento"; Rec."Zona Mantenimiento")
+            {
+                ApplicationArea = All;
+                Caption = 'Zona Mantenimiento';
+            }
         }
     }
     actions
@@ -40,9 +45,6 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                 ApplicationArea = All;
                 Caption = 'Panel gerencia';
                 Image = Report;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
                 ToolTip = 'Abre el panel de indicadores de paradas bus, tareas de limpieza/revisión, mantenimiento y partes de trabajo.';
 
                 trigger OnAction()
@@ -391,6 +393,26 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     Message('Se han creado %1 órdenes de mantenimiento.', N);
                 end;
             }
+            action(AsignarZonaMantenimiento)
+            {
+                ApplicationArea = All;
+                Caption = 'Asignar zona mantenimiento';
+                Image = Apply;
+                ToolTip = 'Asigna la misma zona de mantenimiento a todas las paradas seleccionadas.';
+
+                trigger OnAction()
+                var
+                    Paradas: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
+                begin
+                    CurrPage.SetSelectionFilter(Paradas);
+                    Gtask.AsignarZonaMantenimientoEmplazamientos(Paradas);
+                end;
+            }
+        }
+        addlast(Category_Process)
+        {
+            actionref(AsignarZonaMantenimiento_Promoted; AsignarZonaMantenimiento) { }
         }
     }
 

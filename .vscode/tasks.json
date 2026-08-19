@@ -42,6 +42,25 @@
                 "reveal": "always",
                 "panel": "shared"
             }
+        },
+        {
+            "label": "AL: Recargar proyecto (limpiar caché)",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/.vscode/Reload-AlProject.ps1",
+                "-WorkspaceFolder",
+                "${workspaceFolder}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            }
         }
     ]
 }

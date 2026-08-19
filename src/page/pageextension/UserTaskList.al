@@ -118,6 +118,12 @@ pageextension 92157 "UserTaskList" extends "User Task List"
                 ApplicationArea = All;
                 StyleExpr = EstadoStyle;
             }
+            field(Zona; ZonaTarea())
+            {
+                Caption = 'Zona';
+                ApplicationArea = All;
+                StyleExpr = EstadoStyle;
+            }
         }
 
     }
@@ -517,6 +523,55 @@ pageextension 92157 "UserTaskList" extends "User Task List"
         Rec.SetRange(Id_Record, EmplazamientoId);
     end;
 
+    local procedure ZonaTarea(): Text
+    var
+        ParadaBus: Record Emplazamientos;
+        Resource: Record Resource;
+    begin
+        Case Rec."User Task Group Assigned To" of
+            'LIMPIEZA':
+                begin
+                    If ParadaBus.Get(Rec.Id_record) then
+                        exit(TextoZona(ParadaBus."Zona Limpieza"))
+                    else
+                        exit('');
+                end;
+            'REVISION':
+                begin
+                    If ParadaBus.Get(Rec.Id_record) then
+                        exit(TextoZona(ParadaBus."Zona Limpieza"))
+                    else
+                        exit('');
+                end;
+
+            'MTO', 'EMT':
+                begin
+                    if Rec.Id_record.TableNo = Database::Resource Then begin
+                        If Resource.Get(Rec.Id_record) then
+                            exit(TextoZona(Resource."Zona Mantenimiento"))
+                        else
+                            exit('');
+                    end;
+                    if Rec.Id_record.TableNo = Database::Emplazamientos Then begin
+                        If ParadaBus.Get(Rec.Id_record) then
+                            exit(TextoZona(ParadaBus."Zona Mantenimiento"))
+                        else
+                            exit('');
+                    end;
+                end;
+
+        end;
+    end;
+
+    procedure TextoZona(Zona: Integer): Text
+    var
+        ZonasLimpieza: Record "Zonas Limpieza";
+    begin
+        If ZonasLimpieza.Get(Zona) then
+            exit(ZonasLimpieza."Descripción")
+        else
+            exit('');
+    end;
 
 
 

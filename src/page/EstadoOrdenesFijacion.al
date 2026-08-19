@@ -253,8 +253,12 @@ page 50102 "Ordenes Fijación QR"
                             UserTask.SetRange(OrdenFijacion, OrdenFijacion."Nº Orden");
                             UserTask.SetRange(Reserva, OrdenFijacion."Nº Reserva");
                             if UserTask.FindSet() then begin
-                                if not OrdenFijacion."Tiene Fotos" Then
-                                    Procesos_GTask.UpdateTasksPriority(UserTask);
+                                if not OrdenFijacion."Tiene Fotos" then begin
+                                    if UserTask."Id_Tarea" <> '' then begin
+                                        Gtask.GetSetDocattchment(UserTask, UserTask.Id_Tarea);
+                                        Gtask.ResetTaskPriorityNormal(UserTask.Id_Tarea);
+                                    end;
+                                end;
                                 DocumentAttachment.SetRange("Table ID", Database::"User Task");
                                 DocumentAttachment.SetRange("No.", UserTask."No.");
                                 DocumentAttachment.SetFilter("File Name", '%1', '*.jpg');

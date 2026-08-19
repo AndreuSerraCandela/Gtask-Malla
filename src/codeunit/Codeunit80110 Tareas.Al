@@ -9,6 +9,13 @@ codeunit 7001148 GTask
         LToken: Text;
         Procesos_GTask: Codeunit Procesos_GTask;
         UserTaskTemp: Record "User Task" temporary;
+        FijacionBatchInitialized: Boolean;
+        FijacionBatchOrdenNo: Integer;
+        FijacionBatchDepartament: Text;
+        FijacionBatchService: Text;
+        FijacionBatchCategory: Text;
+        FijacionBatchRecursoCache: Dictionary of [Text, Text];
+        FijacionBatchProyectoCache: Dictionary of [Text, Text];
 
     trigger OnRun()
     var
@@ -247,6 +254,24 @@ codeunit 7001148 GTask
                 end;
             until DocumentAttachment.Next() = 0;
         //GetSetChat(Tarea, Id_Tarea);
+    end;
+
+    procedure ResetTaskPriorityNormal(Id_Tarea: Text)
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Json: Text;
+        JsonObjt: JsonObject;
+    begin
+        if Id_Tarea = '' then
+            exit;
+
+        CompanyInfo.Get();
+        Clear(JsonObjt);
+        JsonObjt.Add('type', 'NORMAL');
+        JsonObjt.WriteTo(Json);
+        RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Id_Tarea, Token(), RequestType::put, Json);
     end;
 
     procedure SetDocAttachment(var DocumentAttachment: Record "Document Attachment"; Id_Tarea: Text)
@@ -1152,6 +1177,327 @@ codeunit 7001148 GTask
         //     "60d34a0dd3c5950019177665"
         // ],
         // "mentions": ["60d31d7d0c6fff00183fe616"]
+    end;
+
+    procedure AddTareaFijacion(var OrdenFijacion: Record "Cab Orden fijación"; var Tarea: Record "User Task"; Opcion: Option " ",Valla,Opi,Otros; Retirada: Boolean; var ArrayTareas: JsonArray)
+    var
+        JsonTask: JsonObject;
+    begin
+        InicializarMaestrosFijacionOrden(OrdenFijacion, Tarea);
+        ConstruirJsonTareaFijacion(OrdenFijacion, Tarea, Opcion, Retirada, JsonTask);
+        Tarea.Modify(false);
+        ArrayTareas.Add(JsonTask);
+    end;
+
+    procedure CrearTareaFijacionArray(var OrdenFijacion: Record "Cab Orden fijación"; var ArrayTareas: JsonArray)
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        JsonText: Text;
+        JsonResp: Text;
+        UserTask: Record "User Task";
+    begin
+        if ArrayTareas.Count() = 0 then begin
+            ResetFijacionBatchCache();
+            exit;
+        end;
+
+        ArrayTareas.WriteTo(JsonText);
+        CompanyInfo.Get();
+        JsonResp := RestApi.RestApiToken(CompanyInfo."Url task" + 'taskarray', Token(), RequestType::post, JsonText);
+        if JsonResp <> '' then
+            ActualizarTareasFijacionDesdeRespuesta(JsonResp);
+
+        Commit();
+        UserTask.SetRange(OrdenFijacion, OrdenFijacion."Nº Orden");
+        UserTask.SetFilter(Reserva, '<>%1', 0);
+        if UserTask.FindSet() then
+            repeat
+                if UserTask.Id_Tarea <> '' then
+                    ProcesarTareaFijacionPostEnvio(OrdenFijacion, UserTask);
+            until UserTask.Next() = 0;
+
+        ResetFijacionBatchCache();
+    end;
+
+    local procedure ResetFijacionBatchCache()
+    begin
+        FijacionBatchInitialized := false;
+        FijacionBatchOrdenNo := 0;
+        Clear(FijacionBatchDepartament);
+        Clear(FijacionBatchService);
+        Clear(FijacionBatchCategory);
+        Clear(FijacionBatchRecursoCache);
+        Clear(FijacionBatchProyectoCache);
+    end;
+
+    local procedure FijacionBatchIsInitializedForOrder(NOrden: Integer): Boolean
+    begin
+        exit(FijacionBatchInitialized and (FijacionBatchOrdenNo = NOrden));
+    end;
+
+    local procedure SetFijacionBatchRecurso(RecursoNo: Code[20]; IdGtask: Text)
+    begin
+        if RecursoNo = '' then
+            exit;
+        if FijacionBatchRecursoCache.ContainsKey(RecursoNo) then
+            FijacionBatchRecursoCache.Set(RecursoNo, IdGtask)
+        else
+            FijacionBatchRecursoCache.Add(RecursoNo, IdGtask);
+    end;
+
+    local procedure SetFijacionBatchProyecto(CacheKey: Text; IdGtask: Text)
+    begin
+        if CacheKey = '' then
+            exit;
+        if FijacionBatchProyectoCache.ContainsKey(CacheKey) then
+            FijacionBatchProyectoCache.Set(CacheKey, IdGtask)
+        else
+            FijacionBatchProyectoCache.Add(CacheKey, IdGtask);
+    end;
+
+    local procedure InicializarMaestrosFijacionOrden(var OrdenFijacion: Record "Cab Orden fijación"; var Tarea: Record "User Task")
+    var
+        DetOrdenFijacion: Record "Orden fijación";
+        TipoIncidencia: Record "User Task Group";
+        Recurso: Record Resource;
+        wRecordRef: RecordRef;
+        Categoria: Text;
+        departament: Text;
+        service: Text;
+        category: Text;
+        resource: Text;
+    begin
+        if FijacionBatchIsInitializedForOrder(OrdenFijacion."Nº Orden") then
+            exit;
+
+        ResetFijacionBatchCache();
+        departament := Tarea.Departamento;
+        service := Tarea.Servicio;
+        CrearDepartamnetoyServicio(departament, service);
+
+        Categoria := Tarea."User Task Group Assigned To";
+        if not TipoIncidencia.Get(Categoria) then begin
+            TipoIncidencia.Init();
+            TipoIncidencia."Code" := Categoria;
+            TipoIncidencia."Description" := Categoria;
+            TipoIncidencia.Insert();
+            Commit();
+        end;
+        wRecordRef.Open(Database::"User Task Group", false, CompanyName);
+        wRecordRef.Get(TipoIncidencia.RecordId);
+        category := GetMaestro('category', Categoria, 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
+        if category = 'Error' then begin
+            CreaCategoria(Categoria, TipoIncidencia.RecordId, Database::"User Task Group", 'Malla Publicidad');
+            category := GetMaestro('category', 'Intervencion', 'name', wRecordRef, Database::"User Task Group", 'Malla Publicidad');
+        end;
+        wRecordRef.Close();
+
+        DetOrdenFijacion.SetRange("Nº Orden", OrdenFijacion."Nº Orden");
+        if DetOrdenFijacion.FindSet() then
+            repeat
+                if Recurso.Get(DetOrdenFijacion."Nº Recurso") then begin
+                    if not FijacionBatchRecursoCache.Get(Recurso."No.", resource) then begin
+                        wRecordRef.Close();
+                        wRecordRef.Open(Database::Resource, false, CompanyName);
+                        wRecordRef.Get(Recurso.RecordId);
+                        resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+                        if resource = 'Error' then begin
+                            CreaRecurso(Recurso, Recurso.RecordId, Database::Resource);
+                            resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
+                        end;
+                        SetFijacionBatchRecurso(Recurso."No.", resource);
+                    end;
+                end;
+            until DetOrdenFijacion.Next() = 0;
+        wRecordRef.Close();
+
+        FijacionBatchInitialized := true;
+        FijacionBatchOrdenNo := OrdenFijacion."Nº Orden";
+        FijacionBatchDepartament := departament;
+        FijacionBatchService := service;
+        FijacionBatchCategory := category;
+    end;
+
+    local procedure ConstruirJsonTareaFijacion(var OrdenFijacion: Record "Cab Orden fijación"; var Tarea: Record "User Task"; Opcion: Option " ",Valla,Opi,Otros; Retirada: Boolean; var JsonTask: JsonObject)
+    var
+        UserGtaskMalla: Record UsuariosGtask;
+        CompanyInfo: Record "Company Information";
+        Job: Record Job;
+        wRecordRef: RecordRef;
+        responsable: Text;
+        Supervisor: Text;
+        usuario: Text;
+        JobNo: Text;
+        Desde: Date;
+        Hasta: Date;
+        Dias: Integer;
+        Url: Text;
+        ExpirationDate: JsonObject;
+        ProyectoCacheKey: Text;
+        JsonNullRule: JsonToken;
+    begin
+        UserGtaskMalla.ChangeCompany('Malla Publicidad');
+        Clear(JsonTask);
+
+        Tarea.CalcFields("Assigned To User Name");
+        UserGtaskMalla.SetRange("Id Usuario", Tarea."Assigned To");
+        if not UserGtaskMalla.FindFirst() then
+            Error('El usuario responsable %1 no existe en Gtask o, no está enlazado', Tarea."Assigned To User Name");
+        responsable := UserGtaskMalla."Id Gtask";
+
+        Tarea.CalcFields("Supervisor User Name");
+        UserGtaskMalla.SetRange("Id Usuario", Tarea."Supervisor");
+        if not UserGtaskMalla.FindFirst() then
+            Error('El usuario  supervisor %1 no existe en Gtask o, no está enlazado', Tarea."Supervisor User Name");
+        Supervisor := UserGtaskMalla."Id Gtask";
+
+        UserGtaskMalla.SetRange("Id Usuario", Tarea."Created By");
+        if not UserGtaskMalla.FindFirst() then
+            Error('El usuario %1 no existe en Gtask o, no está enlazado', Tarea."Created By User Name");
+        usuario := UserGtaskMalla."Id Gtask";
+
+        if Tarea.EmpresaTarea <> '' then
+            Job.ChangeCompany(Tarea.EmpresaTarea);
+        Job.Get(Tarea."Job No.");
+        ProyectoCacheKey := ClaveProyectoFijacionCache(Tarea.EmpresaTarea, Tarea."Job No.");
+        if not FijacionBatchProyectoCache.Get(ProyectoCacheKey, JobNo) then begin
+            if Tarea.EmpresaTarea <> '' then
+                wRecordRef.Open(Database::Job, false, Tarea.EmpresaTarea)
+            else
+                wRecordRef.Open(Database::Job);
+            wRecordRef.Get(Job.RecordId);
+            JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+            if JobNo = 'Error' then begin
+                CreaProyecto(Job, Job.RecordId, Database::Job);
+                JobNo := GetMaestro('project', Job.Description, 'name', wRecordRef, Database::Job, '');
+            end;
+            wRecordRef.Close();
+            SetFijacionBatchProyecto(ProyectoCacheKey, JobNo);
+        end;
+
+        Clear(ExpirationDate);
+        ExpirationDate.Add('date', Hora(Tarea."Start DateTime"));
+        JsonNullRule.ReadFrom('null');
+        ExpirationDate.Add('rule', JsonNullRule);
+        ExpirationDate.Add('custom', false);
+
+        Desde := Variant2Date(Tarea."Start DateTime");
+        if Desde = 0D then begin
+            Tarea."Start DateTime" := CurrentDateTime;
+            Desde := Variant2Date(Tarea."Start DateTime");
+        end;
+        Hasta := Variant2Date(Tarea."Due DateTime");
+        if Hasta = 0D then begin
+            Tarea."Due DateTime" := CurrentDateTime;
+            Hasta := Variant2Date(Tarea."Due DateTime");
+        end;
+        Dias := Hasta - Desde;
+
+        CompanyInfo.Get();
+        JsonTask.Add('department', FijacionBatchDepartament);
+        JsonTask.Add('expirationDate', ExpirationDate);
+        JsonTask.Add('daysToPerform', Dias + 1);
+        JsonTask.Add('description', Tarea.Title);
+        JsonTask.Add('observation', Tarea.GetDescription());
+        JsonTask.Add('service', FijacionBatchService);
+        JsonTask.Add('category', FijacionBatchCategory);
+        JsonTask.Add('project', JobNo);
+        JsonTask.Add('user', responsable);
+        JsonTask.Add('Id_Navision', CompanyInfo."Clave Recursos" + Format(Tarea.ID));
+        JsonTask.Add('supervisor', Supervisor);
+        JsonTask.Add('bc', true);
+        if Tarea.fastPhoto then
+            JsonTask.Add('fastPhoto', 'true');
+        JsonTask.Add('owner', usuario);
+        JsonTask.Add('priority', 'HIGH');
+
+        Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
+        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
+            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
+            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        JsonTask.Add('link', Url);
+
+        if Opcion = Opcion::Opi then begin
+            JsonTask.Add('IdQr', Tarea.Resource);
+            Tarea.IdQr := Tarea.Resource;
+        end else begin
+            if Retirada then begin
+                JsonTask.Add('IdQr', Format(Tarea.OrdenFijacion) + '-R' + Format(Tarea.Reserva));
+                Tarea.IdQr := Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva);
+            end else begin
+                JsonTask.Add('IdQr', Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva));
+                Tarea.IdQr := Format(Tarea.OrdenFijacion) + '-' + Format(Tarea.Reserva);
+            end;
+        end;
+
+        AgregarChecklistTareaAJsonObject(JsonTask, Tarea);
+    end;
+
+    local procedure ActualizarTareasFijacionDesdeRespuesta(JsonResp: Text)
+    var
+        JsonArrayResp: JsonArray;
+        JsonToken: JsonToken;
+        JsonTask: JsonObject;
+        JDatoDetalleToken: JsonToken;
+        UserTask: Record "User Task";
+        Id: Text;
+        idNium: Integer;
+    begin
+        if not JsonArrayResp.ReadFrom(JsonResp) then
+            exit;
+
+        foreach JsonToken in JsonArrayResp do begin
+            JsonTask := JsonToken.AsObject();
+            Clear(JDatoDetalleToken);
+            if not JsonTask.Get('Id_Navision', JDatoDetalleToken) then
+                continue;
+
+            if not Evaluate(idNium, JDatoDetalleToken.AsValue().AsText()) then begin
+                if StrLen(JDatoDetalleToken.AsValue().AsText()) < 2 then
+                    idNium := 0
+                else
+                    Evaluate(idNium, CopyStr(JDatoDetalleToken.AsValue().AsText(), 3, StrLen(JDatoDetalleToken.AsValue().AsText())));
+            end;
+
+            Clear(JDatoDetalleToken);
+            if not JsonTask.Get('_id', JDatoDetalleToken) then
+                continue;
+            Id := JDatoDetalleToken.AsValue().AsText();
+            if (Id = '') or (idNium = 0) then
+                continue;
+
+            if UserTask.Get(idNium) then begin
+                UserTask.Id_Tarea := Id;
+                UserTask.Modify(false);
+            end;
+        end;
+    end;
+
+    local procedure ProcesarTareaFijacionPostEnvio(var OrdenFijacion: Record "Cab Orden fijación"; var Tarea: Record "User Task")
+    var
+        JobsSetup: Record "Jobs Setup";
+        Job: Record Job;
+        Customer: Record Customer;
+    begin
+        EnviarDocumentos(Tarea, Tarea.Id_Tarea);
+        GetSetChat(Tarea, Tarea.Id_Tarea);
+        JobsSetup.Get();
+        if JobsSetup."Crear subtareas" then
+            CrearSubTareaFijacion(OrdenFijacion, Tarea)
+        else begin
+            if not Job.Get(Tarea."Job No.") then
+                Job.Init();
+            if Customer.Get(Job."Bill-to Customer No.") then
+                CreateParte(Tarea);
+        end;
+    end;
+
+    local procedure ClaveProyectoFijacionCache(EmpresaTarea: Text; JobNo: Code[20]): Text
+    begin
+        exit(EmpresaTarea + '|' + JobNo);
     end;
 
     procedure CrearSubTareaFijacion(var OrdenFijacion: Record "Cab Orden fijación"; MTarea: Record "User Task")
@@ -4280,42 +4626,12 @@ codeunit 7001148 GTask
         UserTask.Init();
         UserTask.Validate(Title, rDet."Descripción");
         UserTask.SetDescription(rDet.GetWorkDescription());
+        // Object Type antes que Object ID; asignación directa (Validate fuerza AllObj).
+        UserTask."Object Type" := UserTask."Object Type"::Page;
 
-        // If not IsNullGuid(UserTask.Supervisor) then
-        //     UserTask."Created By" := UserTask.Supervisor
-        // else
-        //No puede ser UserSecurityId(), porque es el usuario que crea la tarea,
-        // y no es el usuario de Odata por defecto, vamos a suponer que es el mismo que el supervisor
-
-        //UserTask."Created By" := UserSecurityId();
-        if IsNullGuid(rDet."Usuario Asignado") = false then
-            UserTask."Assigned To" := rDet."Usuario Asignado"
-        else
-            UserTask."Assigned To" := rDet.Usuario;
-        //Supervisor será de la Categoría MTO, el supervidor
-        If rDet."User Task Group" <> '' then
-            UserTask."User Task Group Assigned To" := rDet."User Task Group"
-        else
-            UserTask."User Task Group Assigned To" := 'MTO';
-
-        UserTaskGroup.SetRange("User Task Group Code", UserTask."User Task Group Assigned To");
-        UserTaskGroup.SetRange(Supervisor, true);
-        UserTask.Servicio := 'TALLER';
-        If UserTaskGroup.FindFirst() then begin
-            UserTask."Supervisor" := UserTaskGroup."User Security ID";
-            UserTask.Departamento := UserTaskGroup.Departamento;
-
-        end else
-            UserTask."Supervisor" := rDet."Usuario";
-        UserTask."Created By" := UserTask."Supervisor";
-        UserTask.Validate("Created DateTime", CurrentDateTime);
-        Usertask."Start DateTime" := rDet.FechaHora;
-        Usertask."Due DateTime" := rDet.FechaHora;
-        UserTask.Validate(Priority, Usertask.Priority::High);
-        UserTask.Validate("Object Type", Usertask."Object Type"::Page);
         If rDet."Tipo Elemento" = rDet."Tipo Elemento"::Recurso then begin
             If Resource.Get(rDet.Recurso) then begin
-                UserTask.Validate("Object ID", Page::"Resource Card");
+                UserTask."Object ID" := Page::"Resource Card";
                 UserTask.Id_record := Resource.RecordId;
                 Resource.SetRange("No.", Resource."No.");
                 RecRef.GetTable(Resource);
@@ -4324,7 +4640,15 @@ codeunit 7001148 GTask
 
         end else begin
             If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, rDet.Recurso) then begin
-                UserTask.Validate("Object ID", Page::"Ficha Parada Bus");
+                UserTask."Object ID" := Page::"Ficha Parada Bus";
+                UserTask.Id_record := Emplazamientos.RecordId;
+                Resource.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
+                RecRef.GetTable(Emplazamientos);
+                RecRef.Get(Emplazamientos.RecordId);
+
+            end;
+            If Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Vallas, rDet.Recurso) then begin
+                UserTask."Object ID" := Page::"Ficha emplazamiento";
                 UserTask.Id_record := Emplazamientos.RecordId;
                 Resource.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
                 RecRef.GetTable(Emplazamientos);
@@ -4333,9 +4657,55 @@ codeunit 7001148 GTask
             end;
         end;
 
+        if rDet."SubTipo Incidencia" = rDet."SubTipo Incidencia"::Mantenimiento then begin
+            AsegurarFechaProximoMantenimientoDesdeZona(Emplazamientos, Resource);
+            if not AsignarResponsablesTareaMantenimiento(rDet, UserTask, RecRef, EmailResponsable, EmailSupervisor, ListadeCorreos) then begin
+                if IsNullGuid(rDet."Usuario Asignado") = false then
+                    UserTask."Assigned To" := rDet."Usuario Asignado"
+                else
+                    UserTask."Assigned To" := rDet.Usuario;
+                If rDet."User Task Group" <> '' then
+                    UserTask."User Task Group Assigned To" := rDet."User Task Group"
+                else
+                    UserTask."User Task Group Assigned To" := 'MTO';
 
+                UserTaskGroup.SetRange("User Task Group Code", UserTask."User Task Group Assigned To");
+                UserTaskGroup.SetRange(Supervisor, true);
+                UserTask.Servicio := 'TALLER';
+                If UserTaskGroup.FindFirst() then begin
+                    UserTask."Supervisor" := UserTaskGroup."User Security ID";
+                    UserTask.Departamento := UserTaskGroup.Departamento;
 
-        UserTask.Insert(true);
+                end else
+                    UserTask."Supervisor" := rDet."Usuario";
+            end;
+        end else begin
+            if IsNullGuid(rDet."Usuario Asignado") = false then
+                UserTask."Assigned To" := rDet."Usuario Asignado"
+            else
+                UserTask."Assigned To" := rDet.Usuario;
+            If rDet."User Task Group" <> '' then
+                UserTask."User Task Group Assigned To" := rDet."User Task Group"
+            else
+                UserTask."User Task Group Assigned To" := 'MTO';
+
+            UserTaskGroup.SetRange("User Task Group Code", UserTask."User Task Group Assigned To");
+            UserTaskGroup.SetRange(Supervisor, true);
+            UserTask.Servicio := 'TALLER';
+            If UserTaskGroup.FindFirst() then begin
+                UserTask."Supervisor" := UserTaskGroup."User Security ID";
+                UserTask.Departamento := UserTaskGroup.Departamento;
+
+            end else
+                UserTask."Supervisor" := rDet."Usuario";
+        end;
+        UserTask."Created By" := UserTask."Supervisor";
+        UserTask.Validate("Created DateTime", CurrentDateTime);
+        Usertask."Start DateTime" := rDet.FechaHora;
+        Usertask."Due DateTime" := rDet.FechaHora;
+        UserTask.Validate(Priority, Usertask.Priority::High);
+        // Insert(false): evita revalidar Object ID contra AllObj (ya asignado arriba).
+        UserTask.Insert(false);
         UserTask.Get(UserTask.ID);
         // if not IsNullGuid(UserTask.Supervisor) then begin
         //     UserTask."Created By" := Supervisor;
@@ -4372,19 +4742,21 @@ codeunit 7001148 GTask
             Imagenes.DeleteAll();
 
         end;
-        If rDet."User Task Group" <> '' then
-            UserTask."User Task Group Assigned To" := rDet."User Task Group"
-        else
-            UserTask."User Task Group Assigned To" := 'MTO';
+        if rDet."SubTipo Incidencia" <> rDet."SubTipo Incidencia"::Mantenimiento then begin
+            If rDet."User Task Group" <> '' then
+                UserTask."User Task Group Assigned To" := rDet."User Task Group"
+            else
+                UserTask."User Task Group Assigned To" := 'MTO';
 
+            if IsNullGuid(rDet."Usuario Asignado") = false then
+                Empleado := rDet."Usuario Asignado"
+            else
+                Empleado := rDet.Usuario;
+            UserTask."Assigned To" := Empleado;
+        end;
 
-        if IsNullGuid(rDet."Usuario Asignado") = false then
-            Empleado := rDet."Usuario Asignado"
-        else
-            Empleado := rDet.Usuario;
-        UserTask."Assigned To" := Empleado;
-
-        UserTask.Modify();
+        // Modify(false): coherente con Insert(false); no revalida Object ID/AllObj.
+        UserTask.Modify(false);
         //end;
         Commit();
         UserTask.Get(UserTask.ID);
@@ -4651,18 +5023,17 @@ codeunit 7001148 GTask
             UserTask."Start DateTime" := rDet.FechaHora;
             UserTask."Due DateTime" := rDet.FechaHora;
             UserTask.Validate(Priority, Usertask.Priority::High);
-            UserTask.Validate("Object Type", Usertask."Object Type"::Page);
+            // No revalidar Object Type/ID: Modify() comprueba AllObj igual que Validate y
+            // la tarea ya tiene la page correcta. Solo actualizamos Id_record.
             If rDet."Tipo Elemento" = rDet."Tipo Elemento"::Recurso then begin
                 If rDet.Empresa <> '' Then Resource.ChangeCompany(rDet.Empresa) else Resource.ChangeCompany(CompanyName);
                 Resource.Get(rDet.Recurso);
-                UserTask.Validate("Object ID", Page::"Resource Card");
                 UserTask.Id_record := Resource.RecordId;
                 Resource.SetRange("No.", Resource."No.");
                 RecRef.GetTable(Resource);
                 RecRef.Get(Resource.RecordId);
             end else begin
                 Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, rDet.Recurso);
-                UserTask.Validate("Object ID", Page::"Ficha Parada Bus");
                 UserTask.Id_record := Emplazamientos.RecordId;
                 Resource.SetRange("Nº Emplazamiento", Emplazamientos."Nº Emplazamiento");
                 RecRef.GetTable(Emplazamientos);
@@ -4679,7 +5050,8 @@ codeunit 7001148 GTask
                 UserTask."Assigned To" := rDet.Usuario;
             if rdet.Estado = rdet.Estado::Cerrada then
                 UserTask.Estado := UserTask.Estado::Finalizado;
-            UserTask.Modify();
+            // Modify(false): no revalida Object ID/AllObj (Validate y Modify(true) fallaban igual).
+            UserTask.Modify(false);
         end;
         Procesos_GTask.UpdateTaskGtask(UserTask.Id_Tarea, UserTask.ID);
     end;
@@ -5776,8 +6148,12 @@ codeunit 7001148 GTask
         Empresa: Text;
         JobsOtrasEmpresas: Record Job temporary;
         Empresas: Record "Company";
-
         Resource: Record Resource;
+        DocOrdenFijacion: Record "Document Attachment";
+        OrdenFijacion: Record "Orden fijación";
+        FechaCapturaDT: DateTime;
+        FechaFijacion: Date;
+        EmpresaDoc: Text;
     begin
         // Inicializar lista de extensiones de imagen
         ExtensionesImagen.Add('jpg');
@@ -5882,17 +6258,44 @@ codeunit 7001148 GTask
                             Clear(DocumentJson);
                             DocumentJson.Add('nombre', DocumentAttachment."File Name");
                             DocumentJson.Add('url', DocumentAttachment."URL");
+
+                            // Fecha de captura / adjunto de la foto
+                            FechaCapturaDT := DocumentAttachment."Attached Date";
+                            if FechaCapturaDT = 0DT then
+                                FechaCapturaDT := DocumentAttachment.SystemCreatedAt;
+                            if FechaCapturaDT <> 0DT then
+                                DocumentJson.Add('fecha_captura', Format(DT2Date(FechaCapturaDT), 0, 9));
+
+                            // Fecha de fijación y tipo de soporte vía orden / recurso
+                            FechaFijacion := 0D;
+                            EmpresaDoc := JobsOtrasEmpresas."Empresa Origen";
+                            if EmpresaDoc = '' then
+                                EmpresaDoc := CompanyName;
+
+                            DocOrdenFijacion.Reset();
+                            DocOrdenFijacion.ChangeCompany(EmpresaDoc);
+                            DocOrdenFijacion.SetRange("Table ID", Database::"Orden fijación");
+                            DocOrdenFijacion.SetRange("No.", DocumentAttachment."No.");
+                            DocOrdenFijacion.SetRange("File Name", DocumentAttachment."File Name");
+                            if DocOrdenFijacion.FindFirst() then begin
+                                OrdenFijacion.Reset();
+                                OrdenFijacion.ChangeCompany(EmpresaDoc);
+                                OrdenFijacion.SetRange("Nº Reserva", DocOrdenFijacion."Line No.");
+                                if OrdenFijacion.FindFirst() then
+                                    FechaFijacion := OrdenFijacion."Fecha fijación";
+                            end;
+                            if FechaFijacion <> 0D then
+                                DocumentJson.Add('fecha_fijacion', Format(FechaFijacion, 0, 9));
+
                             RecursoNo := Procesos_GTask.GetRecursoNo(DocumentAttachment, JobsOtrasEmpresas."Empresa Origen");
                             If RecursoNo <> '' then begin
                                 DocumentJson.Add('recurso', RecursoNo);
-                                if JobsOtrasEmpresas."Empresa Origen" <> '' then
-                                    Resource.changecompany(JobsOtrasEmpresas."Empresa Origen")
-                                else
-                                    Resource.changecompany(CompanyName);
+                                Resource.ChangeCompany(EmpresaDoc);
                                 if Resource.Get(RecursoNo) then begin
                                     DocumentJson.Add('resource', Resource.Name);
-                                    DocumentJson.add('puntox', Resource.PuntoX);
-                                    DocumentJson.add('puntoy', Resource.PuntoY);
+                                    DocumentJson.Add('puntox', Resource.PuntoX);
+                                    DocumentJson.Add('puntoy', Resource.PuntoY);
+                                    DocumentJson.Add('tipo_soporte', Resource."Tipo Recurso");
                                 end;
                             end;
                             if DocumentAttachment.Url <> '' then
@@ -7381,19 +7784,19 @@ codeunit 7001148 GTask
 
         case IncidenceType of
 
-            'EMT':
+            'EMT', 'Incidencias EMT':
                 begin
                     rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias EMT";
                     rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
                     rDet."User Task Group" := 'EMT';
                 end;
-            'VILLENA', 'VALLAS', 'SOPORTES':
+            'VILLENA', 'VALLAS', 'SOPORTES', 'Vallas', 'Soportes', 'Incidencias Soportes':
                 begin
                     rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Soportes";
                     rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
                     rDet."User Task Group" := 'MTO';
                 end;
-            'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller':
+            'ELECTRICIDAD', 'Electricidad', 'TALLER', 'Taller', 'Incidencias Mobiliario Urbano':
                 begin
                     rDet."Tipo Incidencia" := rDet."Tipo Incidencia"::"Incidencias Mobiliario Urbano";
                     rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica;
@@ -7418,22 +7821,21 @@ codeunit 7001148 GTask
                     rDet."User Task Group" := 'PODA';
                 end;
         end;
-        case Uppercase(SubTipoIncidencia) of
-            'LIMPIEZA':
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
-            'ELECTRICA':
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica;
-            'PODA':
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Poda;
-            'MANTENIMIENTO':
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
-            'OTRAS':
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Otras;
-            'TIP':
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica
-            else
-                rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Otras;
-        end;
+        if SubTipoIncidencia <> '' then
+            case Uppercase(SubTipoIncidencia) of
+                'LIMPIEZA':
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Limpieza;
+                'ELECTRICA':
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica;
+                'PODA':
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Poda;
+                'MANTENIMIENTO':
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Mantenimiento;
+                'OTRAS':
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Otras;
+                'TIP':
+                    rDet."SubTipo Incidencia" := rDet."SubTipo Incidencia"::Electrica
+            end;
         case Uppercase(State) of
             'PENDING', 'ABIERTA':
                 rDet.Estado := rDet.Estado::Abierta;
@@ -7690,6 +8092,52 @@ codeunit 7001148 GTask
                 JsonArrayRespuesta.Add(JsonError);
             end;
         end;
+
+        JsonArrayRespuesta.WriteTo(JsonText);
+        exit(JsonText);
+    end;
+
+    /// <summary>
+    /// Crea una tarea (o varias) incluyendo checklist. Cada elemento debe llevar "checklist":[{"text":"..."},...].
+    /// Identidad (prioridad): empleado / codigo_empleado → usuariogtask → email.
+    /// resource opcional. category: id Gtask, código o descripción BC (p. ej. "Salida Oficina").
+    /// Ejemplo: {"empleado":"000000001","description":"Salida Oficina","category":"Salida Oficina","fecha":"2026-08-13","checklist":[{"text":"Cliente A"}]}
+    /// </summary>
+    [ServiceEnabled]
+    procedure postTareaChecklist(JsonText: Text): Text
+    var
+        JsonArrayEntrada: JsonArray;
+        JsonArrayRespuesta: JsonArray;
+        JsonObjEntrada: JsonObject;
+        JsonToken: JsonToken;
+        JsonTarea: JsonObject;
+        JsonError: JsonObject;
+        Tareas: Record "User Task";
+        ErrorMsg: Text;
+    begin
+        if JsonArrayEntrada.ReadFrom(JsonText) then begin
+            foreach JsonToken in JsonArrayEntrada do begin
+                JsonTarea := JsonToken.AsObject();
+                if Procesos_GTask.ProcesarUnaTareaPostChecklist(JsonTarea, Tareas, ErrorMsg) then begin
+                    Tareas.Get(Tareas.ID);
+                    Procesos_GTask.AgregarTareaUsuarioAlJson(Tareas, JsonArrayRespuesta);
+                end else begin
+                    Clear(JsonError);
+                    JsonError.Add('error', CopyStr(ErrorMsg, 1, 250));
+                    JsonArrayRespuesta.Add(JsonError);
+                end;
+            end;
+        end else if JsonObjEntrada.ReadFrom(JsonText) then begin
+            if Procesos_GTask.ProcesarUnaTareaPostChecklist(JsonObjEntrada, Tareas, ErrorMsg) then begin
+                Tareas.Get(Tareas.ID);
+                Procesos_GTask.AgregarTareaUsuarioAlJson(Tareas, JsonArrayRespuesta);
+            end else begin
+                Clear(JsonError);
+                JsonError.Add('error', CopyStr(ErrorMsg, 1, 250));
+                JsonArrayRespuesta.Add(JsonError);
+            end;
+        end else
+            Error('JSON inválido. Se espera un objeto o un array de tareas con checklist.');
 
         JsonArrayRespuesta.WriteTo(JsonText);
         exit(JsonText);
@@ -10131,6 +10579,7 @@ codeunit 7001148 GTask
     var
         EmplCu: Codeunit Emplazamientos;
         Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
         TipoRecurso: Code[20];
         Fecha: Date;
     begin
@@ -10145,7 +10594,15 @@ codeunit 7001148 GTask
 
         if not ObtenerEmplazamientoDesdeIncidencia(Incidencia, Emplaz, TipoRecurso) then
             exit;
-        EmplCu.ActualizarMantenimientoEmplazamiento(Emplaz."Tipo Emplazamiento", Emplaz."Nº Emplazamiento", Fecha);
+
+        if Incidencia."Tipo Elemento" = Incidencia."Tipo Elemento"::Recurso then
+            if not Resource.Get(Incidencia.Recurso) then
+                Resource.Init();
+
+        if TienePeriodicidadMantenimientoFicha(Emplaz, Resource) then
+            EmplCu.ActualizarMantenimientoEmplazamiento(Emplaz."Tipo Emplazamiento", Emplaz."Nº Emplazamiento", Fecha)
+        else
+            ActualizarProximoMantenimientoDesdeZona(Emplaz, Resource, Fecha);
     end;
 
     procedure ProcesarMantenimientosVencidos(): Integer
@@ -10283,13 +10740,17 @@ codeunit 7001148 GTask
     var
         Incidencia: Record Incidencias;
         TipoParte: Option " ",Trabajo,Nacional,EMT;
+        Resource: Record Resource;
     begin
+        Resource.Init();
+        AsegurarFechaProximoMantenimientoDesdeZona(Emplaz, Resource);
         Incidencia.Init();
         Incidencia."Es Peticion" := true;
         Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
         Incidencia.Recurso := Emplaz."Nº Emplazamiento";
         Incidencia."Tipo Incidencia" := Incidencia."Tipo Incidencia"::"Incidencias EMT";
         Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Mantenimiento;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Preventivo;
         Incidencia."User Task Group" := 'EMT';
         Incidencia."FechaHora" := CurrentDateTime();
         Incidencia.Descripción := CopyStr('Mantenimiento programado ' + Emplaz."Descripción", 1, MaxStrLen(Incidencia.Descripción));
@@ -10303,6 +10764,7 @@ codeunit 7001148 GTask
     local procedure CrearMantenimientoRecurso(var Emplaz: Record Emplazamientos; TipoIncidencia: Enum "Tipo Incidencia"): Code[20]
     var
         Incidencia: Record Incidencias;
+        Resource: Record Resource;
         TipoParte: Option " ",Trabajo,Nacional,EMT;
         NRecurso: Code[20];
     begin
@@ -10310,12 +10772,16 @@ codeunit 7001148 GTask
         if NRecurso = '' then
             exit('');
 
+        Resource.Get(NRecurso);
+        AsegurarFechaProximoMantenimientoDesdeZona(Emplaz, Resource);
+
         Incidencia.Init();
         Incidencia."Es Peticion" := true;
         Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
         Incidencia.Recurso := NRecurso;
         Incidencia."Tipo Incidencia" := TipoIncidencia;
         Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Mantenimiento;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Preventivo;
         Incidencia."User Task Group" := 'MTO';
         Incidencia."FechaHora" := CurrentDateTime();
         Incidencia.Descripción := CopyStr('Mantenimiento programado ' + Emplaz."Descripción", 1, MaxStrLen(Incidencia.Descripción));
@@ -10342,6 +10808,212 @@ codeunit 7001148 GTask
         Emplaz.Modify(true);
     end;
 
+    local procedure AsignarResponsablesTareaMantenimiento(
+        Incidencia: Record Incidencias;
+        var UserTask: Record "User Task";
+        RecRef: RecordRef;
+        var EmailResponsable: Text[250];
+        var EmailSupervisor: Text[250];
+        var ListadeCorreos: Text): Boolean
+    var
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        ZonasLimpieza: Record "Zonas Limpieza";
+        User: Record User;
+        Responsable: Guid;
+        Supervisor: Guid;
+        Categoria: Text;
+        Departamento: Text;
+        Servicio: Text;
+        TipoTarea: Text;
+        TipoRecurso: Code[20];
+        ZonaMantenimiento: Integer;
+    begin
+        if not ObtenerEmplazamientoDesdeIncidencia(Incidencia, Emplaz, TipoRecurso) then
+            exit(false);
+        if Incidencia."Tipo Elemento" = Incidencia."Tipo Elemento"::Recurso then
+            if not Resource.Get(Incidencia.Recurso) then
+                Resource.Init();
+
+        ZonaMantenimiento := ResolverZonaMantenimiento(Emplaz, Resource);
+        if ZonaMantenimiento = 0 then
+            exit(false);
+        if not ZonasLimpieza.Get(ZonaMantenimiento) then
+            exit(false);
+
+        TipoTarea := Incidencia."User Task Group";
+        if TipoTarea = '' then
+            if Incidencia."Tipo Elemento" = Incidencia."Tipo Elemento"::Parada then
+                TipoTarea := 'EMT'
+            else
+                TipoTarea := 'MTO';
+
+        Procesos_GTask.DevuelveCategoriaSupervisorResponsablePorZona(
+            TipoTarea, ZonaMantenimiento, Responsable, Supervisor, Categoria, Departamento, Servicio,
+            EmailResponsable, EmailSupervisor, User, UserTask, ListadeCorreos, RecRef);
+
+        UserTask."Assigned To" := Responsable;
+        UserTask."Supervisor" := Supervisor;
+        UserTask."User Task Group Assigned To" := Categoria;
+        UserTask.Departamento := Departamento;
+        UserTask.Servicio := Servicio;
+        UserTask.ZonaLimpieza := ZonaMantenimiento;
+        UserTask.TipoTarea := TipoTarea;
+        exit(true);
+    end;
+
+    local procedure ResolverZonaMantenimiento(Emplaz: Record Emplazamientos; Resource: Record Resource): Integer
+    begin
+        if (Resource."No." <> '') and (Resource."Zona Mantenimiento" <> 0) then
+            exit(Resource."Zona Mantenimiento");
+        exit(Emplaz."Zona Mantenimiento");
+    end;
+
+    local procedure TienePeriodicidadMantenimientoFicha(Emplaz: Record Emplazamientos; Resource: Record Resource): Boolean
+    begin
+        if (Resource."No." <> '') and (Format(Resource."Periodicidad Mantenimiento") <> '') then
+            exit(true);
+        exit(Format(Emplaz."Periodicidad Mantenimiento") <> '');
+    end;
+
+    local procedure CalcularProximoMantenimientoDesdeZona(Emplaz: Record Emplazamientos; Resource: Record Resource; FechaBase: Date): Date
+    var
+        UserTask: Record "User Task";
+        ZonasLimpieza: Record "Zonas Limpieza";
+        ZonaId: Integer;
+    begin
+        if TienePeriodicidadMantenimientoFicha(Emplaz, Resource) then
+            exit(0D);
+
+        ZonaId := ResolverZonaMantenimiento(Emplaz, Resource);
+        if ZonaId = 0 then
+            exit(0D);
+        if not ZonasLimpieza.Get(ZonaId) then
+            exit(0D);
+        if FechaBase = 0D then
+            FechaBase := WorkDate();
+        exit(UserTask.CalcularProximoDiaLimpieza(ZonasLimpieza, FechaBase));
+    end;
+
+    local procedure AsegurarFechaProximoMantenimientoDesdeZona(var Emplaz: Record Emplazamientos; var Resource: Record Resource)
+    var
+        ProximaFecha: Date;
+        FechaBase: Date;
+    begin
+        if TienePeriodicidadMantenimientoFicha(Emplaz, Resource) then
+            exit;
+
+        FechaBase := Emplaz."Último Mantenimiento";
+        if FechaBase = 0D then
+            FechaBase := WorkDate();
+
+        if Emplaz."Fecha Próximo Mantenimiento" = 0D then begin
+            ProximaFecha := CalcularProximoMantenimientoDesdeZona(Emplaz, Resource, FechaBase);
+            if ProximaFecha <> 0D then begin
+                Emplaz."Fecha Próximo Mantenimiento" := ProximaFecha;
+                Emplaz.Modify(true);
+            end;
+        end;
+
+        if (Resource."No." <> '') and (Resource."Fecha Próximo Mantenimiento" = 0D) then begin
+            ProximaFecha := CalcularProximoMantenimientoDesdeZona(Emplaz, Resource, FechaBase);
+            if ProximaFecha <> 0D then begin
+                Resource."Fecha Próximo Mantenimiento" := ProximaFecha;
+                Resource.Modify(true);
+            end;
+        end;
+    end;
+
+    local procedure ActualizarProximoMantenimientoDesdeZona(var Emplaz: Record Emplazamientos; var Resource: Record Resource; FechaUltimo: Date)
+    var
+        ProximaFecha: Date;
+    begin
+        ProximaFecha := CalcularProximoMantenimientoDesdeZona(Emplaz, Resource, FechaUltimo);
+        if ProximaFecha = 0D then
+            exit;
+
+        Emplaz."Último Mantenimiento" := FechaUltimo;
+        Emplaz."Fecha Próximo Mantenimiento" := ProximaFecha;
+        Emplaz."Bajo Mantenimiento" := false;
+        Emplaz.Modify(true);
+
+        if Resource."No." <> '' then begin
+            Resource."Último Mantenimiento" := FechaUltimo;
+            Resource."Fecha Próximo Mantenimiento" := ProximaFecha;
+            Resource."Bajo Mantenimiento" := false;
+            Resource.Modify(true);
+        end;
+    end;
+
+    local procedure ObtenerPeriodicidadMantenimiento(Emplaz: Record Emplazamientos; Resource: Record Resource): DateFormula
+    var
+        Empty: DateFormula;
+    begin
+        if (Resource."No." <> '') and (Format(Resource."Periodicidad Mantenimiento") <> '') then
+            exit(Resource."Periodicidad Mantenimiento");
+        if Format(Emplaz."Periodicidad Mantenimiento") <> '' then
+            exit(Emplaz."Periodicidad Mantenimiento");
+        exit(Empty);
+    end;
+
+    procedure AsignarZonaMantenimientoEmplazamientos(var Emplazamientos: Record Emplazamientos): Integer
+    var
+        ZonasLimpieza: Record "Zonas Limpieza";
+        Emplaz: Record Emplazamientos;
+        Actualizados: Integer;
+    begin
+        if not SeleccionarZonaMantenimiento(ZonasLimpieza) then
+            exit(0);
+
+        Emplaz.CopyFilters(Emplazamientos);
+        if not Emplaz.FindSet(true) then
+            Error('No hay paradas seleccionadas.');
+
+        if not Confirm(StrSubstNo('¿Asignar la zona de mantenimiento "%1" a %2 parada(s)?', ZonasLimpieza.Descripción, Emplaz.Count()), false) then
+            exit(0);
+
+        repeat
+            Emplaz.Validate("Zona Mantenimiento", ZonasLimpieza.Id);
+            Emplaz.Modify(true);
+            Actualizados += 1;
+        until Emplaz.Next() = 0;
+
+        Message('Zona mantenimiento "%1" asignada a %2 parada(s).', ZonasLimpieza.Descripción, Actualizados);
+        exit(Actualizados);
+    end;
+
+    procedure AsignarZonaMantenimientoRecursos(var Resource: Record Resource): Integer
+    var
+        ZonasLimpieza: Record "Zonas Limpieza";
+        Recurso: Record Resource;
+        Actualizados: Integer;
+    begin
+        if not SeleccionarZonaMantenimiento(ZonasLimpieza) then
+            exit(0);
+
+        Recurso.CopyFilters(Resource);
+        if not Recurso.FindSet(true) then
+            Error('No hay recursos seleccionados.');
+
+        if not Confirm(StrSubstNo('¿Asignar la zona de mantenimiento "%1" a %2 recurso(s)?', ZonasLimpieza.Descripción, Recurso.Count()), false) then
+            exit(0);
+
+        repeat
+            Recurso.Validate("Zona Mantenimiento", ZonasLimpieza.Id);
+            Recurso.Modify(true);
+            Actualizados += 1;
+        until Recurso.Next() = 0;
+
+        Message('Zona mantenimiento "%1" asignada a %2 recurso(s).', ZonasLimpieza.Descripción, Actualizados);
+        exit(Actualizados);
+    end;
+
+    local procedure SeleccionarZonaMantenimiento(var ZonasLimpieza: Record "Zonas Limpieza"): Boolean
+    begin
+        ZonasLimpieza.Reset();
+        exit(Page.RunModal(Page::"Zonas Limpieza", ZonasLimpieza) = Action::LookupOK);
+    end;
+
     /// <summary>
     /// Listado de actuaciones de mantenimiento previstas (emplazamientos) para GMalla.
     /// JSON entrada: { "desde":"YYYY-MM-DD", "hasta":"YYYY-MM-DD", "tipoEmplazamiento":"Opis|Vallas|Otros" (opcional) }
@@ -10356,6 +11028,7 @@ codeunit 7001148 GTask
         JsonArray: JsonArray;
         JsonLinea: JsonObject;
         Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
         EmplCu: Codeunit Emplazamientos;
         Desde: Date;
         Hasta: Date;
@@ -10414,10 +11087,8 @@ codeunit 7001148 GTask
                 JsonLinea.Add('fecha_proximo_mantenimiento', Emplaz."Fecha Próximo Mantenimiento");
                 JsonLinea.Add('bajo_mantenimiento', Emplaz."Bajo Mantenimiento");
                 JsonLinea.Add('ultimo_mantenimiento', Emplaz."Último Mantenimiento");
-                if Format(Emplaz."Periodicidad Mantenimiento") <> '' then
-                    PeriodicidadTxt := Format(Emplaz."Periodicidad Mantenimiento")
-                else
-                    PeriodicidadTxt := '';
+                Resource.Init();
+                PeriodicidadTxt := Format(ObtenerPeriodicidadMantenimiento(Emplaz, Resource));
                 JsonLinea.Add('periodicidad', PeriodicidadTxt);
                 TiposRecursoTxt := EmplCu.ObtenerTiposRecursoEmplazamiento(Emplaz."Nº Emplazamiento");
                 JsonLinea.Add('tipos_recurso', TiposRecursoTxt);
@@ -10492,13 +11163,9 @@ codeunit 7001148 GTask
 
                 BajoMto := BajoMantenimientoRecurso(Resource, Emplaz);
                 UltimoMto := UltimoMantenimientoRecurso(Resource, Emplaz);
-                if Format(Resource."Periodicidad Mantenimiento") <> '' then
-                    PeriodicidadTxt := Format(Resource."Periodicidad Mantenimiento")
-                else
-                    if TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then
-                        PeriodicidadTxt := Format(Emplaz."Periodicidad Mantenimiento")
-                    else
-                        PeriodicidadTxt := '';
+                Clear(Emplaz);
+                TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz);
+                PeriodicidadTxt := Format(ObtenerPeriodicidadMantenimiento(Emplaz, Resource));
 
                 Clear(JsonLinea);
                 JsonLinea.Add('tipo_recurso', Resource."Tipo Recurso");

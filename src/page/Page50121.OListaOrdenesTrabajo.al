@@ -35,6 +35,7 @@ page 50123 "Lista Ordenes de Trabajo"
                 field("PuntoY"; Rec.PuntoY) { ApplicationArea = All; }
                 field("Tipo Incidencia"; Rec."Tipo Incidencia") { ApplicationArea = All; }
                 field("SubTipo Incidencia"; Rec."SubTipo Incidencia") { ApplicationArea = All; }
+                field("Tipo Intervención"; Rec."Tipo Intervención") { ApplicationArea = All; }
                 field("Fecha Hora"; Rec."FechaHora") { ApplicationArea = All; }
                 field("Estado"; Rec."Estado") { ApplicationArea = All; }
                 field("URL Primera Imagen"; UrlPrimeraImagen)

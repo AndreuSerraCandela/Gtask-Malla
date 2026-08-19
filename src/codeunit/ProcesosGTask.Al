@@ -842,46 +842,6 @@ codeunit 7001149 Procesos_GTask
 
 
 
-    procedure UpdateTasksPriority(var Tareas: Record "User Task")
-    var
-        RestApi: Codeunit "Control Ocr";
-        CompanyInfo: Record "Company Information";
-        RequestType: Option Get,patch,put,post,delete;
-        Name: Text;
-        Value1: Text;
-        i: Integer;
-        a: Integer;
-        Json: Text;
-        Id: Text;
-        Link: Record "Data Migration Error";
-        IdLink: Integer;
-        UserMalla: Record UsuariosGtask;
-        Desde: DateTime;
-        JsonObjt: JsonObject;
-        responsable: Text;
-        Supervisor: Text;
-        departament: Text;
-        service: Text;
-        DesdeF: Date;
-        Hastaf: Date;
-        Dias: Integer;
-    begin
-        CompanyInfo.Get();
-        //If Tareas.FindFirst() then
-        //repeat
-        Clear(JsonObjt);
-        JsonObjt.Add('type', 'NORMAL');
-        JsonObjt.WriteTo(Json);
-        Clear(RestApi);
-        Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Tareas.Id_Tarea, Gtask.Token(), RequestType::put, Json);
-
-
-        //  until Tareas.Next() = 0;
-
-
-    end;
-
-
     procedure UpdateTaskGtask(idTarea: Text; IdKey: Integer)
     var
         RestApi: Codeunit "Control Ocr";
@@ -1130,7 +1090,198 @@ codeunit 7001149 Procesos_GTask
     end;
 
 
+    /// <summary>
+    /// Resuelve UsuariosGtask desde JSON. Orden:
+    /// 1) empleado / codigo_empleado / nº empleado (enlace con Control de Presencia)
+    /// 2) usuariogtask (Id Gtask)
+    /// 3) email (fallback)
+    /// </summary>
+    internal procedure ResolverUsuarioGtaskDesdeJson(JsonTarea: JsonObject; var UserGtaskMalla: Record UsuariosGtask; var ErrorMsg: Text): Boolean
+    var
+        JsonCampo: JsonToken;
+        EmpleadoNo: Code[20];
+        EmpleadoTxt: Text;
+        UsuarioGtask: Text;
+        EmailUsuario: Text;
+        Employee: Record Employee;
+        Encontrado: Boolean;
+    begin
+        ErrorMsg := '';
+        Clear(UserGtaskMalla);
+
+        EmpleadoTxt := '';
+        if JsonTarea.Get('empleado', JsonCampo) then
+            EmpleadoTxt := JsonCampo.AsValue().AsText()
+        else if JsonTarea.Get('codigo_empleado', JsonCampo) then
+            EmpleadoTxt := JsonCampo.AsValue().AsText()
+        else if JsonTarea.Get('no_empleado', JsonCampo) then
+            EmpleadoTxt := JsonCampo.AsValue().AsText();
+
+        EmpleadoTxt := DelChr(EmpleadoTxt, '<>', ' ');
+        if EmpleadoTxt <> '' then begin
+            EmpleadoNo := CopyStr(EmpleadoTxt, 1, MaxStrLen(EmpleadoNo));
+            UserGtaskMalla.Reset();
+            UserGtaskMalla.ChangeCompany('Malla Publicidad');
+            UserGtaskMalla.SetRange(Empleado, EmpleadoNo);
+            if UserGtaskMalla.FindFirst() then
+                exit(true);
+
+            UserGtaskMalla.Reset();
+            UserGtaskMalla.ChangeCompany(CompanyName);
+            UserGtaskMalla.SetRange(Empleado, EmpleadoNo);
+            if UserGtaskMalla.FindFirst() then
+                exit(true);
+
+            // Fallback: Employee.UserGtask → UsuariosGtask por Id Gtask
+            Employee.Reset();
+            if not Employee.ChangeCompany('Malla Publicidad') then
+                Employee.ChangeCompany(CompanyName);
+            if Employee.Get(EmpleadoNo) and (Employee.UserGtask <> '') then begin
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.ChangeCompany('Malla Publicidad');
+                UserGtaskMalla.SetRange("Id Gtask", Employee.UserGtask);
+                if UserGtaskMalla.FindFirst() then
+                    exit(true);
+                UserGtaskMalla.ChangeCompany(CompanyName);
+                UserGtaskMalla.SetRange("Id Gtask", Employee.UserGtask);
+                if UserGtaskMalla.FindFirst() then
+                    exit(true);
+            end;
+
+            ErrorMsg := 'empleado no encontrado en UsuariosGtask: ' + EmpleadoTxt;
+            exit(false);
+        end;
+
+        if JsonTarea.Get('usuariogtask', JsonCampo) then begin
+            UsuarioGtask := JsonCampo.AsValue().AsText();
+            UserGtaskMalla.Reset();
+            UserGtaskMalla.ChangeCompany('Malla Publicidad');
+            UserGtaskMalla.SetRange("Id Gtask", UsuarioGtask);
+            if UserGtaskMalla.FindFirst() then
+                exit(true);
+            UserGtaskMalla.ChangeCompany(CompanyName);
+            UserGtaskMalla.SetRange("Id Gtask", UsuarioGtask);
+            if UserGtaskMalla.FindFirst() then
+                exit(true);
+            ErrorMsg := 'usuariogtask no encontrado: ' + UsuarioGtask;
+            exit(false);
+        end;
+
+        if JsonTarea.Get('email', JsonCampo) then begin
+            EmailUsuario := LowerCase(CopyStr(JsonCampo.AsValue().AsText(), 1, 250));
+            Encontrado := false;
+            UserGtaskMalla.Reset();
+            UserGtaskMalla.ChangeCompany('Malla Publicidad');
+            if UserGtaskMalla.FindSet() then
+                repeat
+                    if LowerCase(UserGtaskMalla.Email) = EmailUsuario then begin
+                        Encontrado := true;
+                        break;
+                    end;
+                until UserGtaskMalla.Next() = 0;
+            if not Encontrado then begin
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.ChangeCompany(CompanyName);
+                if UserGtaskMalla.FindSet() then
+                    repeat
+                        if LowerCase(UserGtaskMalla.Email) = EmailUsuario then begin
+                            Encontrado := true;
+                            break;
+                        end;
+                    until UserGtaskMalla.Next() = 0;
+            end;
+            if Encontrado then
+                exit(true);
+            ErrorMsg := 'email no encontrado en UsuariosGtask: ' + EmailUsuario;
+            exit(false);
+        end;
+
+        ErrorMsg := 'Falta empleado (codigo_empleado), usuariogtask o email';
+        exit(false);
+    end;
+
+    /// <summary>
+    /// Inserta líneas de checklist en "Checklist Tarea Usuario" desde JSON:
+    /// "checklist": [{"text":"..."}, ...] o [{"descripcion":"..."}, ...] o ["texto", ...]
+    /// Debe llamarse antes de CrearTareaTecnico para que el POST a Malla incluya el checklist.
+    /// </summary>
+    internal procedure InsertarChecklistDesdeJson(var Tareas: Record "User Task"; JsonTarea: JsonObject): Boolean
+    var
+        JsonCampo: JsonToken;
+        JsonItemToken: JsonToken;
+        JsonItem: JsonObject;
+        ChecklistArray: JsonArray;
+        ChecklistLine: Record "Checklist Tarea Usuario";
+        Categoria: Code[20];
+        Texto: Text[250];
+        LineNo: Integer;
+        Insertadas: Integer;
+    begin
+        if Tareas.ID = 0 then
+            exit(false);
+        if not JsonTarea.Get('checklist', JsonCampo) then
+            exit(false);
+        if JsonCampo.AsArray().Count() = 0 then
+            exit(false);
+
+        ChecklistArray := JsonCampo.AsArray();
+        Categoria := Tareas."User Task Group Assigned To";
+        if Categoria = '' then
+            Categoria := Tareas."Categoría";
+        if Categoria = '' then
+            exit(false);
+
+        ChecklistLine.Reset();
+        ChecklistLine.SetRange(Id, Tareas.ID);
+        ChecklistLine.SetRange("Categoría", Categoria);
+        ChecklistLine.DeleteAll();
+
+        LineNo := 0;
+        Insertadas := 0;
+        foreach JsonItemToken in ChecklistArray do begin
+            Texto := '';
+            if JsonItemToken.IsValue() then
+                Texto := CopyStr(JsonItemToken.AsValue().AsText(), 1, MaxStrLen(Texto))
+            else if JsonItemToken.IsObject() then begin
+                JsonItem := JsonItemToken.AsObject();
+                if JsonItem.Get('text', JsonCampo) then
+                    Texto := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(Texto))
+                else if JsonItem.Get('descripcion', JsonCampo) then
+                    Texto := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(Texto))
+                else if JsonItem.Get('description', JsonCampo) then
+                    Texto := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(Texto));
+            end;
+            Texto := CopyStr(DelChr(Texto, '<>', ' '), 1, MaxStrLen(Texto));
+            if Texto <> '' then begin
+                LineNo += 10000;
+                ChecklistLine.Init();
+                ChecklistLine.Id := Tareas.ID;
+                ChecklistLine."Categoría" := Categoria;
+                ChecklistLine."Nº Línea" := LineNo;
+                ChecklistLine."Descripción" := Texto;
+                ChecklistLine.Obligatorio := false;
+                ChecklistLine.Insert(true);
+                Insertadas += 1;
+            end;
+        end;
+
+        exit(Insertadas > 0);
+    end;
+
     internal procedure ProcesarUnaTareaPost(JsonTarea: JsonObject; var Tareas: Record "User Task"; var ErrorMsg: Text): Boolean
+    begin
+        exit(ProcesarUnaTareaPostInterno(JsonTarea, Tareas, ErrorMsg, false));
+    end;
+
+    /// <summary>
+    /// Igual que ProcesarUnaTareaPost pero exige checklist y permite resource vacío / email.
+    /// </summary>
+    internal procedure ProcesarUnaTareaPostChecklist(JsonTarea: JsonObject; var Tareas: Record "User Task"; var ErrorMsg: Text): Boolean
+    begin
+        exit(ProcesarUnaTareaPostInterno(JsonTarea, Tareas, ErrorMsg, true));
+    end;
+
+    local procedure ProcesarUnaTareaPostInterno(JsonTarea: JsonObject; var Tareas: Record "User Task"; var ErrorMsg: Text; RequiereChecklist: Boolean): Boolean
     var
         JsonCampo: JsonToken;
         UserTaskGroup: Record "User Task Group";
@@ -1144,7 +1295,6 @@ codeunit 7001149 Procesos_GTask
         Gtask: Codeunit Gtask;
         Id: Integer;
         IdTareaGtask: Text[30];
-        UsuarioGtask: Text;
         Description: Text;
         Category: Text;
         Resource: Text;
@@ -1161,24 +1311,30 @@ codeunit 7001149 Procesos_GTask
         EmailResponsable: Text;
         EmailSupervisor: Text;
         User: Record User;
-        UserTask: Text;
         ListadeCorreos: Text;
+        TieneChecklist: Boolean;
     begin
         ErrorMsg := '';
 
-        If Not JsonTarea.Get('usuariogtask', JsonCampo) then begin
-            ErrorMsg := 'Falta usuariogtask';
-            exit(false);
+        if RequiereChecklist then begin
+            if not JsonTarea.Get('checklist', JsonCampo) then begin
+                ErrorMsg := 'Falta checklist';
+                exit(false);
+            end;
+            if JsonCampo.AsArray().Count() = 0 then begin
+                ErrorMsg := 'checklist vacío';
+                exit(false);
+            end;
         end;
-        UsuarioGtask := JsonCampo.AsValue().AsText();
-        UserGtaskMalla.SetRange("Id Gtask", UsuarioGtask);
-        If Not UserGtaskMalla.FindFirst() then begin
-            ErrorMsg := 'usuariogtask no encontrado: ' + UsuarioGtask;
+
+        // Prioridad de identidad: empleado (Control de Presencia) → usuariogtask → email
+        if not ResolverUsuarioGtaskDesdeJson(JsonTarea, UserGtaskMalla, ErrorMsg) then
             exit(false);
-        end else begin
-            Responsable := UserGtaskMalla."Id Usuario";
-            Supervisor := UserGtaskMalla."Id Usuario";
-            User.Get(UserGtaskMalla."Id Usuario");
+        Responsable := UserGtaskMalla."Id Usuario";
+        Supervisor := UserGtaskMalla."Id Usuario";
+        if not User.Get(UserGtaskMalla."Id Usuario") then begin
+            ErrorMsg := 'Id Usuario BC no encontrado para UsuariosGtask ' + UserGtaskMalla."Id Gtask";
+            exit(false);
         end;
 
         If Not JsonTarea.Get('description', JsonCampo) then begin
@@ -1196,6 +1352,8 @@ codeunit 7001149 Procesos_GTask
 
         If JsonTarea.Get('resource', JsonCampo) then
             Resource := JsonCampo.AsValue().AsText()
+        else if RequiereChecklist then
+            Resource := ''
         else begin
             ErrorMsg := 'Falta resource';
             exit(false);
@@ -1230,9 +1388,17 @@ codeunit 7001149 Procesos_GTask
                 Categoria.Get('REVISION');
                 Gtask.InsertLink(Categoria.RecordId, Database::"User Task Group", Category, CompanyName);
                 RecordiD := Categoria.RecordId;
-            end else begin
-                ErrorMsg := 'category no encontrada: ' + Category;
-                exit(false);
+            end else if Categoria.Get(CopyStr(Category, 1, MaxStrLen(Categoria.Code))) then
+                RecordiD := Categoria.RecordId
+            else begin
+                Categoria.Reset();
+                Categoria.SetRange(Description, CopyStr(Category, 1, MaxStrLen(Categoria.Description)));
+                if Categoria.FindFirst() then
+                    RecordiD := Categoria.RecordId
+                else begin
+                    ErrorMsg := 'category no encontrada: ' + Category;
+                    exit(false);
+                end;
             end;
         end;
         RecordRef := RecordiD.GetRecord();
@@ -1242,7 +1408,7 @@ codeunit 7001149 Procesos_GTask
 
         Encontrado := false;
         Empresa := CompanyName;
-        If not EsParada then begin
+        If (not EsParada) and (Resource <> '') then begin
             If Resources.Get(Resource) then
                 Encontrado := true
             else begin
@@ -1329,7 +1495,16 @@ codeunit 7001149 Procesos_GTask
         if (Tareas.Departamento = '') Or (Tareas.Servicio = '') then begin
             DevuelveSupervisoryResponsable(Responsable, Supervisor, Departamento, Servicio, Categoria.Code, EmailResponsable, EmailSupervisor, User, Tareas, ListadeCorreos);
         end;
-        IdTareaGtask := Gtask.CrearTareaTecnico(Resource, Tareas, Tareas.Departamento, Tareas.Servicio, true);
+
+        TieneChecklist := InsertarChecklistDesdeJson(Tareas, JsonTarea);
+        if RequiereChecklist and not TieneChecklist then begin
+            ErrorMsg := 'No se pudo crear el checklist';
+            exit(false);
+        end;
+
+        IdTareaGtask := Gtask.CrearTareaTecnico(
+            Resource, Tareas, Tareas.Departamento, Tareas.Servicio,
+            (not RequiereChecklist) or Encontrado);
         If IdTareaGtask <> '' then begin
             Tareas.Get(Tareas.ID);
             Tareas.Id_Tarea := IdTareaGtask;

@@ -600,7 +600,7 @@ page 50131 "Panel Gerencia Paradas Bus"
         Inc.SetFilter(Estado, '<>%1&<>%2', Inc.Estado::Cerrada, Inc.Estado::Facturada);
         AplicarFiltroIncidenciasPorParada(Inc);
         if SoloPeticiones then
-            Page.Run(Page::"Lista Ordenes de Trabajo", Inc)
+            Page.Run(Page::"Lista Mantenimientos", Inc)
         else
             Page.Run(Page::"Lista Incidencias Taller", Inc);
     end;
@@ -655,7 +655,7 @@ page 50131 "Panel Gerencia Paradas Bus"
         Inc: Record Incidencias;
     begin
         AplicarFiltroOrdenesTrabajo(Inc, 'PEN');
-        Page.Run(Page::"Lista Ordenes de Trabajo", Inc);
+        Page.Run(Page::"Lista Mantenimientos", Inc);
     end;
 
     local procedure OpenOrdenesTrabajoAprobadas()
@@ -663,7 +663,7 @@ page 50131 "Panel Gerencia Paradas Bus"
         Inc: Record Incidencias;
     begin
         AplicarFiltroOrdenesTrabajo(Inc, 'APR');
-        Page.Run(Page::"Lista Ordenes de Trabajo", Inc);
+        Page.Run(Page::"Lista Mantenimientos", Inc);
     end;
 
     local procedure OpenMantenimientos(SoloVencidos: Boolean)
