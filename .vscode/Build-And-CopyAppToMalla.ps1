@@ -1,7 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$WorkspaceFolder,
-    [switch]$CopyOnly
+    [switch]$CopyOnly,
+    [switch]$CompileOnly
 )
 
 $destFolder = 'C:\apps\Malla'
@@ -11,7 +12,7 @@ $appFileName = "$($appJson.publisher)_$($appJson.name)_$($appJson.version).app"
 $sourcePath = Join-Path $WorkspaceFolder $appFileName
 $packageCache = Join-Path $WorkspaceFolder '.alpackages'
 
-if (-not $CopyOnly) {
+if (-not $CopyOnly -or $CompileOnly) {
     $alcExe = $env:ALC_PATH
     if ([string]::IsNullOrWhiteSpace($alcExe) -or -not (Test-Path $alcExe)) {
         $extensionRoots = @(
@@ -52,6 +53,15 @@ if (-not $CopyOnly) {
         Write-Error "La compilación falló (código $LASTEXITCODE)."
         exit $LASTEXITCODE
     }
+}
+
+if ($CompileOnly) {
+    if (-not (Test-Path $sourcePath)) {
+        Write-Error "Compilación OK pero no se encontró $appFileName en $WorkspaceFolder."
+        exit 1
+    }
+    Write-Host "Compilado: $sourcePath"
+    exit 0
 }
 
 if (-not (Test-Path $sourcePath)) {

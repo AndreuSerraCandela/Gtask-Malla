@@ -29,13 +29,15 @@ Interpretar frases como: *compila*, *sube versión*, *publica en license*, *copi
 
 ### 2. Compilar
 
-Usar `alc.exe` (extensión AL de VS Code/Cursor):
+**No** invocar `alc.exe` sin `/assemblyprobingpaths`: fallan los DotNet de `CompantInfo.Al` (`AL0185`). Las rutas están en `.vscode/settings.json` → `al.assemblyProbingPaths` (`.netpackages`, `C:\net`); el script `.vscode/Build-And-CopyAppToMalla.ps1` ya las aplica.
+
+**Solo compilar** (sin copiar al buzón / sin publicar):
 
 ```powershell
-$alc = "$env:USERPROFILE\.cursor\extensions\ms-dynamics-smb.al-*\bin\win32\alc.exe"
-$alc = (Get-Item $alc | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
-& $alc /project:"C:\Users\Andres\Source\Bc\Gtask-Malla" /packagecachepath:"C:\Users\Andres\Source\Bc\Gtask-Malla\.alpackages"
+powershell -ExecutionPolicy Bypass -File ".vscode\Build-And-CopyAppToMalla.ps1" -WorkspaceFolder "C:\Users\Andres\Source\Bc\Gtask-Malla" -CompileOnly
 ```
+
+Alternativa: Ctrl+Shift+B en el IDE (AL: Package). El agente **no** debe llamar a `alc` sin `/assemblyprobingpaths`.
 
 El `.app` se genera en la raíz: `Andreu By Malla_Task Malla_{version}.app`.
 

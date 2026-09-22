@@ -102,9 +102,23 @@ page 50127 "Detalle Log Parada"
                         AbrirOrigen();
                     end;
                 }
+                field(Adjuntos; TieneAdjuntosTxt)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Adjuntos';
+                    ToolTip = 'Indica si la incidencia tiene imágenes asociadas o la tarea tiene documentos adjuntos. Abra el registro para ver o subir documentación.';
+                    Editable = false;
+                    DrillDown = true;
+
+                    trigger OnDrillDown()
+                    begin
+                        AbrirOrigen();
+                    end;
+                }
             }
         }
     }
+
 
     actions
     {
@@ -115,7 +129,7 @@ page 50127 "Detalle Log Parada"
                 ApplicationArea = All;
                 Caption = 'Abrir';
                 Image = View;
-                ToolTip = 'Abre la incidencia, orden de trabajo o tarea asociada.';
+                ToolTip = 'Abre la tarea asociada.';
 
                 trigger OnAction()
                 begin
@@ -127,7 +141,7 @@ page 50127 "Detalle Log Parada"
                 ApplicationArea = All;
                 Caption = 'Actualizar';
                 Image = Refresh;
-                ToolTip = 'Vuelve a cargar incidencias y tareas de la parada.';
+                ToolTip = 'Vuelve a cargar las tareas de la parada.';
 
                 trigger OnAction()
                 var
@@ -148,6 +162,16 @@ page 50127 "Detalle Log Parada"
         }
     }
 
+    trigger OnAfterGetRecord()
+    var
+        Procesos_GTask: Codeunit Procesos_GTask;
+    begin
+        if Procesos_GTask.LineaLogTieneAdjuntos(Rec) then
+            TieneAdjuntosTxt := 'Sí'
+        else
+            TieneAdjuntosTxt := 'No';
+    end;
+
     procedure SetEmplazamiento(Emplazamiento: Record Emplazamientos)
     begin
         EmplazamientoParada := Emplazamiento;
@@ -159,7 +183,7 @@ page 50127 "Detalle Log Parada"
         Procesos_GTask: Codeunit Procesos_GTask;
     begin
         if not EmplazamientoCargado then
-            Error('No se ha indicado la parada. Abra el detalle desde la ficha de la parada.');
+            Error('No se ha indicado la parada. Use la acción Detalle log parada en Paradas Bus o en la ficha de la parada.');
         Procesos_GTask.CargarLineas(Rec, EmplazamientoParada);
     end;
 
@@ -202,4 +226,5 @@ page 50127 "Detalle Log Parada"
     var
         EmplazamientoParada: Record Emplazamientos;
         EmplazamientoCargado: Boolean;
+        TieneAdjuntosTxt: Text[3];
 }

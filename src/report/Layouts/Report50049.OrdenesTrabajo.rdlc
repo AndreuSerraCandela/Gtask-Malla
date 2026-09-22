@@ -950,6 +950,22 @@
               <DataElementOutput>NoOutput</DataElementOutput>
               <Style />
             </Image>
+            <Image Name="ImgQrOrden">
+              <Source>Database</Source>
+              <Value>=First(Fields!QrBase64.Value, "DataSet_Result")</Value>
+              <MIMEType>image/bmp</MIMEType>
+              <Sizing>FitProportional</Sizing>
+              <Top>0.08cm</Top>
+              <Left>17.55cm</Left>
+              <Height>2.15cm</Height>
+              <Width>2.15cm</Width>
+              <ZIndex>5</ZIndex>
+              <Visibility>
+                <Hidden>=IsNothing(First(Fields!QrBase64.Value, "DataSet_Result")) OrElse CStr(First(Fields!QrBase64.Value, "DataSet_Result")) = ""</Hidden>
+              </Visibility>
+              <DataElementOutput>NoOutput</DataElementOutput>
+              <Style />
+            </Image>
             <Textbox Name="TxtTituloEmpresa">
               <Paragraphs>
                 <Paragraph>
@@ -971,7 +987,7 @@
               <Top>0.24cm</Top>
               <Left>4.32723cm</Left>
               <Height>0.45cm</Height>
-              <Width>15.7cm</Width>
+              <Width>12.9cm</Width>
               <ZIndex>1</ZIndex>
               <Style />
             </Textbox>
@@ -996,7 +1012,7 @@
               <Top>0.63354cm</Top>
               <Left>4.32723cm</Left>
               <Height>1.35cm</Height>
-              <Width>15.7cm</Width>
+              <Width>12.9cm</Width>
               <ZIndex>2</ZIndex>
               <Style />
             </Textbox>
@@ -1020,7 +1036,7 @@
               <Top>2.16354cm</Top>
               <Left>0.07938cm</Left>
               <Height>0.75cm</Height>
-              <Width>19cm</Width>
+              <Width>17.2cm</Width>
               <ZIndex>3</ZIndex>
               <Style />
             </Textbox>
@@ -1573,6 +1589,9 @@ End Function
         </Field>
         <Field Name="Pet_Descripcion">
           <DataField>Pet_Descripcion</DataField>
+        </Field>
+        <Field Name="QrBase64">
+          <DataField>QrBase64</DataField>
         </Field>
         <Field Name="EmpresaNombre">
           <DataField>EmpresaNombre</DataField>

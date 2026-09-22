@@ -1,85 +1,90 @@
 pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
 {
-    layout
-    {
-
-        modify("Fecha instalación")
-        {
-            Caption = 'Detalle Log Parada';
-
-
-            trigger OnDrillDown()
-            var
-                DetalleLogParada: Page "Detalle Log Parada";
-            begin
-                DetalleLogParada.SetEmplazamiento(Rec);
-                DetalleLogParada.Run();
-            end;
-
-
-        }
-
-
-
-
-        addlast(Content)
-        {
-            group(GrupoActuacionesTIP)
-            {
-                Caption = 'Lista de Actuaciones TIP';
-                part(PartActuacionesTIP; "Lista Actuaciones TIP")
-                {
-                    ApplicationArea = All;
-                    Caption = 'Actuaciones';
-                    SubPageLink = Recurso = FIELD("Nº Emplazamiento");
-                    UpdatePropagation = Both;
-                }
-            }
-        }
-    }
     actions
     {
         addlast(Processing)
         {
+            action(ConsultarPeticiones)
+            {
+                ApplicationArea = All;
+                Caption = 'Peticiones';
+                Image = OrderList;
+                ToolTip = 'Histórico de peticiones de esta parada. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoParada(Rec, 'Peticion');
+                end;
+            }
             action(ConsultarIncidencias)
             {
                 ApplicationArea = All;
-                Caption = 'Consultar incidencias';
+                Caption = 'Incidencias';
                 Image = ErrorLog;
-                ToolTip = 'Abre las incidencias de esta parada (sin órdenes de trabajo)';
+                ToolTip = 'Histórico de incidencias correctivas de esta parada, incluido el subtipo Tip. El filtro se puede cambiar.';
 
                 trigger OnAction()
                 var
-                    Incidencias: Record Incidencias;
+                    Gtask: Codeunit Gtask;
                 begin
-                    Incidencias.SetRange(Recurso, Rec."Nº Emplazamiento");
-                    Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
-                    Incidencias.SetRange("Es Peticion", false);
-                    Page.Run(Page::"Lista Incidencias Taller", Incidencias);
+                    Gtask.AbrirHistoricoParada(Rec, 'Incidencia');
                 end;
             }
-            action(OrdenesTrabajo)
+            action(ConsultarMantenimientos)
             {
                 ApplicationArea = All;
                 Caption = 'Mantenimientos';
-                Image = OrderList;
-                ToolTip = 'Abre los mantenimientos (órdenes de trabajo preventivas) de esta parada';
+                Image = MaintenanceLedger;
+                ToolTip = 'Histórico de mantenimientos preventivos de esta parada. El filtro se puede cambiar.';
 
                 trigger OnAction()
                 var
-                    Incidencias: Record Incidencias;
+                    Gtask: Codeunit Gtask;
                 begin
-                    Incidencias.SetRange(Recurso, Rec."Nº Emplazamiento");
-                    Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
-                    Page.Run(Page::"Lista Mantenimientos", Incidencias);
+                    Gtask.AbrirHistoricoParada(Rec, 'Mantenimiento');
                 end;
             }
-            action(CrearOrdenMantenimiento)
+            action(NuevaPeticionEMT)
             {
                 ApplicationArea = All;
-                Caption = 'Crear orden mantenimiento';
+                Caption = 'Petición EMT';
+                Image = NewDocument;
+                ToolTip = 'Crea una petición externa EMT de esta parada y su orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.CrearPeticionEMTParada(Rec);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevaIncidencia)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva incidencia';
+                Image = NewDocument;
+                ToolTip = 'Crea una incidencia correctiva de esta parada, sin orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    SubTipo: Enum "SubTipo Incidencia";
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.AltaIncidenciaParada(Rec, SubTipo::Otras);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevoMantenimiento)
+            {
+                ApplicationArea = All;
+                Caption = 'Nuevo mantenimiento';
                 Image = CreateDocument;
-                ToolTip = 'Crea una orden EMT de mantenimiento programado para esta parada.';
+                ToolTip = 'Crea un mantenimiento preventivo de esta parada y su orden de trabajo.';
 
                 trigger OnAction()
                 var
@@ -87,10 +92,55 @@ pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
                     NoIncidencia: Code[20];
                 begin
                     NoIncidencia := Gtask.CrearIncidenciaMantenimientoEmplazamiento(Rec);
-                    if NoIncidencia <> '' then
-                        Message('Orden de mantenimiento: %1', NoIncidencia);
+                    if NoIncidencia = '' then
+                        Message('No se ha podido crear el mantenimiento. Compruebe la periodicidad de la parada.')
+                    else
+                        Gtask.AbrirFichaMovimiento(NoIncidencia);
                 end;
             }
+            action(NuevaActuacionTIP)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva incidencia TIP';
+                Image = Create;
+                ToolTip = 'Crea una incidencia de subtipo Tip para esta parada.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    SubTipo: Enum "SubTipo Incidencia";
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.AltaIncidenciaParada(Rec, SubTipo::Tip);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(DetalleLogParada)
+            {
+                ApplicationArea = All;
+                Caption = 'Detalle log parada';
+                Image = History;
+                ToolTip = 'Tareas de esta parada. Abra cada línea para ver o subir documentación adjunta.';
+
+                trigger OnAction()
+                var
+                    DetalleLogParada: Page "Detalle Log Parada";
+                begin
+                    DetalleLogParada.SetEmplazamiento(Rec);
+                    DetalleLogParada.Run();
+                end;
+            }
+        }
+        addfirst(Category_Process)
+        {
+            actionref(ConsultarPeticiones_Promoted; ConsultarPeticiones) { }
+            actionref(ConsultarIncidencias_Promoted; ConsultarIncidencias) { }
+            actionref(ConsultarMantenimientos_Promoted; ConsultarMantenimientos) { }
+            actionref(NuevaPeticionEMT_Promoted; NuevaPeticionEMT) { }
+            actionref(NuevaIncidencia_Promoted; NuevaIncidencia) { }
+            actionref(NuevoMantenimiento_Promoted; NuevoMantenimiento) { }
+            actionref(NuevaActuacionTIP_Promoted; NuevaActuacionTIP) { }
+            actionref(DetalleLogParada_Promoted; DetalleLogParada) { }
         }
     }
 }

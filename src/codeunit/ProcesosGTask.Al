@@ -4046,7 +4046,6 @@ codeunit 7001149 Procesos_GTask
 
     procedure CargarLineas(var Buffer: Record "User Task" temporary; Emplazamiento: Record Emplazamientos)
     var
-        Incidencias: Record Incidencias;
         UserTask: Record "User Task";
         TareasYaMostradas: List of [Integer];
         LineId: Integer;
@@ -4055,13 +4054,6 @@ codeunit 7001149 Procesos_GTask
         Buffer.DeleteAll();
         if Emplazamiento."Nº Emplazamiento" = '' then
             exit;
-
-        Incidencias.SetRange(Recurso, Emplazamiento."Nº Emplazamiento");
-        Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
-        if Incidencias.FindSet() then
-            repeat
-                AgregarLineaIncidencia(Buffer, Incidencias, Emplazamiento."Nº Emplazamiento", LineId, TareasYaMostradas);
-            until Incidencias.Next() = 0;
 
         UserTask.Reset();
         UserTask.SetRange(Id_record, Emplazamiento.RecordId);
@@ -4081,43 +4073,6 @@ codeunit 7001149 Procesos_GTask
 
         Buffer.SetCurrentKey("Start DateTime");
         Buffer.Ascending(false);
-    end;
-
-    local procedure AgregarLineaIncidencia(var Buffer: Record "User Task" temporary; Incidencias: Record Incidencias; ParadaNo: Code[20]; var LineId: Integer; var TareasYaMostradas: List of [Integer])
-    var
-        Descripcion: Text;
-        WorkDesc: Text;
-    begin
-        LineId += 1;
-        Buffer.Init();
-        Buffer.ID := LineId;
-        Buffer."Start DateTime" := Incidencias."FechaHora";
-        if Incidencias."Fecha Actuacion" <> 0DT then
-            Buffer."Due DateTime" := Incidencias."Fecha Actuacion";
-        Buffer.Title := CopyStr(Incidencias."No." + ' · ' + Incidencias."Descripción", 1, MaxStrLen(Buffer.Title));
-        WorkDesc := Incidencias.GetWorkDescription();
-        if WorkDesc <> '' then
-            Descripcion := WorkDesc
-        else
-            Descripcion := Incidencias."Descripción";
-        Buffer.SetDescription(CopyStr(Descripcion, 1, 250));
-        Buffer.Estado := MapearEstadoIncidencia(Incidencias.Estado);
-        if not IsNullGuid(Incidencias."Usuario Asignado") then
-            Buffer."Assigned To" := Incidencias."Usuario Asignado"
-        else
-            Buffer."Assigned To" := Incidencias.Usuario;
-        Buffer.Id_record := Incidencias.RecordId;
-        Buffer.TareaAnterior := Incidencias."Id_Tarea";
-        Buffer.TipoTarea := ParadaNo;
-        if Incidencias."Es Peticion" then
-            Buffer.Resource := 'ORDEN'
-        else
-            Buffer.Resource := 'INCIDENCIA';
-        Buffer."No." := Incidencias."No.";
-        if Incidencias."Id_Tarea" <> 0 then
-            if not TareaYaIncluida(TareasYaMostradas, Incidencias."Id_Tarea") then
-                TareasYaMostradas.Add(Incidencias."Id_Tarea");
-        Buffer.Insert(false);
     end;
 
     local procedure AgregarLineaTarea(var Buffer: Record "User Task" temporary; UserTask: Record "User Task"; var LineId: Integer)
@@ -4145,20 +4100,45 @@ codeunit 7001149 Procesos_GTask
         exit(false);
     end;
 
-    local procedure MapearEstadoIncidencia(EstadoInc: Option Abierta,EnProgreso,Cerrada,"Presupuesto Aprobado",Facturada): Enum "Task Enum"
+    procedure LineaLogTieneAdjuntos(BufferLine: Record "User Task" temporary): Boolean
+    var
+        Incidencias: Record Incidencias;
+        Imagenes: Record "Imagenes Orden fijación";
+        UserTask: Record "User Task";
     begin
-        case EstadoInc of
-            EstadoInc::Abierta:
-                exit("Task Enum"::Pendiente);
-            EstadoInc::EnProgreso:
-                exit("Task Enum"::"En Proceso");
-            EstadoInc::Cerrada,
-            EstadoInc::"Presupuesto Aprobado",
-            EstadoInc::Facturada:
-                exit("Task Enum"::Finalizado);
-            else
-                exit("Task Enum"::Pendiente);
+        if BufferLine.Id_record.TableNo = Database::Incidencias then begin
+            if Incidencias.Get(BufferLine.Id_record) then begin
+                if Incidencias."Nº Orden" <> 0 then begin
+                    Imagenes.SetRange("Nº Orden", Incidencias."Nº Orden");
+                    Imagenes.SetRange("Es Incidencia", true);
+                    if not Imagenes.IsEmpty() then
+                        exit(true);
+                end;
+                if (Incidencias.Id_Tarea <> 0) and UserTask.Get(Incidencias.Id_Tarea) then
+                    if TareaTieneDocumentosAdjuntos(UserTask) then
+                        exit(true);
+            end;
         end;
+
+        if (BufferLine.TareaAnterior <> 0) and UserTask.Get(BufferLine.TareaAnterior) then
+            exit(TareaTieneDocumentosAdjuntos(UserTask));
+
+        if BufferLine.Id_record.TableNo = Database::"User Task" then
+            if UserTask.Get(BufferLine.Id_record) then
+                exit(TareaTieneDocumentosAdjuntos(UserTask));
+
+        exit(false);
+    end;
+
+    local procedure TareaTieneDocumentosAdjuntos(UserTask: Record "User Task"): Boolean
+    var
+        DocAttach: Record "Document Attachment";
+    begin
+        if UserTask."No." = '' then
+            exit(false);
+        DocAttach.SetRange("Table ID", Database::"User Task");
+        DocAttach.SetRange("No.", UserTask."No.");
+        exit(not DocAttach.IsEmpty());
     end;
 
     procedure AbrirRegistroOrigen(BufferLine: Record "User Task" temporary)

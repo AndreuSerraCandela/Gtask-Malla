@@ -188,6 +188,23 @@ page 50112 "Incidencias Taller"
                 end;
 
             }
+            action(CrearOrdenTrabajo)
+            {
+                ApplicationArea = All;
+                Caption = 'Crear orden de trabajo';
+                Image = NewDocument;
+                ToolTip = 'Crea la orden de trabajo de esta incidencia. Si ya tiene tarea, la enlaza con esa y no crea otra.';
+                trigger OnAction()
+                var
+                    Incidencia: Record Incidencias;
+                    Gtask: Codeunit Gtask;
+                begin
+                    Incidencia.Get(Rec."No.");
+                    Gtask.CrearOrdenTrabajoIncidencia(Incidencia);
+                    CurrPage.Update(false);
+                    Page.Run(Page::"Ordenes Trabajo", Incidencia);
+                end;
+            }
             action("Crear Incidencia")
             {
                 ApplicationArea = All;
@@ -372,6 +389,7 @@ page 50112 "Incidencias Taller"
             {
 
             }
+            actionref(CrearOrdenTrabajoPromoted; CrearOrdenTrabajo) { }
             actionref(CrearIncidencia; "Crear Incidencia") { }
             actionref(MensajesWhatsAppPromoted; MensajesWhatsApp) { }
         }
@@ -440,7 +458,19 @@ page 50117 "Lista Incidencias Taller"
                 field("Tipo Incidencia"; Rec."Tipo Incidencia") { ApplicationArea = All; }
                 field("SubTipo Incidencia"; Rec."SubTipo Incidencia") { ApplicationArea = All; }
                 field("Fecha Hora"; Rec."FechaHora") { ApplicationArea = All; }
-                field("Estado"; Rec."Estado") { ApplicationArea = All; }
+                field("Estado"; Rec."Estado")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Estado incidencia';
+                    ToolTip = 'Estado de la incidencia (Abierta, En progreso, Cerrada, etc.).';
+                }
+                field("Estado Tarea"; EstadoTareaTxt)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Estado tarea';
+                    ToolTip = 'Estado de la tarea GTask/BC vinculada a esta incidencia (Pendiente, En proceso, Finalizado, Cancelado).';
+                    Editable = false;
+                }
                 field("URL Primera Imagen"; UrlPrimeraImagen)
                 {
                     Caption = 'URL Primera Imagen';
@@ -635,6 +665,7 @@ page 50117 "Lista Incidencias Taller"
         NombreUsuario: Text;
         NombreUsuarioAsignado: Text;
         UrlPrimeraImagen: Text;
+        EstadoTareaTxt: Text;
         IsPeticion: Boolean;
 
     trigger OnOpenPage()
@@ -663,6 +694,18 @@ page 50117 "Lista Incidencias Taller"
             end;
         end;
         UrlPrimeraImagen := GetUrlPrimeraImagen();
+        EstadoTareaTxt := ObtenerEstadoTarea();
+    end;
+
+    local procedure ObtenerEstadoTarea(): Text
+    var
+        UserTask: Record "User Task";
+    begin
+        if Rec.Id_Tarea = 0 then
+            exit('');
+        if UserTask.Get(Rec.Id_Tarea) then
+            exit(Format(UserTask.Estado));
+        exit('');
     end;
 
     local procedure GetUrlPrimeraImagen(): Text

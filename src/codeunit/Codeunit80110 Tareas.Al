@@ -1096,11 +1096,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
-        //Cambiar NAV-MALLA01:48900 por bc240.malla.es
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonFormater.WriteStringProperty('link', Url);
         if Opcion = Opcion::Opi then begin
             JsonFormater.WriteStringProperty('IdQr', Tarea.Resource);
@@ -1414,10 +1410,7 @@ codeunit 7001148 GTask
         JsonTask.Add('priority', 'HIGH');
 
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonTask.Add('link', Url);
 
         if Opcion = Opcion::Opi then begin
@@ -1658,10 +1651,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('project', JobNo);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonFormater.WriteStringProperty('link', Url);
         AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
@@ -2231,10 +2221,7 @@ codeunit 7001148 GTask
             JsonFormater.WriteStringProperty('IdQr', Tarea.IdQr);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonFormater.WriteStringProperty('link', Url);
         AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
@@ -2442,10 +2429,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonFormater.WriteStringProperty('link', Url);
         JsonFormater.WriteEndObject();
         Json := JsonFormater.GetJSonAsText();
@@ -2660,10 +2644,7 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('owner', usuario);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonFormater.WriteStringProperty('link', Url);
         AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
@@ -4530,6 +4511,15 @@ codeunit 7001148 GTask
             exit(Format("DateTime", 0, '<Year4>-<Month,2>-<Day,2>T<Hours24>:<Minutes,2>:<Seconds,2>'));
     end;
 
+    procedure UrlCorrecta(Url: Text): Text
+    begin
+        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
+            exit('https://bc270.malla.es/' + CopyStr(Url, 26));
+        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
+            exit('https://bc270.malla.es/' + CopyStr(Url, 26));
+        exit(Url);
+    end;
+
     /// <summary>
     /// Aplica expirationDate y daysToPerform devueltos por GTask sin desplazar un día la fecha de inicio
     /// ni sobrescribir la hora de inicio (p. ej. limpieza 08:00–13:00 el mismo día).
@@ -4711,7 +4701,10 @@ codeunit 7001148 GTask
         //     UserTask."Created By" := Supervisor;
         UserTask."No." := Format(UserTask.ID);
 
-        UserTask.IdQr := rDet.Id_Gtask;
+        if IdQrOrdenTrabajo(rDet) <> '' then
+            UserTask.IdQr := IdQrOrdenTrabajo(rDet)
+        else
+            UserTask.IdQr := rDet.Id_Gtask;
         UserTask.TestField(IdQr);
         UserTask."Created By" := UserTask."Supervisor";
         //Traspasa las fotos
@@ -4752,8 +4745,11 @@ codeunit 7001148 GTask
                 Empleado := rDet."Usuario Asignado"
             else
                 Empleado := rDet.Usuario;
-            UserTask."Assigned To" := Empleado;
+            if not IsNullGuid(Empleado) then
+                UserTask."Assigned To" := Empleado;
         end;
+        if IsNullGuid(UserTask."Assigned To") then
+            UserTask."Assigned To" := UserTask.Supervisor;
 
         // Modify(false): coherente con Insert(false); no revalida Object ID/AllObj.
         UserTask.Modify(false);
@@ -4774,9 +4770,14 @@ codeunit 7001148 GTask
         end else begin
             Id_Task := CrearTareaIncidencia(Resource."No.", UserTask, UserTask.Departamento, UserTask.Servicio, true);
         end;
+        rDet."Id_Tarea" := UserTask.ID;
+        if rDet."Fecha Actuacion" = 0DT then
+            rDet."Fecha Actuacion" := CurrentDateTime();
+        rDet.Modify();
+        Commit();
         EnviarCorreoBak(UserTask, rDet."Descripción");
         If Strlen(Id_Task) > 30 then exit(Id_Task);
-        rDet."Id_Tarea" := UserTask.ID;
+        rDet.Get(rDet."No.");
         rDet."Id Tarea Gtask" := Id_Task;
         if rDet."Fecha Actuacion" = 0DT Then rDet."Fecha Actuacion" := CurrentDateTime();
         rDet.Modify();
@@ -4932,10 +4933,7 @@ codeunit 7001148 GTask
             JsonFormater.WriteStringProperty('IdQr', Tarea.IdQr);
         JsonFormater.WriteStringProperty('priority', 'HIGH');
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc220.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         JsonFormater.WriteStringProperty('link', Url);
         AgregarChecklistTareaAJson(JsonFormater, Tarea);
         JsonFormater.WriteEndObject();
@@ -5040,8 +5038,11 @@ codeunit 7001148 GTask
                 RecRef.Get(Emplazamientos.RecordId);
             end;
             UserTask."No." := Format(UserTask.ID);
-            If rDet.Id_Gtask <> '' then
-                UserTask.IdQr := rDet.Id_Gtask;
+            if IdQrOrdenTrabajo(rDet) <> '' then
+                UserTask.IdQr := IdQrOrdenTrabajo(rDet)
+            else
+                if rDet.Id_Gtask <> '' then
+                    UserTask.IdQr := rDet.Id_Gtask;
             UserTask.TestField(IdQr);
             UserTask."Created By" := UserTask."Supervisor";
             if IsNullGuid(rDet."Usuario Asignado") = false then
@@ -5410,10 +5411,7 @@ codeunit 7001148 GTask
         Url: Text;
     begin
         Url := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", Tarea);
-        if StrPos(Url, 'http://NAV-MALLA01:48900') > 0 then
-            Url := 'https://bc270.malla.es/' + CopyStr(Url, 26);
-        if StrPos(Url, 'http://nav-malla01:48900/') > 0 then
-            Url := 'https://bc270.malla.es/' + CopyStr(Url, 26);
+        Url := UrlCorrecta(Url);
         exit(Url);
     end;
 
@@ -8712,11 +8710,16 @@ codeunit 7001148 GTask
         // Tarea BC ya existe pero aún no se publicó en GTask: solo POST task (evita duplicar User Task)
         if rDet."Id_Tarea" <> 0 then begin
             if UserTask.Get(rDet."Id_Tarea") then begin
-                if UserTask.IdQr = '' then begin
-                    UserTask.IdQr := rDet.Id_Gtask;
-                    UserTask.Modify(true);
+                if (IdQrOrdenTrabajo(rDet) <> '') and (UserTask.IdQr <> IdQrOrdenTrabajo(rDet)) then begin
+                    UserTask.IdQr := IdQrOrdenTrabajo(rDet);
+                    UserTask.Modify(false);
                     Commit();
-                end;
+                end else
+                    if (UserTask.IdQr = '') and (rDet.Id_Gtask <> '') then begin
+                        UserTask.IdQr := rDet.Id_Gtask;
+                        UserTask.Modify(true);
+                        Commit();
+                    end;
                 if rDet."Tipo Elemento" = rDet."Tipo Elemento"::Parada then begin
                     if Emplazamientos.Get(Emplazamientos."Tipo Emplazamiento"::Opis, rDet.Recurso) then
                         NoRecurso := Emplazamientos."Nº Emplazamiento"
@@ -10535,6 +10538,9 @@ codeunit 7001148 GTask
         Incidencia."Parte Trabajo" := Parte."No.";
         Incidencia.Modify(true);
 
+        if Emplaz."Nº Emplazamiento" = '' then
+            exit;
+
         if Incidencia."Tipo Elemento" = Incidencia."Tipo Elemento"::Recurso then
             if Resource.Get(Incidencia.Recurso) then
                 TipoRecurso := Resource."Tipo Recurso";
@@ -10705,6 +10711,374 @@ codeunit 7001148 GTask
     procedure CrearPeticionMantenimientoOpis(var Emplaz: Record Emplazamientos): Code[20]
     begin
         exit(CrearIncidenciaMantenimientoEmplazamiento(Emplaz));
+    end;
+
+    procedure CrearPeticionEMTParada(var Emplaz: Record Emplazamientos): Code[20]
+    var
+        Incidencia: Record Incidencias;
+        TipoParte: Option " ",Trabajo,Nacional,EMT;
+    begin
+        Emplaz.TestField("Nº Emplazamiento");
+        if Emplaz."Tipo Emplazamiento" <> Emplaz."Tipo Emplazamiento"::Opis then
+            Error('La petición EMT solo se crea desde una parada.');
+
+        Incidencia.Init();
+        Incidencia."Es Peticion" := true;
+        Incidencia."Comunicado por EMT" := true;
+        Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
+        Incidencia.Recurso := Emplaz."Nº Emplazamiento";
+        Incidencia."Tipo Incidencia" := Incidencia."Tipo Incidencia"::"Incidencias EMT";
+        Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Otras;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
+        Incidencia."User Task Group" := 'EMT';
+        Incidencia.Estado := Incidencia.Estado::Abierta;
+        Incidencia.Fecha := Today;
+        Incidencia."FechaHora" := CurrentDateTime();
+        Incidencia."Fecha Actuacion" := CurrentDateTime();
+        Incidencia.Descripción := CopyStr('Petición EMT ' + Emplaz."Nº Emplazamiento" + ' ' + Emplaz."Descripción", 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+
+        TipoParte := TipoParte::EMT;
+        CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
+        Incidencia.TestField("Parte Trabajo");
+        LigarTareaConOrden(Incidencia);
+        exit(Incidencia."No.");
+    end;
+
+    procedure CrearPeticionInternaEmplazamiento(var Emplaz: Record Emplazamientos): Code[20]
+    var
+        Incidencia: Record Incidencias;
+        NRecurso: Code[20];
+        TipoParte: Option " ",Trabajo,Nacional,EMT;
+        TipoInc: Enum "Tipo Incidencia";
+    begin
+        Emplaz.TestField("Nº Emplazamiento");
+        Incidencia.Init();
+        Incidencia."Es Peticion" := true;
+        Incidencia."Comunicado por EMT" := false;
+        Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Otras;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
+        RellenarIncidenciaAbierta(Incidencia);
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then begin
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
+            Incidencia.Recurso := Emplaz."Nº Emplazamiento";
+            Incidencia."Tipo Incidencia" := Incidencia."Tipo Incidencia"::"Incidencias EMT";
+            Incidencia."User Task Group" := 'EMT';
+            TipoParte := TipoParte::EMT;
+        end else begin
+            NRecurso := ObtenerRecursoPrincipalEmplazamiento(Emplaz);
+            if NRecurso = '' then
+                Error('El emplazamiento %1 no tiene un recurso para la petición.', Emplaz."Nº Emplazamiento");
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
+            Incidencia.Recurso := NRecurso;
+            if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Vallas then
+                TipoInc := TipoInc::"Incidencias Soportes"
+            else
+                TipoInc := TipoInc::"Incidencias Mobiliario Urbano";
+            Incidencia."Tipo Incidencia" := TipoInc;
+            Incidencia."User Task Group" := 'MTO';
+            TipoParte := TipoParte::Trabajo;
+        end;
+        Incidencia.Descripción := CopyStr('Petición ' + Emplaz."Nº Emplazamiento" + ' ' + Emplaz."Descripción", 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+        CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
+        Incidencia.TestField("Parte Trabajo");
+        LigarTareaConOrden(Incidencia);
+        exit(Incidencia."No.");
+    end;
+
+    procedure CrearPeticionInternaRecurso(var Resource: Record Resource): Code[20]
+    var
+        Incidencia: Record Incidencias;
+        Emplaz: Record Emplazamientos;
+        TipoParte: Option " ",Trabajo,Nacional,EMT;
+        TipoInc: Enum "Tipo Incidencia";
+    begin
+        Resource.TestField("No.");
+        Incidencia.Init();
+        Incidencia."Es Peticion" := true;
+        Incidencia."Comunicado por EMT" := false;
+        Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Otras;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
+        Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
+        Incidencia.Recurso := Resource."No.";
+        Incidencia."User Task Group" := 'MTO';
+        RellenarIncidenciaAbierta(Incidencia);
+        TipoInc := TipoInc::"Incidencias Soportes";
+        TipoParte := TipoParte::Trabajo;
+        if TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then
+            case Emplaz."Tipo Emplazamiento" of
+                Emplaz."Tipo Emplazamiento"::Opis:
+                    begin
+                        TipoInc := TipoInc::"Incidencias EMT";
+                        Incidencia."User Task Group" := 'EMT';
+                        TipoParte := TipoParte::EMT;
+                    end;
+                Emplaz."Tipo Emplazamiento"::"Otros":
+                    TipoInc := TipoInc::"Incidencias Mobiliario Urbano";
+            end
+        else
+            Emplaz.Init();
+        Incidencia."Tipo Incidencia" := TipoInc;
+        Incidencia.Descripción := CopyStr('Petición ' + Resource."No." + ' ' + Resource.Name, 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+        CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
+        Incidencia.TestField("Parte Trabajo");
+        LigarTareaConOrden(Incidencia);
+        exit(Incidencia."No.");
+    end;
+
+    procedure AltaIncidenciaParada(var Emplaz: Record Emplazamientos; SubTipo: Enum "SubTipo Incidencia"): Code[20]
+    var
+        Incidencia: Record Incidencias;
+    begin
+        Emplaz.TestField("Nº Emplazamiento");
+        if Emplaz."Tipo Emplazamiento" <> Emplaz."Tipo Emplazamiento"::Opis then
+            Error('La incidencia de parada solo se crea desde una parada.');
+        Incidencia.Init();
+        Incidencia."Es Peticion" := false;
+        Incidencia."Comunicado por EMT" := false;
+        Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
+        Incidencia.Recurso := Emplaz."Nº Emplazamiento";
+        Incidencia."Tipo Incidencia" := Incidencia."Tipo Incidencia"::"Incidencias EMT";
+        Incidencia."SubTipo Incidencia" := SubTipo;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
+        Incidencia."User Task Group" := 'EMT';
+        RellenarIncidenciaAbierta(Incidencia);
+        if SubTipo = SubTipo::Tip then
+            Incidencia.Descripción := CopyStr('Incidencia TIP ' + Emplaz."Nº Emplazamiento" + ' ' + Emplaz."Descripción", 1, MaxStrLen(Incidencia.Descripción))
+        else
+            Incidencia.Descripción := CopyStr('Incidencia ' + Emplaz."Nº Emplazamiento" + ' ' + Emplaz."Descripción", 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+        exit(Incidencia."No.");
+    end;
+
+    procedure AltaIncidenciaEmplazamiento(var Emplaz: Record Emplazamientos; SubTipo: Enum "SubTipo Incidencia"): Code[20]
+    var
+        Resource: Record Resource;
+        NRecurso: Code[20];
+    begin
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then
+            exit(AltaIncidenciaParada(Emplaz, SubTipo));
+        NRecurso := ObtenerRecursoPrincipalEmplazamiento(Emplaz);
+        if NRecurso = '' then
+            Error('El emplazamiento %1 no tiene un recurso para la incidencia.', Emplaz."Nº Emplazamiento");
+        Resource.Get(NRecurso);
+        exit(AltaIncidenciaRecurso(Resource, SubTipo));
+    end;
+
+    procedure AltaIncidenciaRecurso(var Resource: Record Resource; SubTipo: Enum "SubTipo Incidencia"): Code[20]
+    var
+        Incidencia: Record Incidencias;
+        Emplaz: Record Emplazamientos;
+        TipoInc: Enum "Tipo Incidencia";
+    begin
+        Resource.TestField("No.");
+        Incidencia.Init();
+        Incidencia."Es Peticion" := false;
+        Incidencia."Comunicado por EMT" := false;
+        Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
+        Incidencia.Recurso := Resource."No.";
+        Incidencia."SubTipo Incidencia" := SubTipo;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
+        Incidencia."User Task Group" := 'MTO';
+        RellenarIncidenciaAbierta(Incidencia);
+        TipoInc := TipoInc::"Incidencias Soportes";
+        if TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then
+            case Emplaz."Tipo Emplazamiento" of
+                Emplaz."Tipo Emplazamiento"::Opis:
+                    begin
+                        TipoInc := TipoInc::"Incidencias EMT";
+                        Incidencia."User Task Group" := 'EMT';
+                    end;
+                Emplaz."Tipo Emplazamiento"::"Otros":
+                    TipoInc := TipoInc::"Incidencias Mobiliario Urbano";
+            end;
+        Incidencia."Tipo Incidencia" := TipoInc;
+        Incidencia.Descripción := CopyStr('Incidencia ' + Resource."No." + ' ' + Resource.Name, 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+        exit(Incidencia."No.");
+    end;
+
+    procedure AbrirFichaMovimiento(NoMovimiento: Code[20])
+    var
+        Incidencia: Record Incidencias;
+    begin
+        if NoMovimiento = '' then
+            exit;
+        Incidencia.Get(NoMovimiento);
+        if Incidencia."Es Peticion" or (Incidencia."Tipo Intervención" = Incidencia."Tipo Intervención"::Preventivo) then begin
+            AsegurarParteMantenimiento(Incidencia);
+            Commit();
+            Page.RunModal(Page::"Ordenes Trabajo", Incidencia);
+        end else
+            Page.RunModal(Page::"Incidencias Taller", Incidencia);
+    end;
+
+    procedure AbrirHistoricoParada(var Parada: Record Emplazamientos; Clase: Text)
+    var
+        Incidencia: Record Incidencias;
+    begin
+        Parada.TestField("Nº Emplazamiento");
+        Incidencia.SetRange("Tipo Elemento", Incidencia."Tipo Elemento"::Parada);
+        Incidencia.SetRange(Recurso, Parada."Nº Emplazamiento");
+        AplicarClaseHistorico(Incidencia, Clase);
+        Page.Run(Page::"Histórico movimientos", Incidencia);
+    end;
+
+    procedure AbrirHistoricoEmplazamiento(var Emplaz: Record Emplazamientos; Clase: Text)
+    var
+        Incidencia: Record Incidencias;
+        Resource: Record Resource;
+        FiltroRecursos: Text;
+    begin
+        Emplaz.TestField("Nº Emplazamiento");
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then begin
+            AbrirHistoricoParada(Emplaz, Clase);
+            exit;
+        end;
+        Resource.SetRange("Nº Emplazamiento", Emplaz."Nº Emplazamiento");
+        if Resource.FindSet() then
+            repeat
+                if FiltroRecursos <> '' then
+                    FiltroRecursos += '|';
+                FiltroRecursos += Resource."No.";
+            until Resource.Next() = 0;
+        if FiltroRecursos = '' then
+            FiltroRecursos := '##NOMATCH##';
+        Incidencia.SetRange("Tipo Elemento", Incidencia."Tipo Elemento"::Recurso);
+        Incidencia.SetFilter(Recurso, FiltroRecursos);
+        AplicarClaseHistorico(Incidencia, Clase);
+        Page.Run(Page::"Histórico movimientos", Incidencia);
+    end;
+
+    procedure AbrirHistoricoRecurso(var Resource: Record Resource; Clase: Text)
+    var
+        Incidencia: Record Incidencias;
+    begin
+        Resource.TestField("No.");
+        Incidencia.SetRange("Tipo Elemento", Incidencia."Tipo Elemento"::Recurso);
+        Incidencia.SetRange(Recurso, Resource."No.");
+        AplicarClaseHistorico(Incidencia, Clase);
+        Page.Run(Page::"Histórico movimientos", Incidencia);
+    end;
+
+    local procedure IdQrOrdenTrabajo(Incidencia: Record Incidencias): Text[100]
+    begin
+        if Incidencia."Parte Trabajo" = '' then
+            exit('');
+        exit(CopyStr('OT-' + Incidencia."Parte Trabajo", 1, 100));
+    end;
+
+    local procedure LigarTareaConOrden(var Incidencia: Record Incidencias)
+    var
+        UserTask: Record "User Task";
+        IdTarea: Text;
+        IdQrOrden: Text[100];
+    begin
+        if Incidencia."Parte Trabajo" = '' then
+            exit;
+        IdQrOrden := IdQrOrdenTrabajo(Incidencia);
+        if (Incidencia."Id_Tarea" <> 0) and UserTask.Get(Incidencia."Id_Tarea") then begin
+            if UserTask.IdQr <> IdQrOrden then begin
+                UserTask.IdQr := IdQrOrden;
+                UserTask.Modify(false);
+            end;
+            exit;
+        end;
+        IdTarea := CrearTareaIncidencia(Incidencia);
+        Incidencia.Get(Incidencia."No.");
+        if (CopyStr(IdTarea, 1, 5) = 'Error') or (StrLen(IdTarea) > 30) then
+            Error('La orden %1 está creada, pero la tarea no se ha publicado: %2', Incidencia."Parte Trabajo", IdTarea);
+    end;
+
+    procedure CrearOrdenTrabajoIncidencia(var Incidencia: Record Incidencias)
+    var
+        Emplaz: Record Emplazamientos;
+        UserTask: Record "User Task";
+        TipoRecurso: Code[20];
+        TipoParte: Option " ",Trabajo,Nacional,EMT;
+        IdQrOrden: Text[100];
+        TieneEmplazamiento: Boolean;
+    begin
+        Incidencia.TestField("No.");
+        TieneEmplazamiento := ObtenerEmplazamientoDesdeIncidencia(Incidencia, Emplaz, TipoRecurso);
+        if not TieneEmplazamiento then
+            Clear(Emplaz);
+        if TieneEmplazamiento and (Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis) then
+            TipoParte := TipoParte::EMT
+        else
+            TipoParte := TipoParte::Trabajo;
+        CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
+        Incidencia.TestField("Parte Trabajo");
+        if not BuscarTareaDeIncidencia(Incidencia, UserTask) then
+            exit;
+        IdQrOrden := IdQrOrdenTrabajo(Incidencia);
+        if UserTask.IdQr <> IdQrOrden then begin
+            UserTask.IdQr := IdQrOrden;
+            UserTask.Modify(false);
+        end;
+        if Incidencia.Id_Tarea <> UserTask.ID then begin
+            Incidencia.Id_Tarea := UserTask.ID;
+            Incidencia.Modify(true);
+        end;
+        Commit();
+        PublicarIdQrOrdenEnGtask(UserTask);
+    end;
+
+    local procedure BuscarTareaDeIncidencia(Incidencia: Record Incidencias; var UserTask: Record "User Task"): Boolean
+    begin
+        if (Incidencia.Id_Tarea <> 0) and UserTask.Get(Incidencia.Id_Tarea) then
+            exit(true);
+        if Incidencia."ID Tarea Gtask" = '' then
+            exit(false);
+        UserTask.Reset();
+        UserTask.SetRange(Id_Tarea, Incidencia."ID Tarea Gtask");
+        exit(UserTask.FindFirst());
+    end;
+
+    local procedure PublicarIdQrOrdenEnGtask(UserTask: Record "User Task")
+    var
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        JsonObj: JsonObject;
+        Json: Text;
+    begin
+        if (UserTask.Id_Tarea = '') or (UserTask.IdQr = '') then
+            exit;
+        CompanyInfo.Get();
+        if CompanyInfo."Url Task" = '' then
+            exit;
+        JsonObj.Add('IdQr', UserTask.IdQr);
+        JsonObj.WriteTo(Json);
+        RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + UserTask.Id_Tarea, Token(), RequestType::put, Json);
+    end;
+
+    local procedure RellenarIncidenciaAbierta(var Incidencia: Record Incidencias)
+    begin
+        Incidencia.Estado := Incidencia.Estado::Abierta;
+        Incidencia.Fecha := Today;
+        Incidencia."FechaHora" := CurrentDateTime();
+        Incidencia."Fecha Actuacion" := CurrentDateTime();
+    end;
+
+    local procedure AplicarClaseHistorico(var Incidencia: Record Incidencias; Clase: Text)
+    begin
+        case LowerCase(Clase) of
+            'peticion':
+                begin
+                    Incidencia.SetRange("Es Peticion", true);
+                    Incidencia.SetRange("Tipo Intervención", Incidencia."Tipo Intervención"::Correctivo);
+                end;
+            'incidencia':
+                begin
+                    Incidencia.SetRange("Es Peticion", false);
+                    Incidencia.SetRange("Tipo Intervención", Incidencia."Tipo Intervención"::Correctivo);
+                end;
+            'mantenimiento':
+                Incidencia.SetRange("Tipo Intervención", Incidencia."Tipo Intervención"::Preventivo);
+        end;
     end;
 
     local procedure BuscarNoIncidenciaMantenimientoAbierta(Emplaz: Record Emplazamientos): Code[20]
@@ -11035,6 +11409,7 @@ codeunit 7001148 GTask
         TipoEmplazTxt: Text;
         TipoEmplaz: Enum "Tipo Emplazamiento";
         TipoEmplazFiltro: Boolean;
+        IncluirSinFecha: Boolean;
         Txt: Text;
         PeriodicidadTxt: Text;
         TiposRecursoTxt: Text;
@@ -11050,10 +11425,16 @@ codeunit 7001148 GTask
                     Hasta := 99991231D;
             if JsonIn.Get('tipoEmplazamiento', JsonToken) then
                 TipoEmplazTxt := JsonToken.AsValue().AsText();
+            if JsonIn.Get('incluirSinFecha', JsonToken) then
+                IncluirSinFecha := JsonToken.AsValue().AsBoolean();
+            if JsonIn.Get('tipoListado', JsonToken) then
+                if LowerCase(JsonToken.AsValue().AsText()) in ['recurso', 'recursos'] then
+                    exit(ListadoMantenimientoRecurso(JsonText));
         end;
 
         Clear(JsonArray);
-        Emplaz.SetFilter("Fecha Próximo Mantenimiento", '<>%1', 0D);
+        if not IncluirSinFecha then
+            Emplaz.SetFilter("Fecha Próximo Mantenimiento", '<>%1', 0D);
         if (Desde <> 0D) and (Hasta <> 99991231D) then
             Emplaz.SetRange("Fecha Próximo Mantenimiento", Desde, Hasta)
         else
@@ -11126,6 +11507,7 @@ codeunit 7001148 GTask
         FechaProx: Date;
         BajoMto: Boolean;
         UltimoMto: Date;
+        IncluirSinFecha: Boolean;
     begin
         Desde := 0D;
         Hasta := 99991231D;
@@ -11138,6 +11520,8 @@ codeunit 7001148 GTask
                     Hasta := 99991231D;
             if JsonIn.Get('tipoRecurso', JsonToken) then
                 TipoRecursoTxt := JsonToken.AsValue().AsText();
+            if JsonIn.Get('incluirSinFecha', JsonToken) then
+                IncluirSinFecha := JsonToken.AsValue().AsBoolean();
         end;
         TipoRecursoFiltro := TipoRecursoTxt <> '';
 
@@ -11146,7 +11530,7 @@ codeunit 7001148 GTask
         if Resource.FindSet() then
             repeat
                 FechaProx := FechaProximoMantenimientoRecurso(Resource, Emplaz);
-                if FechaProx = 0D then
+                if (not IncluirSinFecha) and (FechaProx = 0D) then
                     continue;
                 if (Desde <> 0D) and (Hasta <> 99991231D) then begin
                     if (FechaProx < Desde) or (FechaProx > Hasta) then
@@ -11222,6 +11606,639 @@ codeunit 7001148 GTask
         if TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then
             exit(Emplaz."Último Mantenimiento");
         exit(0D);
+    end;
+
+    /// <summary>
+    /// Detalle de mantenimiento de un emplazamiento (parada, valla, mobiliario).
+    /// JSON: { "tipoEmplazamiento":"Opis|Vallas|Otros", "noEmplazamiento":"..." }
+    /// </summary>
+    [ServiceEnabled]
+    procedure DetalleMantenimientoEmplaz(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonRoot: JsonObject;
+        JsonRecursos: JsonArray;
+        JsonLinea: JsonObject;
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        EmplCu: Codeunit Emplazamientos;
+        TipoEmplazTxt: Text;
+        NEmplaz: Code[20];
+        Txt: Text;
+        PeriodicidadTxt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido');
+
+        if JsonIn.Get('noEmplazamiento', JsonToken) then
+            NEmplaz := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NEmplaz));
+        if NEmplaz = '' then
+            Error('Falta noEmplazamiento');
+
+        if JsonIn.Get('tipoEmplazamiento', JsonToken) then
+            TipoEmplazTxt := JsonToken.AsValue().AsText();
+
+        if not BuscarEmplazamientoPorTipoONo(TipoEmplazTxt, NEmplaz, Emplaz) then
+            Error('Emplazamiento no encontrado: %1', NEmplaz);
+
+        Clear(JsonRoot);
+        JsonRoot.Add('tipo_emplazamiento', Format(Emplaz."Tipo Emplazamiento"));
+        JsonRoot.Add('no_emplazamiento', Emplaz."Nº Emplazamiento");
+        JsonRoot.Add('descripcion', Emplaz."Descripción");
+        JsonRoot.Add('ubicacion', Emplaz."Ubicación");
+        JsonRoot.Add('municipio', Emplaz."Municipio emplazamiento");
+        JsonRoot.Add('zona', Emplaz.Zona);
+        JsonRoot.Add('fecha_proximo_mantenimiento', Emplaz."Fecha Próximo Mantenimiento");
+        JsonRoot.Add('ultimo_mantenimiento', Emplaz."Último Mantenimiento");
+        JsonRoot.Add('bajo_mantenimiento', Emplaz."Bajo Mantenimiento");
+        Resource.Init();
+        PeriodicidadTxt := Format(ObtenerPeriodicidadMantenimiento(Emplaz, Resource));
+        JsonRoot.Add('periodicidad', PeriodicidadTxt);
+        JsonRoot.Add('periodicidad_invierno', Format(Emplaz."Periodicidad Mant. Invierno"));
+        JsonRoot.Add('zona_mantenimiento', Emplaz."Zona Mantenimiento");
+        JsonRoot.Add('tipos_recurso', EmplCu.ObtenerTiposRecursoEmplazamiento(Emplaz."Nº Emplazamiento"));
+        JsonRoot.Add('punto_x', Emplaz.PuntoX);
+        JsonRoot.Add('punto_y', Emplaz.PuntoY);
+
+        Clear(JsonRecursos);
+        Resource.SetRange("Nº Emplazamiento", Emplaz."Nº Emplazamiento");
+        Resource.SetRange(Blocked, false);
+        if Resource.FindSet() then
+            repeat
+                Clear(JsonLinea);
+                JsonLinea.Add('no_recurso', Resource."No.");
+                JsonLinea.Add('descripcion', Resource.Name);
+                JsonLinea.Add('tipo_recurso', Resource."Tipo Recurso");
+                JsonLinea.Add('fecha_proximo_mantenimiento', Resource."Fecha Próximo Mantenimiento");
+                JsonLinea.Add('ultimo_mantenimiento', Resource."Último Mantenimiento");
+                JsonLinea.Add('bajo_mantenimiento', Resource."Bajo Mantenimiento");
+                JsonLinea.Add('periodicidad', Format(Resource."Periodicidad Mantenimiento"));
+                JsonRecursos.Add(JsonLinea);
+            until Resource.Next() = 0;
+        JsonRoot.Add('recursos', JsonRecursos.AsToken());
+
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    /// <summary>
+    /// Detalle de mantenimiento de un recurso.
+    /// JSON: { "noRecurso":"..." }
+    /// </summary>
+    [ServiceEnabled]
+    procedure DetalleMantenimientoRecurso(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonRoot: JsonObject;
+        JsonEmplaz: JsonObject;
+        Resource: Record Resource;
+        Emplaz: Record Emplazamientos;
+        NRecurso: Code[20];
+        Txt: Text;
+        PeriodicidadTxt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido');
+        if JsonIn.Get('noRecurso', JsonToken) then
+            NRecurso := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NRecurso));
+        if NRecurso = '' then
+            Error('Falta noRecurso');
+        if not Resource.Get(NRecurso) then
+            Error('Recurso no encontrado: %1', NRecurso);
+
+        Clear(JsonRoot);
+        JsonRoot.Add('no_recurso', Resource."No.");
+        JsonRoot.Add('descripcion', Resource.Name);
+        JsonRoot.Add('tipo_recurso', Resource."Tipo Recurso");
+        JsonRoot.Add('ubicacion', Resource.Ubicación);
+        JsonRoot.Add('municipio', Resource.Municipio);
+        JsonRoot.Add('zona', Resource.Zona);
+        JsonRoot.Add('no_emplazamiento', Resource."Nº Emplazamiento");
+        JsonRoot.Add('fecha_proximo_mantenimiento', Resource."Fecha Próximo Mantenimiento");
+        JsonRoot.Add('ultimo_mantenimiento', Resource."Último Mantenimiento");
+        JsonRoot.Add('bajo_mantenimiento', Resource."Bajo Mantenimiento");
+        PeriodicidadTxt := Format(Resource."Periodicidad Mantenimiento");
+        if PeriodicidadTxt = '' then begin
+            Clear(Emplaz);
+            if TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then
+                PeriodicidadTxt := Format(ObtenerPeriodicidadMantenimiento(Emplaz, Resource));
+        end;
+        JsonRoot.Add('periodicidad', PeriodicidadTxt);
+        JsonRoot.Add('zona_mantenimiento', Resource."Zona Mantenimiento");
+        JsonRoot.Add('punto_x', Resource.PuntoX);
+        JsonRoot.Add('punto_y', Resource.PuntoY);
+
+        Clear(JsonEmplaz);
+        if TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then begin
+            JsonEmplaz.Add('tipo_emplazamiento', Format(Emplaz."Tipo Emplazamiento"));
+            JsonEmplaz.Add('no_emplazamiento', Emplaz."Nº Emplazamiento");
+            JsonEmplaz.Add('descripcion', Emplaz."Descripción");
+            JsonEmplaz.Add('ubicacion', Emplaz."Ubicación");
+        end;
+        JsonRoot.Add('emplazamiento', JsonEmplaz.AsToken());
+
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    /// <summary>
+    /// Historial de incidencias de mantenimiento para emplazamiento o recurso.
+    /// JSON: { "tipo":"emplaz|recurso", "tipoEmplazamiento":"...", "codigo":"...", "limite":50 }
+    /// </summary>
+    [ServiceEnabled]
+    procedure HistorialMantenimiento(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonRoot: JsonObject;
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        Incidencias: Record Incidencias;
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        TipoTxt: Text;
+        TipoEmplazTxt: Text;
+        Codigo: Code[20];
+        Limite: Integer;
+        Contador: Integer;
+        Txt: Text;
+    begin
+        Limite := 50;
+        if JsonIn.ReadFrom(JsonText) then begin
+            if JsonIn.Get('tipo', JsonToken) then
+                TipoTxt := LowerCase(JsonToken.AsValue().AsText());
+            if JsonIn.Get('tipoEmplazamiento', JsonToken) then
+                TipoEmplazTxt := JsonToken.AsValue().AsText();
+            if JsonIn.Get('codigo', JsonToken) then
+                Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Codigo));
+            if JsonIn.Get('limite', JsonToken) then
+                Limite := JsonToken.AsValue().AsInteger();
+        end;
+        if Codigo = '' then
+            Error('Falta codigo');
+        if Limite <= 0 then
+            Limite := 50;
+        if Limite > 200 then
+            Limite := 200;
+
+        Clear(JsonFormater);
+        JsonFormater.WriteStartObject('');
+        JsonFormater.WriteStartArray('value');
+
+        Incidencias.Reset();
+        Incidencias.SetRange("SubTipo Incidencia", Incidencias."SubTipo Incidencia"::Mantenimiento);
+        Contador := 0;
+
+        if TipoTxt = 'recurso' then begin
+            Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Recurso);
+            Incidencias.SetRange(Recurso, Codigo);
+            if Incidencias.FindSet() then
+                repeat
+                    Procesos_GTask.EscribirIncidenciaHistorial(Incidencias, JsonFormater);
+                    Contador += 1;
+                until (Incidencias.Next() = 0) or (Contador >= Limite);
+        end else begin
+            if not BuscarEmplazamientoPorTipoONo(TipoEmplazTxt, Codigo, Emplaz) then
+                Error('Emplazamiento no encontrado: %1', Codigo);
+
+            if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then begin
+                Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
+                Incidencias.SetRange(Recurso, Emplaz."Nº Emplazamiento");
+                if Incidencias.FindSet() then
+                    repeat
+                        Procesos_GTask.EscribirIncidenciaHistorial(Incidencias, JsonFormater);
+                        Contador += 1;
+                    until (Incidencias.Next() = 0) or (Contador >= Limite);
+            end else begin
+                Resource.SetRange("Nº Emplazamiento", Emplaz."Nº Emplazamiento");
+                if Resource.FindSet() then
+                    repeat
+                        Incidencias.Reset();
+                        Incidencias.SetRange("SubTipo Incidencia", Incidencias."SubTipo Incidencia"::Mantenimiento);
+                        Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Recurso);
+                        Incidencias.SetRange(Recurso, Resource."No.");
+                        if Incidencias.FindSet() then
+                            repeat
+                                Procesos_GTask.EscribirIncidenciaHistorial(Incidencias, JsonFormater);
+                                Contador += 1;
+                            until (Incidencias.Next() = 0) or (Contador >= Limite);
+                    until (Resource.Next() = 0) or (Contador >= Limite);
+            end;
+        end;
+
+        JsonFormater.WriteEndArray();
+        JsonFormater.WriteEndObject();
+        Txt := JsonFormater.GetJSonAsText();
+        exit(Txt);
+    end;
+
+    /// <summary>
+    /// Actualiza datos de mantenimiento en emplazamiento o recurso.
+    /// JSON: { "tipo":"emplaz|recurso", "tipoEmplazamiento":"...", "codigo":"...",
+    ///         "fechaProximoMantenimiento":"YYYY-MM-DD", "periodicidad":"1M", "zonaMantenimiento":0 }
+    /// </summary>
+    [ServiceEnabled]
+    procedure PostActualizarMantenimiento(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonRoot: JsonObject;
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        TipoTxt: Text;
+        TipoEmplazTxt: Text;
+        Codigo: Code[20];
+        FechaProx: Date;
+        Periodicidad: DateFormula;
+        ZonaMto: Integer;
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido');
+        if JsonIn.Get('tipo', JsonToken) then
+            TipoTxt := LowerCase(JsonToken.AsValue().AsText());
+        if JsonIn.Get('tipoEmplazamiento', JsonToken) then
+            TipoEmplazTxt := JsonToken.AsValue().AsText();
+        if JsonIn.Get('codigo', JsonToken) then
+            Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Codigo));
+        if Codigo = '' then
+            Error('Falta codigo');
+
+        if JsonIn.Get('fechaProximoMantenimiento', JsonToken) then
+            if not Evaluate(FechaProx, JsonToken.AsValue().AsText()) then
+                FechaProx := 0D;
+
+        if TipoTxt = 'recurso' then begin
+            if not Resource.Get(Codigo) then
+                Error('Recurso no encontrado: %1', Codigo);
+            if JsonIn.Get('fechaProximoMantenimiento', JsonToken) then
+                Resource."Fecha Próximo Mantenimiento" := FechaProx;
+            if JsonIn.Get('periodicidad', JsonToken) then begin
+                Clear(Periodicidad);
+                if JsonToken.AsValue().AsText() <> '' then
+                    Evaluate(Periodicidad, JsonToken.AsValue().AsText());
+                Resource."Periodicidad Mantenimiento" := Periodicidad;
+            end;
+            if JsonIn.Get('zonaMantenimiento', JsonToken) then begin
+                ZonaMto := JsonToken.AsValue().AsInteger();
+                Resource."Zona Mantenimiento" := ZonaMto;
+            end;
+            Resource.Modify(true);
+            Clear(JsonRoot);
+            JsonRoot.Add('success', true);
+            JsonRoot.Add('tipo', 'recurso');
+            JsonRoot.Add('codigo', Resource."No.");
+            JsonRoot.Add('fecha_proximo_mantenimiento', Resource."Fecha Próximo Mantenimiento");
+            JsonRoot.Add('periodicidad', Format(Resource."Periodicidad Mantenimiento"));
+            JsonRoot.WriteTo(Txt);
+            exit(Txt);
+        end;
+
+        if not BuscarEmplazamientoPorTipoONo(TipoEmplazTxt, Codigo, Emplaz) then
+            Error('Emplazamiento no encontrado: %1', Codigo);
+        if JsonIn.Get('fechaProximoMantenimiento', JsonToken) then
+            Emplaz."Fecha Próximo Mantenimiento" := FechaProx;
+        if JsonIn.Get('periodicidad', JsonToken) then begin
+            Clear(Periodicidad);
+            if JsonToken.AsValue().AsText() <> '' then
+                Evaluate(Periodicidad, JsonToken.AsValue().AsText());
+            Emplaz."Periodicidad Mantenimiento" := Periodicidad;
+        end;
+        if JsonIn.Get('periodicidadInvierno', JsonToken) then begin
+            Clear(Periodicidad);
+            if JsonToken.AsValue().AsText() <> '' then
+                Evaluate(Periodicidad, JsonToken.AsValue().AsText());
+            Emplaz."Periodicidad Mant. Invierno" := Periodicidad;
+        end;
+        if JsonIn.Get('zonaMantenimiento', JsonToken) then begin
+            ZonaMto := JsonToken.AsValue().AsInteger();
+            Emplaz."Zona Mantenimiento" := ZonaMto;
+        end;
+        Emplaz.Modify(true);
+        Clear(JsonRoot);
+        JsonRoot.Add('success', true);
+        JsonRoot.Add('tipo', 'emplaz');
+        JsonRoot.Add('codigo', Emplaz."Nº Emplazamiento");
+        JsonRoot.Add('fecha_proximo_mantenimiento', Emplaz."Fecha Próximo Mantenimiento");
+        JsonRoot.Add('periodicidad', Format(Emplaz."Periodicidad Mantenimiento"));
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    /// <summary>
+    /// Crea orden/tarea puntual de mantenimiento.
+    /// JSON: { "tipo":"emplaz|recurso", "tipoEmplazamiento":"...", "codigo":"...",
+    ///         "descripcion":"...", "puntual":true }
+    /// </summary>
+    [ServiceEnabled]
+    procedure PostCrearOrdenMantenimiento(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonRoot: JsonObject;
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        TipoTxt: Text;
+        TipoEmplazTxt: Text;
+        Codigo: Code[20];
+        Descripcion: Text;
+        Puntual: Boolean;
+        NoIncidencia: Code[20];
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido');
+        if JsonIn.Get('tipo', JsonToken) then
+            TipoTxt := LowerCase(JsonToken.AsValue().AsText());
+        if JsonIn.Get('tipoEmplazamiento', JsonToken) then
+            TipoEmplazTxt := JsonToken.AsValue().AsText();
+        if JsonIn.Get('codigo', JsonToken) then
+            Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Codigo));
+        if JsonIn.Get('descripcion', JsonToken) then
+            Descripcion := JsonToken.AsValue().AsText();
+        if JsonIn.Get('puntual', JsonToken) then
+            Puntual := JsonToken.AsValue().AsBoolean();
+        if Codigo = '' then
+            Error('Falta codigo');
+
+        if TipoTxt = 'recurso' then begin
+            if not Resource.Get(Codigo) then
+                Error('Recurso no encontrado: %1', Codigo);
+            NoIncidencia := CrearIncidenciaMantenimientoRecurso(Resource, Descripcion, Puntual);
+        end else begin
+            if not BuscarEmplazamientoPorTipoONo(TipoEmplazTxt, Codigo, Emplaz) then
+                Error('Emplazamiento no encontrado: %1', Codigo);
+            if Puntual and (Descripcion <> '') then
+                NoIncidencia := CrearIncidenciaMantenimientoEmplazPuntual(Emplaz, Descripcion)
+            else
+                NoIncidencia := CrearIncidenciaMantenimientoEmplazamiento(Emplaz);
+        end;
+
+        Clear(JsonRoot);
+        JsonRoot.Add('success', NoIncidencia <> '');
+        JsonRoot.Add('no_incidencia', NoIncidencia);
+        if NoIncidencia = '' then
+            JsonRoot.Add('mensaje', 'No se pudo crear la orden (¿ya existe una abierta o falta periodicidad/recursos?)')
+        else
+            JsonRoot.Add('mensaje', StrSubstNo('Orden de mantenimiento creada: %1', NoIncidencia));
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    /// <summary>
+    /// Crea una petición y su orden de trabajo.
+    /// JSON: { "emt": true|false, "codigo":"...", "tipo":"recurso|parada|...", "descripcion":"..." }
+    /// </summary>
+    [ServiceEnabled]
+    procedure PostCrearPeticion(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonRoot: JsonObject;
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        Incidencia: Record Incidencias;
+        Codigo: Code[20];
+        TipoTxt: Text;
+        Descripcion: Text;
+        Emt: Boolean;
+        NoIncidencia: Code[20];
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido');
+        if JsonIn.Get('emt', JsonToken) then
+            Emt := JsonToken.AsValue().AsBoolean();
+        if JsonIn.Get('codigo', JsonToken) then
+            Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Codigo));
+        if JsonIn.Get('tipo', JsonToken) then
+            TipoTxt := JsonToken.AsValue().AsText();
+        if JsonIn.Get('descripcion', JsonToken) then
+            Descripcion := JsonToken.AsValue().AsText();
+        if Codigo = '' then
+            Error('Falta el código de la parada, el emplazamiento o el recurso.');
+
+        if Emt then begin
+            if not ResolverParadaPeticionEMT(Codigo, Emplaz) then
+                Error('La petición EMT solo se crea sobre una parada. %1 no es una parada.', Codigo);
+            NoIncidencia := CrearPeticionEMTParada(Emplaz);
+        end else
+            if DestinoPeticionEsRecurso(Codigo, TipoTxt, Resource) then
+                NoIncidencia := CrearPeticionInternaRecurso(Resource)
+            else begin
+                if not BuscarEmplazamientoPorTipoONo(TipoEmplazamientoDesdeTexto(TipoTxt), Codigo, Emplaz) then
+                    Error('No se ha encontrado el emplazamiento o el recurso %1.', Codigo);
+                NoIncidencia := CrearPeticionInternaEmplazamiento(Emplaz);
+            end;
+
+        if (NoIncidencia <> '') and (Descripcion <> '') then
+            if Incidencia.Get(NoIncidencia) then begin
+                Incidencia.Descripción := CopyStr(Descripcion, 1, MaxStrLen(Incidencia.Descripción));
+                Incidencia.Modify(true);
+            end;
+
+        Clear(JsonRoot);
+        JsonRoot.Add('success', NoIncidencia <> '');
+        JsonRoot.Add('no_incidencia', NoIncidencia);
+        if NoIncidencia = '' then
+            JsonRoot.Add('mensaje', 'No se pudo crear la petición.')
+        else
+            if Emt then
+                JsonRoot.Add('mensaje', StrSubstNo('Petición EMT creada: %1', NoIncidencia))
+            else
+                JsonRoot.Add('mensaje', StrSubstNo('Petición creada: %1', NoIncidencia));
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure ResolverParadaPeticionEMT(Codigo: Code[20]; var Emplaz: Record Emplazamientos): Boolean
+    var
+        Resource: Record Resource;
+    begin
+        if Emplaz.Get(Emplaz."Tipo Emplazamiento"::Opis, Codigo) then
+            exit(true);
+        if not Resource.Get(Codigo) then
+            exit(false);
+        if not TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz) then
+            exit(false);
+        exit(Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis);
+    end;
+
+    local procedure DestinoPeticionEsRecurso(Codigo: Code[20]; TipoTxt: Text; var Resource: Record Resource): Boolean
+    var
+        TipoLower: Text;
+    begin
+        TipoLower := LowerCase(TipoTxt);
+        if not Resource.Get(Codigo) then
+            exit(false);
+        if (StrPos(TipoLower, 'emplaz') > 0) or (StrPos(TipoLower, 'parada') > 0) or (TipoLower = 'opis') then
+            exit(false);
+        if (StrPos(TipoLower, 'recurso') > 0) or (StrPos(TipoLower, 'soporte') > 0) or (TipoLower = '') then
+            exit(true);
+        exit(true);
+    end;
+
+    local procedure TipoEmplazamientoDesdeTexto(TipoTxt: Text): Text
+    var
+        TipoLower: Text;
+    begin
+        TipoLower := LowerCase(TipoTxt);
+        if (StrPos(TipoLower, 'opis') > 0) or (StrPos(TipoLower, 'parada') > 0) then
+            exit('opis');
+        if StrPos(TipoLower, 'valla') > 0 then
+            exit('vallas');
+        if StrPos(TipoLower, 'otro') > 0 then
+            exit('otros');
+        exit('');
+    end;
+
+    local procedure BuscarEmplazamientoPorTipoONo(TipoEmplazTxt: Text; NEmplaz: Code[20]; var Emplaz: Record Emplazamientos): Boolean
+    begin
+        Emplaz.Reset();
+        if TipoEmplazTxt <> '' then begin
+            case LowerCase(TipoEmplazTxt) of
+                'opis':
+                    exit(Emplaz.Get(Emplaz."Tipo Emplazamiento"::Opis, NEmplaz));
+                'vallas':
+                    exit(Emplaz.Get(Emplaz."Tipo Emplazamiento"::Vallas, NEmplaz));
+                'otros':
+                    exit(Emplaz.Get(Emplaz."Tipo Emplazamiento"::"Otros", NEmplaz));
+            end;
+        end;
+        Emplaz.SetRange("Nº Emplazamiento", NEmplaz);
+        exit(Emplaz.FindFirst());
+    end;
+
+    procedure CrearIncidenciaMantenimientoRecurso(var Resource: Record Resource; DescripcionCustom: Text; Puntual: Boolean): Code[20]
+    var
+        Incidencia: Record Incidencias;
+        Emplaz: Record Emplazamientos;
+        TipoInc: Enum "Tipo Incidencia";
+        TipoParte: Option " ",Trabajo,Nacional,EMT;
+        DescTxt: Text;
+    begin
+        Resource.TestField("No.");
+        if (not Puntual) and MantenimientoPendienteRecurso(Resource."No.") then
+            exit(BuscarNoIncidenciaMantenimientoRecursoAbierta(Resource."No."));
+
+        Clear(Emplaz);
+        TryGetEmplazamientoRecurso(Resource."Nº Emplazamiento", Emplaz);
+        AsegurarFechaProximoMantenimientoDesdeZona(Emplaz, Resource);
+
+        TipoInc := TipoInc::"Incidencias Soportes";
+        if Emplaz."Nº Emplazamiento" <> '' then
+            case Emplaz."Tipo Emplazamiento" of
+                Emplaz."Tipo Emplazamiento"::"Otros":
+                    TipoInc := TipoInc::"Incidencias Mobiliario Urbano";
+                Emplaz."Tipo Emplazamiento"::Opis:
+                    TipoInc := TipoInc::"Incidencias EMT";
+            end;
+
+        Incidencia.Init();
+        Incidencia."Es Peticion" := true;
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then begin
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
+            Incidencia.Recurso := Emplaz."Nº Emplazamiento";
+        end else begin
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
+            Incidencia.Recurso := Resource."No.";
+        end;
+        Incidencia."Tipo Incidencia" := TipoInc;
+        Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Mantenimiento;
+        if Puntual then
+            Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo
+        else
+            Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Preventivo;
+        Incidencia."User Task Group" := 'MTO';
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then
+            Incidencia."User Task Group" := 'EMT';
+        Incidencia."FechaHora" := CurrentDateTime();
+        if DescripcionCustom <> '' then
+            DescTxt := DescripcionCustom
+        else
+            DescTxt := 'Mantenimiento programado ' + Resource.Name;
+        Incidencia.Descripción := CopyStr(DescTxt, 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then
+            TipoParte := TipoParte::EMT
+        else
+            TipoParte := TipoParte::Trabajo;
+        if Emplaz."Nº Emplazamiento" <> '' then
+            CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
+        if Emplaz."Nº Emplazamiento" <> '' then
+            FinalizarAltaMantenimiento(Emplaz, Incidencia)
+        else begin
+            Resource."Bajo Mantenimiento" := true;
+            Resource.Modify(true);
+        end;
+        exit(Incidencia."No.");
+    end;
+
+    local procedure MantenimientoPendienteRecurso(NRecurso: Code[20]): Boolean
+    var
+        Incidencia: Record Incidencias;
+    begin
+        Incidencia.SetRange(Recurso, NRecurso);
+        Incidencia.SetRange("Tipo Elemento", Incidencia."Tipo Elemento"::Recurso);
+        Incidencia.SetRange("SubTipo Incidencia", Incidencia."SubTipo Incidencia"::Mantenimiento);
+        Incidencia.SetFilter(Estado, '<>%1', Incidencia.Estado::Cerrada);
+        exit(not Incidencia.IsEmpty());
+    end;
+
+    local procedure BuscarNoIncidenciaMantenimientoRecursoAbierta(NRecurso: Code[20]): Code[20]
+    var
+        Incidencia: Record Incidencias;
+    begin
+        Incidencia.SetRange(Recurso, NRecurso);
+        Incidencia.SetRange("Tipo Elemento", Incidencia."Tipo Elemento"::Recurso);
+        Incidencia.SetRange("SubTipo Incidencia", Incidencia."SubTipo Incidencia"::Mantenimiento);
+        Incidencia.SetFilter(Estado, '<>%1', Incidencia.Estado::Cerrada);
+        if Incidencia.FindFirst() then
+            exit(Incidencia."No.");
+        exit('');
+    end;
+
+    local procedure CrearIncidenciaMantenimientoEmplazPuntual(var Emplaz: Record Emplazamientos; DescripcionCustom: Text): Code[20]
+    var
+        Incidencia: Record Incidencias;
+        Resource: Record Resource;
+        TipoInc: Enum "Tipo Incidencia";
+        TipoParte: Option " ",Trabajo,Nacional,EMT;
+        NRecurso: Code[20];
+    begin
+        Resource.Init();
+        AsegurarFechaProximoMantenimientoDesdeZona(Emplaz, Resource);
+        Incidencia.Init();
+        Incidencia."Es Peticion" := true;
+        if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then begin
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
+            Incidencia.Recurso := Emplaz."Nº Emplazamiento";
+            Incidencia."Tipo Incidencia" := Incidencia."Tipo Incidencia"::"Incidencias EMT";
+            Incidencia."User Task Group" := 'EMT';
+            TipoParte := TipoParte::EMT;
+        end else begin
+            NRecurso := ObtenerRecursoPrincipalEmplazamiento(Emplaz);
+            if NRecurso = '' then
+                exit('');
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
+            Incidencia.Recurso := NRecurso;
+            if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Vallas then
+                TipoInc := TipoInc::"Incidencias Soportes"
+            else
+                TipoInc := TipoInc::"Incidencias Mobiliario Urbano";
+            Incidencia."Tipo Incidencia" := TipoInc;
+            Incidencia."User Task Group" := 'MTO';
+            TipoParte := TipoParte::Trabajo;
+        end;
+        Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Mantenimiento;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
+        Incidencia."FechaHora" := CurrentDateTime();
+        Incidencia.Descripción := CopyStr(DescripcionCustom, 1, MaxStrLen(Incidencia.Descripción));
+        Incidencia.Insert(true);
+        CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
+        FinalizarAltaMantenimiento(Emplaz, Incidencia);
+        exit(Incidencia."No.");
     end;
 
     procedure CrearTareasSinId()

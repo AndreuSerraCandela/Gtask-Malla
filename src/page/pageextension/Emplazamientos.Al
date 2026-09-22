@@ -334,12 +334,87 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
         }
         addlast(Processing)
         {
+            action(ConsultarPeticiones)
+            {
+                ApplicationArea = All;
+                Caption = 'Peticiones';
+                Image = OrderList;
+                ToolTip = 'Histórico de peticiones de este emplazamiento. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoEmplazamiento(Rec, 'Peticion');
+                end;
+            }
+            action(ConsultarIncidencias)
+            {
+                ApplicationArea = All;
+                Caption = 'Incidencias';
+                Image = ErrorLog;
+                ToolTip = 'Histórico de incidencias correctivas de este emplazamiento. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoEmplazamiento(Rec, 'Incidencia');
+                end;
+            }
+            action(ConsultarMantenimientos)
+            {
+                ApplicationArea = All;
+                Caption = 'Mantenimientos';
+                Image = MaintenanceLedger;
+                ToolTip = 'Histórico de mantenimientos preventivos de este emplazamiento. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoEmplazamiento(Rec, 'Mantenimiento');
+                end;
+            }
+            action(NuevaPeticion)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva petición';
+                Image = NewDocument;
+                ToolTip = 'Crea una petición interna de este emplazamiento y su orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.CrearPeticionInternaEmplazamiento(Rec);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevaIncidencia)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva incidencia';
+                Image = NewDocument;
+                ToolTip = 'Crea una incidencia correctiva de este emplazamiento, sin orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    SubTipo: Enum "SubTipo Incidencia";
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.AltaIncidenciaEmplazamiento(Rec, SubTipo::Otras);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
             action(CrearOrdenMantenimiento)
             {
                 ApplicationArea = All;
-                Caption = 'Crear orden mantenimiento';
+                Caption = 'Nuevo mantenimiento';
                 Image = CreateDocument;
-                ToolTip = 'Crea una orden de mantenimiento programado para este emplazamiento (Opis/EMT, Vallas o Otros).';
+                ToolTip = 'Crea un mantenimiento preventivo de este emplazamiento y su orden de trabajo.';
 
                 trigger OnAction()
                 var
@@ -348,14 +423,20 @@ pageextension 92156 EmplazaExt extends "Ficha emplazamiento"
                 begin
                     NoIncidencia := Gtask.CrearIncidenciaMantenimientoEmplazamiento(Rec);
                     if NoIncidencia = '' then
-                        Message('No se ha podido crear la orden. Compruebe que el emplazamiento tiene recursos (Vallas/Otros) y periodicidad definida.')
+                        Message('No se ha podido crear el mantenimiento. Compruebe que el emplazamiento tiene recursos (Vallas/Otros) y periodicidad definida.')
                     else
-                        Message('Orden de mantenimiento: %1', NoIncidencia);
+                        Gtask.AbrirFichaMovimiento(NoIncidencia);
                 end;
             }
         }
         addafter(SendEmail)
         {
+            actionref(ConsultarPeticiones_Promoted; ConsultarPeticiones) { }
+            actionref(ConsultarIncidencias_Promoted; ConsultarIncidencias) { }
+            actionref(ConsultarMantenimientos_Promoted; ConsultarMantenimientos) { }
+            actionref(NuevaPeticion_Promoted; NuevaPeticion) { }
+            actionref(NuevaIncidencia_Promoted; NuevaIncidencia) { }
+            actionref(CrearOrdenMantenimiento_Promoted; CrearOrdenMantenimiento) { }
             actionref("Ver Tareas_Promoted89509"; "Ver Tareas")
             {
             }

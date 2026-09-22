@@ -90,6 +90,9 @@ report 50081 "Ordenes Trabajo"
             column(Pet_Descripcion; Pet_Descripcion)
             {
             }
+            column(QrBase64; QrBase64)
+            {
+            }
             column(EmpresaNombre; NombreEmpresa)
             {
             }
@@ -122,6 +125,7 @@ report 50081 "Ordenes Trabajo"
                     Cab_EstadoTxt := Format(TSH.Estado);
                     Cab_Proyecto := TSH.Proyecto;
                     Cab_IdFactura := TSH."Id Factura";
+                    QrBase64 := GenerarQrOrdenBase64(Cab_OrdenNo);
 
                     Pet.SetRange("Parte Trabajo", TSH."No.");
                     Pet.SetRange("Es Peticion", true);
@@ -188,6 +192,7 @@ report 50081 "Ordenes Trabajo"
         Cab_IdFactura: Code[20];
         Pet_Numero: Code[20];
         Pet_Descripcion: Text[100];
+        QrBase64: Text;
         UltimaCabeceraOrden: Code[20];
 
     local procedure LoadCompanyHeader()
@@ -266,5 +271,21 @@ report 50081 "Ordenes Trabajo"
         Clear(Cab_IdFactura);
         Clear(Pet_Numero);
         Clear(Pet_Descripcion);
+        Clear(QrBase64);
+    end;
+
+    local procedure GenerarQrOrdenBase64(OrdenNo: Code[20]): Text
+    var
+        CompanyInfoPage: Page "Company Information";
+        TempBlob: Codeunit "Temp Blob";
+        Base64Convert: Codeunit "Base64 Convert";
+        InStr: InStream;
+    begin
+        if OrdenNo = '' then
+            exit('');
+        if not CompanyInfoPage.GenerateQRCodeImage('https://gtasks-app.deploy.malla.es/IdQr/OT-' + OrdenNo, TempBlob) then
+            exit('');
+        TempBlob.CreateInStream(InStr);
+        exit(Base64Convert.ToBase64(InStr));
     end;
 }

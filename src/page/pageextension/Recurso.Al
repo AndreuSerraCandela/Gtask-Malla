@@ -231,6 +231,112 @@ pageextension 92160 RecursoExt extends "Resource Card"
             }
 
         }
+        addlast(Processing)
+        {
+            action(ConsultarPeticiones)
+            {
+                ApplicationArea = All;
+                Caption = 'Peticiones';
+                Image = OrderList;
+                ToolTip = 'Histórico de peticiones de este recurso. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoRecurso(Rec, 'Peticion');
+                end;
+            }
+            action(ConsultarIncidencias)
+            {
+                ApplicationArea = All;
+                Caption = 'Incidencias';
+                Image = ErrorLog;
+                ToolTip = 'Histórico de incidencias correctivas de este recurso. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoRecurso(Rec, 'Incidencia');
+                end;
+            }
+            action(ConsultarMantenimientos)
+            {
+                ApplicationArea = All;
+                Caption = 'Mantenimientos';
+                Image = MaintenanceLedger;
+                ToolTip = 'Histórico de mantenimientos preventivos de este recurso. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                begin
+                    Gtask.AbrirHistoricoRecurso(Rec, 'Mantenimiento');
+                end;
+            }
+            action(NuevaPeticion)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva petición';
+                Image = NewDocument;
+                ToolTip = 'Crea una petición interna de este recurso y su orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.CrearPeticionInternaRecurso(Rec);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevaIncidencia)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva incidencia';
+                Image = NewDocument;
+                ToolTip = 'Crea una incidencia correctiva de este recurso, sin orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    SubTipo: Enum "SubTipo Incidencia";
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.AltaIncidenciaRecurso(Rec, SubTipo::Otras);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevoMantenimiento)
+            {
+                ApplicationArea = All;
+                Caption = 'Nuevo mantenimiento';
+                Image = CreateDocument;
+                ToolTip = 'Crea un mantenimiento preventivo de este recurso y su orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    NoIncidencia := Gtask.CrearIncidenciaMantenimientoRecurso(Rec, '', false);
+                    if NoIncidencia = '' then
+                        Message('No se ha podido crear el mantenimiento. Compruebe la periodicidad del recurso.')
+                    else
+                        Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+        }
+        addlast(Category_Process)
+        {
+            actionref(ConsultarPeticiones_Promoted; ConsultarPeticiones) { }
+            actionref(ConsultarIncidencias_Promoted; ConsultarIncidencias) { }
+            actionref(ConsultarMantenimientos_Promoted; ConsultarMantenimientos) { }
+            actionref(NuevaPeticion_Promoted; NuevaPeticion) { }
+            actionref(NuevaIncidencia_Promoted; NuevaIncidencia) { }
+            actionref(NuevoMantenimiento_Promoted; NuevoMantenimiento) { }
+        }
         //     addafter(AsignarImagenaLineas)
         //   {
         //     actionref(CreartareaRef;"Crear Tarea"){}

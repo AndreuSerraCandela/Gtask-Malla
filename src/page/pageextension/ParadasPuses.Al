@@ -32,6 +32,20 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                 ApplicationArea = All;
                 Caption = 'Zona Mantenimiento';
             }
+            field(TieneOPI; TieneOpi)
+            {
+                ApplicationArea = All;
+                Caption = 'Tiene OPI';
+                ToolTip = 'Indica si la parada tiene algún recurso OPI activo montado.';
+                Editable = false;
+            }
+            field(TipoOPI; TipoOpiTxt)
+            {
+                ApplicationArea = All;
+                Caption = 'Tipo OPI';
+                ToolTip = 'Clasificación del OPI en la parada: Digital, Papel, Mixto (ambos) o vacío si no hay OPI.';
+                Editable = false;
+            }
         }
     }
     actions
@@ -40,6 +54,45 @@ pageextension 92169 BusExtension extends "Paradas Bus"
 
         addlast(Processing)
         {
+            action(DetalleLogParada)
+            {
+                ApplicationArea = All;
+                Caption = 'Detalle log parada';
+                Image = History;
+                ToolTip = 'Tareas de la parada seleccionada. Las peticiones, incidencias y mantenimientos están en el histórico de movimientos.';
+
+                trigger OnAction()
+                var
+                    Parada: Record Emplazamientos;
+                    DetalleLogParada: Page "Detalle Log Parada";
+                begin
+                    CurrPage.SetSelectionFilter(Parada);
+                    if not Parada.FindFirst() then
+                        Parada := Rec;
+                    Parada.TestField("Nº Emplazamiento");
+                    DetalleLogParada.SetEmplazamiento(Parada);
+                    DetalleLogParada.Run();
+                end;
+            }
+            action(NuevaActuacionTIP)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva incidencia TIP';
+                Image = Create;
+                ToolTip = 'Crea una incidencia de subtipo Tip para la parada seleccionada.';
+
+                trigger OnAction()
+                var
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
+                    SubTipo: Enum "SubTipo Incidencia";
+                    NoIncidencia: Code[20];
+                begin
+                    ParadaSeleccionada(Parada);
+                    NoIncidencia := Gtask.AltaIncidenciaParada(Parada, SubTipo::Tip);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
             action(PanelGerenciaParadasBus)
             {
                 ApplicationArea = All;
@@ -52,38 +105,110 @@ pageextension 92169 BusExtension extends "Paradas Bus"
                     Page.Run(Page::"Panel Gerencia Paradas Bus");
                 end;
             }
+            action(ConsultarPeticiones)
+            {
+                ApplicationArea = All;
+                Caption = 'Peticiones';
+                Image = OrderList;
+                ToolTip = 'Histórico de peticiones de esta parada. El filtro se puede cambiar.';
+
+                trigger OnAction()
+                var
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
+                begin
+                    ParadaSeleccionada(Parada);
+                    Gtask.AbrirHistoricoParada(Parada, 'Peticion');
+                end;
+            }
             action(ConsultarIncidencias)
             {
                 ApplicationArea = All;
-                Caption = 'Consultar incidencias';
+                Caption = 'Incidencias';
                 Image = ErrorLog;
-                ToolTip = 'Abre las incidencias de esta parada (sin órdenes de trabajo)';
+                ToolTip = 'Histórico de incidencias correctivas de esta parada, incluido el subtipo Tip. El filtro se puede cambiar.';
 
                 trigger OnAction()
                 var
-                    Incidencias: Record Incidencias;
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
                 begin
-                    Incidencias.SetRange(Recurso, Rec."Nº Emplazamiento");
-                    Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
-                    Incidencias.SetRange("Es Peticion", false);
-                    Page.Run(Page::"Lista Incidencias Taller", Incidencias);
+                    ParadaSeleccionada(Parada);
+                    Gtask.AbrirHistoricoParada(Parada, 'Incidencia');
                 end;
             }
-            action(OrdenesTrabajo)
+            action(ConsultarMantenimientos)
             {
                 ApplicationArea = All;
-                Caption = 'Órdenes de trabajo';
-                Image = OrderList;
-                ToolTip = 'Abre las órdenes de trabajo (incidencias tipo petición) de esta parada';
+                Caption = 'Mantenimientos';
+                Image = MaintenanceLedger;
+                ToolTip = 'Histórico de mantenimientos preventivos de esta parada. El filtro se puede cambiar.';
 
                 trigger OnAction()
                 var
-                    Incidencias: Record Incidencias;
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
                 begin
-                    Incidencias.SetRange(Recurso, Rec."Nº Emplazamiento");
-                    Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Parada);
-                    Incidencias.SetRange("Es Peticion", true);
-                    Page.Run(Page::"Lista Ordenes de Trabajo", Incidencias);
+                    ParadaSeleccionada(Parada);
+                    Gtask.AbrirHistoricoParada(Parada, 'Mantenimiento');
+                end;
+            }
+            action(NuevaPeticionEMT)
+            {
+                ApplicationArea = All;
+                Caption = 'Petición EMT';
+                Image = NewDocument;
+                ToolTip = 'Crea una petición externa EMT de esta parada y su orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    ParadaSeleccionada(Parada);
+                    NoIncidencia := Gtask.CrearPeticionEMTParada(Parada);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevaIncidencia)
+            {
+                ApplicationArea = All;
+                Caption = 'Nueva incidencia';
+                Image = NewDocument;
+                ToolTip = 'Crea una incidencia correctiva de esta parada, sin orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
+                    SubTipo: Enum "SubTipo Incidencia";
+                    NoIncidencia: Code[20];
+                begin
+                    ParadaSeleccionada(Parada);
+                    NoIncidencia := Gtask.AltaIncidenciaParada(Parada, SubTipo::Otras);
+                    Gtask.AbrirFichaMovimiento(NoIncidencia);
+                end;
+            }
+            action(NuevoMantenimiento)
+            {
+                ApplicationArea = All;
+                Caption = 'Nuevo mantenimiento';
+                Image = CreateDocument;
+                ToolTip = 'Crea un mantenimiento preventivo de esta parada y su orden de trabajo.';
+
+                trigger OnAction()
+                var
+                    Parada: Record Emplazamientos;
+                    Gtask: Codeunit Gtask;
+                    NoIncidencia: Code[20];
+                begin
+                    ParadaSeleccionada(Parada);
+                    NoIncidencia := Gtask.CrearIncidenciaMantenimientoEmplazamiento(Parada);
+                    if NoIncidencia = '' then
+                        Message('No se ha podido crear el mantenimiento. Compruebe la periodicidad de la parada.')
+                    else
+                        Gtask.AbrirFichaMovimiento(NoIncidencia);
                 end;
             }
             //Consultar tareas limpieza
@@ -412,9 +537,78 @@ pageextension 92169 BusExtension extends "Paradas Bus"
         }
         addlast(Category_Process)
         {
+            actionref(ConsultarPeticiones_Promoted; ConsultarPeticiones) { }
+            actionref(ConsultarIncidencias_Promoted; ConsultarIncidencias) { }
+            actionref(ConsultarMantenimientos_Promoted; ConsultarMantenimientos) { }
+            actionref(NuevaPeticionEMT_Promoted; NuevaPeticionEMT) { }
+            actionref(NuevaIncidencia_Promoted; NuevaIncidencia) { }
+            actionref(NuevoMantenimiento_Promoted; NuevoMantenimiento) { }
+            actionref(NuevaActuacionTIP_Promoted; NuevaActuacionTIP) { }
+            actionref(DetalleLogParada_Promoted; DetalleLogParada) { }
             actionref(AsignarZonaMantenimiento_Promoted; AsignarZonaMantenimiento) { }
         }
     }
 
+    var
+        TieneOpi: Boolean;
+        TipoOpiTxt: Text[20];
 
+    local procedure ParadaSeleccionada(var Parada: Record Emplazamientos)
+    begin
+        CurrPage.SetSelectionFilter(Parada);
+        if not Parada.FindFirst() then
+            Parada := Rec;
+        Parada.TestField("Nº Emplazamiento");
+    end;
+
+    trigger OnAfterGetRecord()
+    begin
+        CalcularOpiParada(TieneOpi, TipoOpiTxt);
+    end;
+
+    local procedure CalcularOpiParada(var TieneOpiOut: Boolean; var TipoOpiOut: Text[20])
+    var
+        Resource: Record Resource;
+        HayDigital: Boolean;
+        HayPapel: Boolean;
+    begin
+        TieneOpiOut := false;
+        TipoOpiOut := '';
+        if Rec."Nº Emplazamiento" = '' then
+            exit;
+
+        Resource.SetRange("Nº Emplazamiento", Rec."Nº Emplazamiento");
+        Resource.SetRange(Blocked, false);
+        Resource.SetRange("Fecha baja", 0D);
+        if Resource.FindSet() then
+            repeat
+                if EsTipoRecursoOpiDigital(Resource."Tipo Recurso") then
+                    HayDigital := true;
+                if EsTipoRecursoOpiPapel(Resource."Tipo Recurso") then
+                    HayPapel := true;
+            until Resource.Next() = 0;
+
+        TieneOpiOut := HayDigital or HayPapel;
+        if not TieneOpiOut then
+            exit;
+
+        if HayDigital and HayPapel then
+            TipoOpiOut := 'Mixto'
+        else
+            if HayDigital then
+                TipoOpiOut := 'Digital'
+            else
+                TipoOpiOut := 'Papel';
+    end;
+
+    // Códigos Tipo Recurso OPI (SQL Malla2009): Malla Publicidad, Grepsa, Ibiza/Menorca Publicidad S_A_ — máx. 10 chars (Code[10]).
+    local procedure EsTipoRecursoOpiDigital(TipoRecurso: Code[10]): Boolean
+    begin
+        exit(TipoRecurso in ['OPIDIGITAL', 'PANT.LED', 'POSTLED', 'OPI DIGIT.', 'P.LEDS']);
+    end;
+
+    local procedure EsTipoRecursoOpiPapel(TipoRecurso: Code[10]): Boolean
+    begin
+        exit(TipoRecurso in ['OPI', 'OPI ROT.', 'MINI OPI', 'OPIS AJENO', 'LUM1,5X1,1', 'RELOJ', 'PLANIMETRO', 'ALQOPI', 'LUMINOSOS', 'OPI SMAP', 'PANTALLA', 'DECOPIS']);
+    end;
 }
