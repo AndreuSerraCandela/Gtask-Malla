@@ -426,6 +426,7 @@ page 50117 "Lista Incidencias Taller"
     CardPageId = "Incidencias Taller";
     ApplicationArea = All;
     UsageCategory = Documents;
+    SourceTableView = where("Tipo Intervención" = filter(<> Preventivo));
     layout
     {
         area(content)
@@ -671,6 +672,7 @@ page 50117 "Lista Incidencias Taller"
     trigger OnOpenPage()
     begin
         Rec.SetRange("Es Peticion", false);
+        Rec.SetFilter("Tipo Intervención", '<>%1', Rec."Tipo Intervención"::Preventivo);
     end;
 
     trigger OnAfterGetRecord()

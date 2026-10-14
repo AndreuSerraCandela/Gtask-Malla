@@ -1,0 +1,61 @@
+---
+description: Publicar extensiones BC vía buzón MyBeLic y variables locales
+globs:
+alwaysApply: true
+---
+
+# MyBeLic — publicación Task Malla / Emplazamientos
+
+## Regla obligatoria del agente: buzón vs urgente
+
+| Petición del usuario | Destino | Efecto en BC |
+|----------------------|---------|--------------|
+| *compila*, *copia a Malla*, *buzón*, *publicar* (sin “urgente”) | `C:\apps\Malla\` | Cola programada (no publish inmediato) |
+| *urgente*, *inmediato*, *ya*, *ahora* | `C:\apps\Malla\_urgent\` o script con `-Urgent` | Publish inmediato vía runner |
+
+- **Prohibido** copiar a `_urgent` o llamar API `immediate=true` si el usuario **no** ha pedido urgencia.
+- **Prohibido** `Copy-Item` manual a `_urgent` “por ir más rápido”.
+- **Una sola copia** del mismo `.app` por despliegue.
+- Repos BC (Task Malla, Funciones, Emplazamientos, Malla…): misma regla; usar su `Build-And-CopyAppToMalla.ps1` cuando exista.
+
+## Secretos y IDs
+
+- Leer **`mybelic.local.env`** en la raíz del repo (gitignored). No pegar tokens en chat ni en commits.
+- Plantilla: `mybelic.local.env.example`.
+- Cliente BC Malla: `MYBELIC_PYTHON_DEPLOY_CUSTOMER_ID` = `4e27c722-48a2-4228-81c6-3317d20f98b1`.
+- API MyBeLic: `https://license.malla.es` — cabecera `X-MyBeLic-Token` (Publish Runner: `%APPDATA%\MyBeLicPublishRunner\config.json` o `publish_runner.env`; distinto de `MYBELIC_APPDESKTOP_RUNNER_TOKEN`).
+- AppDesktop: `MYBELIC_APPDESKTOP_URL` + `MYBELIC_APPDESKTOP_RUNNER_TOKEN` (despliegues Python/runner remoto en apps.malla.es).
+
+## Buzón (Publish Runner)
+
+- `watch_dir`: `C:\apps` → carpeta cliente **`Malla`**.
+- Copia normal: `C:\apps\Malla\{Publisher}_{Name}_{version}.app` → cola según `bc_publish_end_of_day` (p. ej. cierre 21:10).
+- **Urgente (publish inmediato):** `C:\apps\Malla\_urgent\` mismo nombre de `.app`.
+- Alternativa urgente: sufijo `.urgent.app`.
+- **No** copiar el mismo `.app` dos veces ni mezclar buzón + API para el mismo despliegue.
+- Logs: `%APPDATA%\MyBeLicPublishRunner\logs\runner.log`.
+
+## Orden habitual
+
+1. Dependencias base (Malla, Funciones, **Emplazamientos** si cambió).
+2. **Task Malla** (`366ac4b9-199a-4725-a5f2-9bead2fe08b5`).
+
+Si Task Malla falla en upgrade, publicar antes la dependencia nueva (p. ej. Emplazamientos urgente) y reintentar.
+
+## Compilar Task Malla
+
+Usar `.vscode/Build-And-CopyAppToMalla.ps1` con `-CompileOnly`; no invocar `alc` sin `/assemblyprobingpaths`.
+
+Copiar al buzón (cola normal):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".vscode\Build-And-CopyAppToMalla.ps1" -WorkspaceFolder "C:\Users\Andres\Source\Bc\Gtask-Malla"
+```
+
+Solo si el usuario pidió **urgente**:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".vscode\Build-And-CopyAppToMalla.ps1" -WorkspaceFolder "C:\Users\Andres\Source\Bc\Gtask-Malla" -Urgent
+```
+
+Ver también `AGENTS.md` sección publicar.

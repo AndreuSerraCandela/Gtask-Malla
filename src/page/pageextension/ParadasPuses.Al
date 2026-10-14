@@ -23,14 +23,63 @@ pageextension 92169 BusExtension extends "Paradas Bus"
         }
         addafter("Zona Limpieza")
         {
+            field("Objetivo Limpieza"; Rec."Veces Limpieza")
+            {
+                ApplicationArea = All;
+            }
+            field("Periodo Limpieza"; Rec."Periodo Limpieza")
+            {
+                ApplicationArea = All;
+            }
             field("Zona Revisión"; Rec."Zona Revisión")
             {
                 Caption = 'Zona Revisión';
             }
+
+            field("Objetivo Revisión"; Rec."Veces Revisión")
+            {
+                ApplicationArea = All;
+            }
+            field("Periodo Revisión"; Rec."Periodo Revisión")
+            {
+                ApplicationArea = All;
+            }
+
+            field("Zona Techos"; Rec."Zona Techos")
+            {
+                ApplicationArea = All;
+            }
+            field("Objetivo Techos"; Rec."Veces Techos")
+            {
+                ApplicationArea = All;
+            }
+            field("Periodo Techos"; Rec."Periodo Techos")
+            {
+                ApplicationArea = All;
+            }
+            field("Zona Limpieza a Presión"; Rec."Zona Limpieza a Presión")
+            {
+                ApplicationArea = All;
+            }
+            field("Objetivo Limpieza a Presión"; Rec."Veces Limpieza a Presión")
+            {
+                ApplicationArea = All;
+            }
+            field("Periodo Limpieza a Presión"; Rec."Periodo Limpieza a Presión")
+            {
+                ApplicationArea = All;
+            }
             field("Zona Mantenimiento"; Rec."Zona Mantenimiento")
             {
                 ApplicationArea = All;
-                Caption = 'Zona Mantenimiento';
+            }
+            field("Objetivo Mantenimiento"; Rec."Veces Mantenimiento")
+            {
+                ApplicationArea = All;
+            }
+            field("Periodo Mantenimiento"; Rec."Periodo Mantenimiento")
+            {
+                ApplicationArea = All;
             }
             field(TieneOPI; TieneOpi)
             {

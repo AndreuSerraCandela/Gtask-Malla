@@ -131,6 +131,16 @@ tableextension 92401 "Hoja de Trabajo" extends "Time Sheet Header"
             Caption = 'Es plantilla';
             DataClassification = CustomerContent;
         }
+        field(80022; "Firma Técnico"; Blob)
+        {
+            Caption = 'Firma Técnico';
+            DataClassification = CustomerContent;
+        }
+        field(80023; "Fecha Firma Tecnico"; DateTime)
+        {
+            Caption = 'Fecha firma técnico';
+            DataClassification = CustomerContent;
+        }
     }
 
 

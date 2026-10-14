@@ -1,13 +1,10 @@
-page 50081 "Lista Actuaciones TIP"
+page 50081 "Lista Actuaciones"
 {
-    Caption = 'Lista de Actuaciones TIP';
+    Caption = 'Lista de Actuaciones';
     PageType = ListPart;
     ApplicationArea = All;
     SourceTable = Incidencias;
-    SourceTableView = where("Tipo Elemento" = const(Parada),
-                            "SubTipo Incidencia" = const(Tip),
-                            "Tipo Incidencia" = const("Incidencias EMT"),
-                            "Es Peticion" = const(false));
+    SourceTableView = where("Tipo Elemento" = const(Parada));
     InsertAllowed = false;
     ModifyAllowed = false;
     DeleteAllowed = false;
@@ -18,6 +15,22 @@ page 50081 "Lista Actuaciones TIP"
         {
             repeater(Lines)
             {
+                field("Tipo Incidencia"; Rec."Tipo Incidencia")
+                {
+                    Caption = 'Tipo de incidencia';
+                    Editable = false;
+                }
+                field("SubTipo Incidencia"; Rec."SubTipo Incidencia")
+                {
+                    Caption = 'Subtipo de incidencia';
+                    Editable = false;
+                }
+                field("Es Peticion"; Rec."Es Peticion")
+                {
+                    Caption = 'Es petición';
+                    Editable = false;
+                }
+
                 field(FechaActuacion; FechaActuacionTxt)
                 {
                     Caption = 'Fecha';
@@ -27,7 +40,7 @@ page 50081 "Lista Actuaciones TIP"
                 field(Parada; ParadaTxt)
                 {
                     Caption = 'Parada';
-                    ToolTip = 'Código y descripción del TIP / parada.';
+                    ToolTip = 'Código y descripción de la parada.';
                     Editable = false;
                 }
                 field(Descripcion; DescripcionTxt)

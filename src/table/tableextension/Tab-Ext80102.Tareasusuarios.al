@@ -295,6 +295,24 @@ tableextension 92103 Tareasusuarios extends "User Task"
             Caption = 'Eliminar Tarea';
             DataClassification = ToBeClassified;
         }
+        field(50040; "Tipo objetivo"; Option)
+        {
+            Caption = 'Tipo objetivo';
+            DataClassification = CustomerContent;
+            OptionMembers = " ",Limpieza,"Revisión","Limpieza techos","Limpieza a presión",Mantenimiento;
+        }
+        field(50041; "Veces objetivo"; Integer)
+        {
+            Caption = 'Veces objetivo';
+            DataClassification = CustomerContent;
+            MinValue = 0;
+        }
+        field(50042; "Periodo objetivo"; Option)
+        {
+            Caption = 'Periodo objetivo';
+            DataClassification = CustomerContent;
+            OptionMembers = " ",Semana,Mes;
+        }
     }
     trigger OnAfterDelete()
     var
@@ -358,6 +376,9 @@ tableextension 92103 Tareasusuarios extends "User Task"
         OrdenRetirada := Origen.OrdenRetirada;
         ZonaLimpieza := Origen.ZonaLimpieza;
         TipoTarea := Origen.TipoTarea;
+        "Tipo objetivo" := Origen."Tipo objetivo";
+        "Veces objetivo" := Origen."Veces objetivo";
+        "Periodo objetivo" := Origen."Periodo objetivo";
         EsPeriodica := Origen.EsPeriodica;
         CrearParte := Origen.CrearParte;
         EmpresaTarea := Origen.EmpresaTarea;

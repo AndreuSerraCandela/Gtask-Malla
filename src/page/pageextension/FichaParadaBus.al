@@ -1,5 +1,42 @@
 pageextension 50115 FichaParadaBusExtension extends "Ficha Parada Bus"
 {
+    layout
+    {
+
+        modify("Fecha instalación")
+        {
+            Caption = 'Detalle Log Parada';
+
+
+            trigger OnDrillDown()
+            var
+                DetalleLogParada: Page "Detalle Log Parada";
+            begin
+                DetalleLogParada.SetEmplazamiento(Rec);
+                DetalleLogParada.Run();
+            end;
+
+
+        }
+
+
+
+
+        addlast(Content)
+        {
+            group(GrupoActuacionesTIP)
+            {
+                Caption = 'Lista de Actuaciones';
+                part(PartActuaciones; "Lista Actuaciones")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Actuaciones';
+                    SubPageLink = Recurso = FIELD("Nº Emplazamiento");
+                    UpdatePropagation = Both;
+                }
+            }
+        }
+    }
     actions
     {
         addlast(Processing)

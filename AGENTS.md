@@ -16,7 +16,8 @@ Extensión **Business Central OnPrem** (BC 27) que amplía **Malla Wave 2.0**. P
 | **Objetos BC** | `C:\Users\Andres\Source\Python\Objetos` | Reserva IDs en `objetos.malla.es` |
 
 App id Task Malla: `366ac4b9-199a-4725-a5f2-9bead2fe08b5`  
-Cliente MyBeLic Malla (por defecto): `4e27c722-48a2-4228-81c6-3317d20f98b1`
+Cliente MyBeLic Malla (por defecto): `4e27c722-48a2-4228-81c6-3317d20f98b1`  
+Variables locales (tokens, AppDesktop): **`mybelic.local.env`** (gitignored; plantilla `mybelic.local.env.example`). Regla Cursor: `.cursor/rules/mybelic-publish.mdc`.
 
 ## Cuando el usuario pida compilar, subir versión o publicar en license
 
@@ -45,9 +46,18 @@ El `.app` se genera en la raíz: `Andreu By Malla_Task Malla_{version}.app`.
 
 **Regla crítica:** el **MyBeLic Publish Runner** vigila el buzón (p. ej. `C:\apps\Malla`). **Cada copia de un `.app` al buzón dispara tareas de publicación.** No copiar dos veces el mismo fichero ni combinar buzón + API para el mismo despliegue.
 
+#### Buzón normal vs urgente (obligatorio para el agente)
+
+| Usuario dice | Acción |
+|--------------|--------|
+| *publicar*, *copia a Malla*, *buzón*, *license*… **sin** “urgente” | Script **sin** `-Urgent` → `C:\apps\Malla\` (cola, p. ej. 21:10). **No** publicar BC al momento. |
+| *urgente*, *inmediato*, *ya*, *ahora* | Script **con** `-Urgent` → `C:\apps\Malla\_urgent\` (publish inmediato). |
+
+No usar `_urgent`, API `immediate=true` ni copias manuales urgentes salvo petición explícita de urgencia. Aplica también a **Funciones**, **Emplazamientos** y demás apps Malla.
+
 #### Vía A — Buzón (actual, script existente)
 
-Una sola copia con `.vscode/Build-And-CopyAppToMalla.ps1`:
+Una sola copia con `.vscode/Build-And-CopyAppToMalla.ps1` (**sin** `-Urgent` salvo que pidan urgente):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ".vscode\Build-And-CopyAppToMalla.ps1" -WorkspaceFolder "C:\Users\Andres\Source\Bc\Gtask-Malla"
@@ -56,6 +66,12 @@ powershell -ExecutionPolicy Bypass -File ".vscode\Build-And-CopyAppToMalla.ps1" 
 - Destino: `C:\apps\Malla`
 - El runner crea tarea **publish** (`auto_schedule`) y, si la versión es mayor que el catálogo MyBeLic (on-prem), **upgrade** +5 min después.
 - **No** volver a copiar si el script ya respondió OK. **No** hacer copia manual de verificación.
+
+Urgente (solo si lo piden):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".vscode\Build-And-CopyAppToMalla.ps1" -WorkspaceFolder "C:\Users\Andres\Source\Bc\Gtask-Malla" -Urgent
+```
 
 #### Vía B — API MyBeLic (alternativa, sin buzón)
 
@@ -100,4 +116,4 @@ Ver `.cursor/rules/bc-object-ids.mdc`. No inventar IDs; reservar en `objetos.mal
 
 ## Pendiente / mejora futura
 
-Script `Schedule-AppToMyBeLic.ps1` (API directa + comprobación de tareas) y regla `.cursor/rules/mybelic-publish.mdc` — aún no creados; priorizar buzón único hasta entonces.
+Script `Schedule-AppToMyBeLic.ps1` (API directa + comprobación de tareas) — opcional; buzón + `_urgent` documentados en `.cursor/rules/mybelic-publish.mdc`.

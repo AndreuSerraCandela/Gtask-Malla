@@ -123,6 +123,14 @@ page 50113 "Lineas Enviadas Taller"
                     Editable = false;
                     StyleExpr = Color;
                 }
+                field("Description 2"; Rec."Description 2")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Descripción 2';
+                    ToolTip = 'Descripción 2 del artículo o servicio';
+                    Editable = false;
+                    StyleExpr = Color;
+                }
                 field("Description Proyecto"; DescriptionProyecto)
                 {
                     StyleExpr = Color;
@@ -557,11 +565,13 @@ page 50113 "Lineas Enviadas Taller"
                             end;
                         end;
                     end;
+                    if PurchaseHeader.Get(PurchaseLine."Document Type", PurchaseLine."Document No.") then
+                        Rec."Expected Receipt Date" := PurchaseHeader."Order Date";
                     Rec.Insert();
                 until PurchaseLine.Next() = 0;
             end;
         until Company.Next() = 0;
-
+        rec.SetCurrentKey(Type, "No.", "Variant Code", "Drop Shipment", "Location Code", "Document Type", "Expected Receipt Date");
         CurrPage.Update(false);
     end;
 

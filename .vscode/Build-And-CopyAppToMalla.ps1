@@ -2,10 +2,15 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$WorkspaceFolder,
     [switch]$CopyOnly,
-    [switch]$CompileOnly
+    [switch]$CompileOnly,
+    [switch]$Urgent
 )
 
 $destFolder = 'C:\apps\Malla'
+if ($Urgent) {
+    $destFolder = Join-Path $destFolder '_urgent'
+    Write-Warning 'Copia URGENTE: el Publish Runner publicara en BC de forma inmediata. No usar -Urgent salvo peticion explicita del usuario.'
+}
 $appJsonPath = Join-Path $WorkspaceFolder 'app.json'
 $appJson = Get-Content $appJsonPath -Raw | ConvertFrom-Json
 $appFileName = "$($appJson.publisher)_$($appJson.name)_$($appJson.version).app"

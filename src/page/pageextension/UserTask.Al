@@ -143,6 +143,18 @@ pageextension 92154 "UserTask" extends "User Task card"
                 Caption = 'Nº Proyecto';
                 ApplicationArea = All;
             }
+            field("Tipo objetivo"; Rec."Tipo objetivo")
+            {
+                ApplicationArea = All;
+            }
+            field("Veces objetivo"; Rec."Veces objetivo")
+            {
+                ApplicationArea = All;
+            }
+            field("Periodo objetivo"; Rec."Periodo objetivo")
+            {
+                ApplicationArea = All;
+            }
         }
 
         addlast(Content)

@@ -16,17 +16,20 @@ codeunit 7001148 GTask
         FijacionBatchCategory: Text;
         FijacionBatchRecursoCache: Dictionary of [Text, Text];
         FijacionBatchProyectoCache: Dictionary of [Text, Text];
+        TareasEncoladasEnEstaEjecucion: List of [Integer];
 
     trigger OnRun()
     var
+        ColaGtaskEstado: Codeunit ColaGtaskEstado;
     begin
+        ColaGtaskEstado.SetSuprimirEncolado(false);
         UpdateTasksFicheros();
+        MarcarTareasComunicadas();
         EnviarCorreoFicheros();
         CrearTareasSinId();
         ProcesarMantenimientosVencidos();
         Procesos_GTask.EnviarAvisosTareasProgramadas();
         // GetTareas();
-
     end;
 
 
@@ -200,10 +203,11 @@ codeunit 7001148 GTask
                             If Docuname2 = '' Then Docuname2 := DocName;
                             DocumentAttachment."File Name" := Docuname2;
                             DocumentAttachment."URL" := DocUrl;
+                            DocumentAttachment.ID_Url := 0;
                             if JsonDocumentInf.Get('_id', JsonCampo) then
-                                DocumentAttachment.ID_Url := JsonCampo.AsValue().AsInteger()
-                            else
-                                DocumentAttachment.ID_Url := 0;
+                                if JsonCampo.IsValue and not JsonCampo.AsValue().IsNull then
+                                    if not Evaluate(DocumentAttachment.ID_Url, JsonCampo.AsValue().AsText()) then
+                                        DocumentAttachment.ID_Url := 0;
                             DocumentAttachment."Document Flow Service" := true;
                             DocumentAttachment.Insert();
                             If (Tarea.OrdenFijacion <> 0) Then begin
@@ -502,6 +506,15 @@ codeunit 7001148 GTask
 
     procedure GetTarea(IdTarea: Text): Text
     var
+        ColaGtaskEstado: Codeunit ColaGtaskEstado;
+    begin
+        ColaGtaskEstado.SetSuprimirEncolado(true);
+        GetTareaImpl(IdTarea);
+        ColaGtaskEstado.SetSuprimirEncolado(false);
+    end;
+
+    local procedure GetTareaImpl(IdTarea: Text): Text
+    var
         RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
         RequestType: Option Get,patch,put,post,delete;
@@ -694,7 +707,16 @@ codeunit 7001148 GTask
 
     end;
 
-    procedure GetTareas(): Text;
+    procedure GetTareas(): Text
+    var
+        ColaGtaskEstado: Codeunit ColaGtaskEstado;
+    begin
+        ColaGtaskEstado.SetSuprimirEncolado(true);
+        GetTareasImpl();
+        ColaGtaskEstado.SetSuprimirEncolado(false);
+    end;
+
+    local procedure GetTareasImpl(): Text
     var
         RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
@@ -730,154 +752,82 @@ codeunit 7001148 GTask
         Texto: Text;
         DocuName: Text;
         Docuname2: Text;
+        JsonDocumentos: JsonArray;
+        JsonTokenDoc: JsonToken;
+        SaltarTareaAlineada: Boolean;
     begin
         CompanyInfo.Get();
         UserGtaskMalla.ChangeCompany('Malla Publicidad');
         Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task', Token(), RequestType::Get, '');
         JsonArray.ReadFrom(Json);
         foreach JsonToken in JsonArray do begin
+            SaltarTareaAlineada := false;
             JsonTarea := JsonToken.AsObject();
             If JsonTarea.Get('Id_Navision', JsonCampo) Then begin
                 Texto := JsonCampo.AsValue().AsText();
-                If Not Evaluate(Id, Texto) then begin
-                    CodEmpresa := CopyStr(JsonCampo.AsValue().AsText(), 1, 2);
-                    Tareas.ChangeCompany(Procesos_GTask.CambiaEmpresa(CodEmpresa));
-                    Texto := CopyStr(JsonCampo.AsValue().AsText(), 3, StrLen(JsonCampo.AsValue().AsText()));
+                if DelChr(Texto, '=', ' ') = '' then
+                    CrearTareaDesdeGtaskSinNavision(JsonTarea)
+                else begin
+                    If Not Evaluate(Id, Texto) then begin
+                        CodEmpresa := CopyStr(JsonCampo.AsValue().AsText(), 1, 2);
+                        Tareas.ChangeCompany(Procesos_GTask.CambiaEmpresa(CodEmpresa));
+                        Texto := CopyStr(JsonCampo.AsValue().AsText(), 3, StrLen(JsonCampo.AsValue().AsText()));
+                    end;
+                    if Evaluate(Id, Texto) then begin
+                        JsonTarea.Get('_id', JsonCampo);
+                        IdTarea := JsonCampo.AsValue().AsText();
+                        If Tareas.Get(Id) then begin
+                            if (Tareas."Fecha Comunicado Cambio" <> 0DT) and (Tareas."Fecha Cambio" <> 0DT) and (Tareas."Fecha Comunicado Cambio" >= Tareas."Fecha Cambio") then
+                                SaltarTareaAlineada := true
+                            else begin
+                            If Tareas."Fecha Cambio" = 0DT Then Tareas."Fecha Cambio" := CurrentDateTime;
+                            If Tareas."Fecha Comunicado Cambio" = 0DT Then Tareas."Fecha Comunicado Cambio" := CurrentDateTime;
+                            If Tareas."Fecha Comunicado Cambio" >= Tareas."Fecha Cambio" then begin
+                                JsonTarea.Get('state', JsonCampo);
+                                case JsonCampo.AsValue().AsText() of
+                                    'PENDING':
+                                        begin
+                                            Tareas.Estado := Tareas.Estado::Pendiente;
+                                        end;
+                                    'INPROCESS':
+                                        Tareas.Estado := Tareas.Estado::"En Proceso";
+                                    'FINISHED':
+                                        Tareas.Estado := Tareas.Estado::Finalizado
+                                end;
+                                JsonTarea.Get('description', JsonCampo);
+                                Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
+                                JsonTarea.Get('observation', JsonCampo);
+                                if not JsonCampo.AsValue().IsNull then begin
+                                    Tareas.SetDescription(JsonCampo.AsValue().AsText());
+                                    Tareas.Get(Id);
+                                end;
+                                AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
+                                //Actualizar supervisor
+                                if JsonTarea.Get('supervisor', JsonCampo) then begin
+                                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
+                                    if UserGtaskMalla.FindFirst() then
+                                        Tareas.Supervisor := UserGtaskMalla."Id Usuario";
+                                end;
+                                //Actulizar responsable
+                                if JsonTarea.Get('user', JsonCampo) then begin
+                                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
+                                    if UserGtaskMalla.FindFirst() then
+                                        Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
+                                end;
+
+                                Tareas.Modify();
+
+                            end;
+                            end;
+                        end; //else
+                             //If Id <> 0 Then DeleteTarea(IdTarea);
+                    end;
                 end;
-                if Evaluate(Id, Texto) then begin
-                    JsonTarea.Get('_id', JsonCampo);
-                    IdTarea := JsonCampo.AsValue().AsText();
-                    If Tareas.Get(Id) then begin
-                        If Tareas."Fecha Cambio" = 0DT Then Tareas."Fecha Cambio" := CurrentDateTime;
-                        If Tareas."Fecha Comunicado Cambio" = 0DT Then Tareas."Fecha Comunicado Cambio" := CurrentDateTime;
-                        If Tareas."Fecha Comunicado Cambio" >= Tareas."Fecha Cambio" then begin
-                            JsonTarea.Get('state', JsonCampo);
-                            case JsonCampo.AsValue().AsText() of
-                                'PENDING':
-                                    begin
-                                        Tareas.Estado := Tareas.Estado::Pendiente;
-                                    end;
-                                'INPROCESS':
-                                    Tareas.Estado := Tareas.Estado::"En Proceso";
-                                'FINISHED':
-                                    Tareas.Estado := Tareas.Estado::Finalizado
-                            end;
-                            JsonTarea.Get('description', JsonCampo);
-                            Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
-                            JsonTarea.Get('observation', JsonCampo);
-                            if not JsonCampo.AsValue().IsNull then begin
-                                Tareas.SetDescription(JsonCampo.AsValue().AsText());
-                                Tareas.Get(Id);
-                            end;
-                            AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
-                            //Actualizar supervisor
-                            if JsonTarea.Get('supervisor', JsonCampo) then begin
-                                UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                                if UserGtaskMalla.FindFirst() then
-                                    Tareas.Supervisor := UserGtaskMalla."Id Usuario";
-                            end;
-                            //Actulizar responsable
-                            if JsonTarea.Get('user', JsonCampo) then begin
-                                UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                                if UserGtaskMalla.FindFirst() then
-                                    Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
-                            end;
+            end else
+                CrearTareaDesdeGtaskSinNavision(JsonTarea);
 
-                            Tareas.Modify();
-
-                        end;
-                    end; //else
-                         //If Id <> 0 Then DeleteTarea(IdTarea);
-                end else begin
-                    //crear tarea
-                    Tareas.Reset();
-                    If Tareas.FindLast() Then Id := Tareas."Id" + 1;
-                    Tareas.Init();
-                    Tareas."Id" := Id;
-                    JsonTarea.Get('user', JsonCampo);
-                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                    If UserGtaskMalla.FindFirst() then
-                        Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
-                    JsonTarea.Get('supervisor', JsonCampo);
-                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                    If UserGtaskMalla.FindFirst() then
-                        Tareas."Supervisor" := UserGtaskMalla."Id Usuario";
-                    If JsonTarea.Get('department', JsonCampo) Then begin
-                        Clear(RecordiD);
-                        RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"Responsibility Center", CompanyName);
-                        If RecordiD.TableNo <> 0 then begin
-                            RecordRef := RecordiD.GetRecord();
-                            Tareas.Departamento := RecordRef.Field(ResponsabilitiCenter.FieldNo(Code)).Value;
-                        end else begin
-                            Tareas.Departamento := InsertarDepartamentoOservicio(JsonCampo.AsValue().AsText(), CompanyName, false);
-                        end;
-                    end;
-                    If JsonTarea.Get('service', JsonCampo) Then begin
-                        If JsonCampo.AsValue().IsNull = false then begin
-                            Clear(RecordiD);
-                            RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"Work Center", CompanyName);
-                            If RecordiD.TableNo <> 0 then begin
-                                RecordRef := RecordiD.GetRecord();
-                                Tareas.Servicio := RecordRef.Field(WorkCenter.FieldNo("No.")).Value;
-                            end else begin
-                                Tareas.Servicio := InsertarDepartamentoOservicio(JsonCampo.AsValue().AsText(), CompanyName, true);
-                            end;
-                        END;
-                    end;
-                    If JsonTarea.Get('category', JsonCampo) Then begin
-                        Clear(RecordiD);
-                        If JsonCampo.AsValue().IsNull = false then begin
-                            RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"User Task Group", CompanyName);
-                            If RecordiD.TableNo <> 0 then begin
-                                RecordRef := RecordiD.GetRecord();
-                                Tareas."User Task Group Assigned To" := RecordRef.Field(UserTaskGroup.FieldNo(Code)).Value;
-                                Tareas."Categoría" := Tareas."User Task Group Assigned To";
-                            end;
-                        end;
-                    end;
-                    If JsonTarea.Get('project', JsonCampo) then begin
-                        Clear(RecordiD);
-                        If JsonCampo.AsValue().IsNull = false then begin
-                            RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::Job, CompanyName);
-                            If RecordiD.TableNo <> 0 then begin
-                                RecordRef := RecordiD.GetRecord();
-                                Tareas."Job No." := RecordRef.Field(Job.FieldNo("No.")).Value;
-                            end;
-                        end;
-                    end;
-                    JsonTarea.Get('owner', JsonCampo);
-                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                    If UserGtaskMalla.FindFirst() then
-                        Tareas."Created By" := UserGtaskMalla."Id Usuario";
-                    Clear(RecordiD);
-                    JsonTarea.Get('_id', JsonCampo);
-                    Tareas."Id_Tarea" := JsonCampo.AsValue().AsText();
-                    JsonTarea.Get('state', JsonCampo);
-                    case JsonCampo.AsValue().AsText() of
-                        'PENDING':
-                            begin
-                                Tareas.Estado := Tareas.Estado::Pendiente;
-                            end;
-                        'INPROCESS':
-                            Tareas.Estado := Tareas.Estado::"En Proceso";
-                        'FINISHED':
-                            Tareas.Estado := Tareas.Estado::Finalizado
-                    end;
-                    Tareas.Modify();
-                    Tareas.Get(Id);
-                    JsonTarea.Get('description', JsonCampo);
-                    Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
-                    if JsonTarea.Get('observation', JsonCampo) Then
-                        Tareas.SetDescription(JsonCampo.AsValue().AsText());
-                    Tareas.Insert(true);
-
-                    UpdateTask(Tareas.Id_Tarea, Format(Tareas.ID));
-
-                end;
-            end;
-
-            if JsonTarea.Get('document', JsonCampo) then begin
-                JsonArray := JsonCampo.AsArray();
+            if (not SaltarTareaAlineada) and JsonTarea.Get('document', JsonCampo) then begin
+                JsonDocumentos := JsonCampo.AsArray();
                 If JsonTarea.Get('Id_Navision', JsonCampo) Then begin
                     Texto := JsonCampo.AsValue().AsText();
                     If Not Evaluate(Id, Texto) then begin
@@ -893,8 +843,8 @@ codeunit 7001148 GTask
                                 Tareas.Modify();
                             end;
 
-                            foreach JsonToken in JsonArray do begin
-                                JsonDetalleCampo := JsonToken.AsObject();
+                            foreach JsonTokenDoc in JsonDocumentos do begin
+                                JsonDetalleCampo := JsonTokenDoc.AsObject();
                                 If JsonDetalleCampo.Get('document', JsonCampo) then begin
                                     JSonDocument := JsonCampo.AsObject();
                                     If jSonDocument.Get('url', JsonCampo) then begin
@@ -923,10 +873,11 @@ codeunit 7001148 GTask
                                                 If Docuname2 = '' Then Docuname2 := DocuName;
                                                 DocumentAtt."File Name" := DocuName2;
                                                 DocumentAtt."URL" := DocUrl;
+                                                DocumentAtt.ID_Url := 0;
                                                 if JsonDetalleCampo.Get('_id', JsonCampo) then
-                                                    DocumentAtt.ID_Url := JsonCampo.AsValue().AsInteger()
-                                                else
-                                                    DocumentAtt.ID_Url := 0;
+                                                    if JsonCampo.IsValue and not JsonCampo.AsValue().IsNull then
+                                                        if not Evaluate(DocumentAtt.ID_Url, JsonCampo.AsValue().AsText()) then
+                                                            DocumentAtt.ID_Url := 0;
                                                 DocumentAtt.Insert();
                                             end;
                                         end;
@@ -938,6 +889,138 @@ codeunit 7001148 GTask
             end;
         end;
 
+    end;
+
+    /// <summary>
+    /// Alta en BC de una tarea creada en GTask sin Id_Navision, y PUT del id a GTask.
+    /// </summary>
+    local procedure CrearTareaDesdeGtaskSinNavision(JsonTarea: JsonObject)
+    var
+        Tareas: Record "User Task";
+        UserGtaskMalla: Record UsuariosGtask;
+        UserTaskGroup: Record "User Task Group";
+        ResponsabilitiCenter: Record "Responsibility Center";
+        WorkCenter: Record "Work Center";
+        Job: Record Job;
+        JsonCampo: JsonToken;
+        RecordiD: RecordId;
+        RecordRef: RecordRef;
+        IdGtask: Text;
+        IdGtaskUser: Text;
+        StateTxt: Text;
+    begin
+        if not JsonTarea.Get('_id', JsonCampo) then
+            exit;
+        if JsonCampo.AsValue().IsNull then
+            exit;
+        IdGtask := JsonCampo.AsValue().AsText();
+        if IdGtask = '' then
+            exit;
+
+        UserGtaskMalla.ChangeCompany('Malla Publicidad');
+        Tareas.Reset();
+        Tareas.SetRange(Id_Tarea, CopyStr(IdGtask, 1, MaxStrLen(Tareas.Id_Tarea)));
+        if Tareas.FindFirst() then begin
+            UpdateTask(Tareas.Id_Tarea, Format(Tareas.ID));
+            exit;
+        end;
+
+        Tareas.Init();
+        Tareas.Id_Tarea := CopyStr(IdGtask, 1, MaxStrLen(Tareas.Id_Tarea));
+
+        if JsonTarea.Get('user', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                IdGtaskUser := JsonCampo.AsValue().AsText();
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.SetRange("Id Gtask", CopyStr(IdGtaskUser, 1, MaxStrLen(UserGtaskMalla."Id Gtask")));
+                if UserGtaskMalla.FindFirst() then begin
+                    Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
+                    Tareas.Grupo := UserGtaskMalla.Grupo;
+                end;
+            end;
+
+        if JsonTarea.Get('supervisor', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.SetRange("Id Gtask", CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(UserGtaskMalla."Id Gtask")));
+                if UserGtaskMalla.FindFirst() then
+                    Tareas.Supervisor := UserGtaskMalla."Id Usuario";
+            end;
+
+        if JsonTarea.Get('owner', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                UserGtaskMalla.Reset();
+                UserGtaskMalla.SetRange("Id Gtask", CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(UserGtaskMalla."Id Gtask")));
+                if UserGtaskMalla.FindFirst() then
+                    Tareas."Created By" := UserGtaskMalla."Id Usuario";
+            end;
+
+        if JsonTarea.Get('department', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                Clear(RecordiD);
+                RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"Responsibility Center", CompanyName);
+                if RecordiD.TableNo <> 0 then begin
+                    RecordRef := RecordiD.GetRecord();
+                    Tareas.Departamento := RecordRef.Field(ResponsabilitiCenter.FieldNo(Code)).Value;
+                end else
+                    Tareas.Departamento := InsertarDepartamentoOservicio(JsonCampo.AsValue().AsText(), CompanyName, false);
+            end;
+
+        if JsonTarea.Get('service', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                Clear(RecordiD);
+                RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"Work Center", CompanyName);
+                if RecordiD.TableNo <> 0 then begin
+                    RecordRef := RecordiD.GetRecord();
+                    Tareas.Servicio := RecordRef.Field(WorkCenter.FieldNo("No.")).Value;
+                end else
+                    Tareas.Servicio := InsertarDepartamentoOservicio(JsonCampo.AsValue().AsText(), CompanyName, true);
+            end;
+
+        if JsonTarea.Get('category', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                Clear(RecordiD);
+                RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"User Task Group", CompanyName);
+                if RecordiD.TableNo <> 0 then begin
+                    RecordRef := RecordiD.GetRecord();
+                    Tareas."User Task Group Assigned To" := RecordRef.Field(UserTaskGroup.FieldNo(Code)).Value;
+                    Tareas."Categoría" := Tareas."User Task Group Assigned To";
+                end;
+            end;
+
+        if JsonTarea.Get('project', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                Clear(RecordiD);
+                RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::Job, CompanyName);
+                if RecordiD.TableNo <> 0 then begin
+                    RecordRef := RecordiD.GetRecord();
+                    Tareas."Job No." := RecordRef.Field(Job.FieldNo("No.")).Value;
+                end;
+            end;
+
+        if JsonTarea.Get('state', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then begin
+                StateTxt := JsonCampo.AsValue().AsText();
+                case StateTxt of
+                    'PENDING':
+                        Tareas.Estado := Tareas.Estado::Pendiente;
+                    'INPROCESS':
+                        Tareas.Estado := Tareas.Estado::"En Proceso";
+                    'FINISHED':
+                        Tareas.Estado := Tareas.Estado::Finalizado;
+                end;
+            end;
+
+        if JsonTarea.Get('description', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then
+                Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
+        if JsonTarea.Get('observation', JsonCampo) then
+            if not JsonCampo.AsValue().IsNull then
+                Tareas.SetDescription(JsonCampo.AsValue().AsText());
+
+        AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
+        Tareas.Insert(true);
+        UpdateTask(Tareas.Id_Tarea, Format(Tareas.ID));
     end;
 
     procedure CrearTareaFijacion(var OrdenFijacion: Record "Cab Orden fijación"; Tarea: Record "User Task"; Opcion: Option " ",Valla,Opi,Otros; Retirada: Boolean)
@@ -3870,6 +3953,28 @@ codeunit 7001148 GTask
     end;
 
 
+    procedure ActualizarVencimientoTarea(Tarea: Record "User Task")
+    var
+        JsonFormater: Codeunit "Json Text Reader/Writer";
+        RestApi: Codeunit "Control Ocr";
+        CompanyInfo: Record "Company Information";
+        RequestType: Option Get,patch,put,post,delete;
+        Json: Text;
+    begin
+        if (Tarea.Id_Tarea = '') or (Tarea."Due DateTime" = 0DT) then
+            exit;
+        CompanyInfo.Get();
+        JsonFormater.WriteStartObject('');
+        JsonFormater.WriteStartObject('expirationDate');
+        JsonFormater.WriteStringProperty('date', Hora(Tarea."Due DateTime"));
+        JsonFormater.WriteNullProperty('rule');
+        JsonFormater.WriteBooleanProperty('custom', false);
+        JsonFormater.WriteEndObject();
+        JsonFormater.WriteEndObject();
+        Json := JsonFormater.GetJSonAsText();
+        RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Tarea.Id_Tarea, Token(), RequestType::put, Json);
+    end;
+
     internal procedure CrearTareaEmpazamiento(
        RecRef: RecordRef;
        Title: Text;
@@ -4119,6 +4224,7 @@ codeunit 7001148 GTask
         UserTask.EsPeriodica := EsPeriodica;
         UserTask.ZonaLimpieza := ZonaLimpieza;
         UserTask.TipoTarea := TipoTarea;
+        AsignarObjetivoDesdeRegistro(UserTask, ZonaLimpieza, RecRef);
         UserTask.Validate("Created DateTime", CurrentDateTime);
         Usertask."Start DateTime" := CreateDateTime(Fecha, 080000T);
         Usertask."Due DateTime" := CreateDateTime(Fecha, 130000T);
@@ -4194,6 +4300,80 @@ codeunit 7001148 GTask
             Procesos_GTask.EnviaCorreo(Usertask."No.", UserTask.GetDescription(), true, '', false, Title, EmailResponsable, ListadeCorreos, EmailSupervisor, '', User."Full Name", false, UserTask.Id_Tarea, false, true);
         end;
         exit(True);
+    end;
+
+    local procedure AsignarObjetivoDesdeRegistro(var UserTask: Record "User Task"; IdZona: Integer; RecRef: RecordRef)
+    var
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+    begin
+        if IdZona = 0 then
+            exit;
+        case RecRef.Number of
+            Database::Emplazamientos:
+                begin
+                    RecRef.SetTable(Emplaz);
+                    AsignarObjetivoEmplazamiento(UserTask, Emplaz, IdZona);
+                end;
+            Database::Resource:
+                begin
+                    RecRef.SetTable(Resource);
+                    AsignarObjetivoRecurso(UserTask, Resource, IdZona);
+                end;
+        end;
+    end;
+
+    local procedure AsignarObjetivoEmplazamiento(var UserTask: Record "User Task"; Emplaz: Record Emplazamientos; IdZona: Integer)
+    begin
+        if Emplaz."Zona Limpieza a Presión" = IdZona then
+            FijarObjetivoTarea(UserTask, 5, Emplaz."Veces Limpieza a Presión", Emplaz."Periodo Limpieza a Presión")
+        else if Emplaz."Zona Techos" = IdZona then
+            FijarObjetivoTarea(UserTask, 4, Emplaz."Veces Techos", Emplaz."Periodo Techos")
+        else if Emplaz."Zona Mantenimiento" = IdZona then
+            FijarObjetivoTarea(UserTask, 3, Emplaz."Veces Mantenimiento", Emplaz."Periodo Mantenimiento")
+        else if Emplaz."Zona Revisión" = IdZona then
+            FijarObjetivoTarea(UserTask, 2, Emplaz."Veces Revisión", Emplaz."Periodo Revisión")
+        else if Emplaz."Zona Limpieza" = IdZona then
+            FijarObjetivoTarea(UserTask, 1, Emplaz."Veces Limpieza", Emplaz."Periodo Limpieza");
+    end;
+
+    local procedure AsignarObjetivoRecurso(var UserTask: Record "User Task"; Resource: Record Resource; IdZona: Integer)
+    begin
+        if Resource."Zona Limpieza a Presión" = IdZona then
+            FijarObjetivoTarea(UserTask, 5, Resource."Veces Limpieza a Presión", Resource."Periodo Limpieza a Presión")
+        else if Resource."Zona Techos" = IdZona then
+            FijarObjetivoTarea(UserTask, 4, Resource."Veces Techos", Resource."Periodo Techos")
+        else if Resource."Zona Mantenimiento" = IdZona then
+            FijarObjetivoTarea(UserTask, 3, Resource."Veces Mantenimiento", Resource."Periodo Mantenimiento")
+        else if Resource."Zona Revisión" = IdZona then
+            FijarObjetivoTarea(UserTask, 2, Resource."Veces Revisión", Resource."Periodo Revisión")
+        else if Resource."Zona Limpieza" = IdZona then
+            FijarObjetivoTarea(UserTask, 1, Resource."Veces Limpieza", Resource."Periodo Limpieza");
+    end;
+
+    local procedure FijarObjetivoTarea(var UserTask: Record "User Task"; Tipo: Integer; Veces: Integer; Periodo: Integer)
+    begin
+        UserTask."Veces objetivo" := Veces;
+        case Tipo of
+            1:
+                UserTask."Tipo objetivo" := UserTask."Tipo objetivo"::Limpieza;
+            2:
+                UserTask."Tipo objetivo" := UserTask."Tipo objetivo"::"Revisión";
+            3:
+                UserTask."Tipo objetivo" := UserTask."Tipo objetivo"::Mantenimiento;
+            4:
+                UserTask."Tipo objetivo" := UserTask."Tipo objetivo"::"Limpieza techos";
+            5:
+                UserTask."Tipo objetivo" := UserTask."Tipo objetivo"::"Limpieza a presión";
+        end;
+        case Periodo of
+            1:
+                UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::Semana;
+            2:
+                UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::Mes;
+            else
+                UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::" ";
+        end;
     end;
 
     /// <param name="CodigoEmplazamiento">Código del emplazamiento</param>
@@ -5062,20 +5242,45 @@ codeunit 7001148 GTask
     local procedure UpdateTasksFicheros()
     var
         Ficheros: Record Ficheros;
-
+        FicheroProcesado: Record Ficheros;
+        Pendientes: List of [Integer];
+        Secuencia: Integer;
     begin
+        Ficheros.ReadIsolation := IsolationLevel::ReadUncommitted;
         Ficheros.SetRange(Proceso, 'UPDATEGTASK');
         Ficheros.SetRange(Procesado, false);
-        If Ficheros.FindSet() then begin
+        if Ficheros.FindSet(false) then
             repeat
-                Procesos_GTask.UpdateTaskGtask(Ficheros."Nombre fichero", Ficheros."Incoming Entry No.");
-
+                Pendientes.Add(Ficheros.Secuencia);
             until Ficheros.Next() = 0;
 
-            Ficheros.ModifyAll(Procesado, true);
+        foreach Secuencia in Pendientes do begin
+            if FicheroProcesado.Get(Secuencia) then
+                if not FicheroProcesado.Procesado then
+                    if Procesos_GTask.UpdateTaskGtask(FicheroProcesado."Nombre fichero", FicheroProcesado."Incoming Entry No.") then begin
+                        FicheroProcesado.Procesado := true;
+                        FicheroProcesado.Modify();
+                        if not TareasEncoladasEnEstaEjecucion.Contains(FicheroProcesado."Incoming Entry No.") then
+                            TareasEncoladasEnEstaEjecucion.Add(FicheroProcesado."Incoming Entry No.");
+                    end;
             Commit();
-
         end;
+    end;
+
+    local procedure MarcarTareasComunicadas()
+    var
+        Tareas: Record "User Task";
+        IdTarea: Integer;
+    begin
+        foreach IdTarea in TareasEncoladasEnEstaEjecucion do
+            if Tareas.Get(IdTarea) then begin
+                if Tareas."Fecha Cambio" = 0DT then
+                    Tareas."Fecha Cambio" := CurrentDateTime;
+                Tareas."Fecha Comunicado Cambio" := Tareas."Fecha Cambio";
+                Tareas.Modify(false);
+            end;
+        Clear(TareasEncoladasEnEstaEjecucion);
+        Commit();
     end;
 
     local procedure EnviarCorreoBak(UserTask: Record "User Task"; Descripcion: Text)
@@ -5085,6 +5290,7 @@ codeunit 7001148 GTask
     begin
         ficheros.Reset();
         if ficheros.FindLast() then Secuencia := ficheros.Secuencia + 1 else Secuencia := 1;
+        ficheros.Init();
         ficheros.Secuencia := Secuencia;
         ficheros."Nombre fichero" := Descripcion;
         ficheros."Incoming Entry No." := UserTask.ID;
@@ -5279,14 +5485,500 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
+    /// Listado para ordenes.malla.es. Entrada: {"idGtask":"...","vista":"mias"|"supervisar"}.
+    /// Salida: {"success":true,"esSupervisor":...,"ordenes":[{no,descripcion,recurso,direccion,estado,idQr,firmaFirmada}]}.
+    /// </summary>
+    [ServiceEnabled]
+    procedure ListarOrdenesUsuario(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonOut: JsonObject;
+        JsonOrden: JsonObject;
+        JsonOrdenes: JsonArray;
+        JsonToken: JsonToken;
+        Usuario: Record UsuariosGtask;
+        TimeSheetHeader: Record "Time Sheet Header";
+        UserTask: Record "User Task";
+        IdGtask: Text;
+        Vista: Text;
+        EsAsignado: Boolean;
+        EsSupervisorOrden: Boolean;
+        Incluir: Boolean;
+        ResultText: Text;
+    begin
+        if (JsonText = '') or not JsonIn.ReadFrom(JsonText) then
+            Error('JSON inválido o vacío');
+
+        IdGtask := '';
+        if JsonIn.Get('idGtask', JsonToken) then
+            IdGtask := JsonToken.AsValue().AsText();
+        if IdGtask = '' then
+            Error('No se ha indicado idGtask.');
+
+        Vista := 'mias';
+        if JsonIn.Get('vista', JsonToken) then
+            Vista := LowerCase(DelChr(JsonToken.AsValue().AsText(), '<>', ' '));
+
+        if not BuscarUsuarioGtaskOperario(IdGtask, Usuario) then
+            Error('No se ha encontrado el usuario GTask %1.', IdGtask);
+
+        Clear(JsonOrdenes);
+        TimeSheetHeader.SetRange(Estado, TimeSheetHeader.Estado::Abierto);
+        TimeSheetHeader.SetFilter(Tarea, '<>%1', 0);
+        if TimeSheetHeader.FindSet() then
+            repeat
+                if UserTask.Get(TimeSheetHeader.Tarea) then begin
+                    EsAsignado := UserTask."Assigned To" = Usuario."Id Usuario";
+                    EsSupervisorOrden := Usuario.Supervisor and (UserTask.Supervisor = Usuario."Id Usuario");
+                    Incluir := false;
+                    if Vista = 'supervisar' then
+                        Incluir := EsSupervisorOrden
+                    else
+                        Incluir := EsAsignado;
+                    if Incluir then begin
+                        Clear(JsonOrden);
+                        AgregarOrdenListadoJson(TimeSheetHeader, JsonOrden);
+                        JsonOrdenes.Add(JsonOrden);
+                    end;
+                end;
+            until TimeSheetHeader.Next() = 0;
+
+        Clear(JsonOut);
+        JsonOut.Add('success', true);
+        JsonOut.Add('esSupervisor', Usuario.Supervisor);
+        JsonOut.Add('ordenes', JsonOrdenes.AsToken());
+        JsonOut.WriteTo(ResultText);
+        exit(ResultText);
+    end;
+
+    local procedure AgregarOrdenListadoJson(TimeSheetHeader: Record "Time Sheet Header"; var JsonOrden: JsonObject)
+    var
+        Incidencias: Record Incidencias;
+        RecursoTxt: Text;
+    begin
+        JsonOrden.Add('no', TimeSheetHeader."No.");
+        JsonOrden.Add('idQr', 'OT-' + TimeSheetHeader."No.");
+        JsonOrden.Add('descripcion', TimeSheetHeader.Description);
+        JsonOrden.Add('direccion', TimeSheetHeader."Dirección");
+        JsonOrden.Add('estado', Format(TimeSheetHeader.Estado));
+        JsonOrden.Add('firmaFirmada', FirmaTecnicoTiene(TimeSheetHeader));
+
+        RecursoTxt := '';
+        Incidencias.SetRange("Parte Trabajo", TimeSheetHeader."No.");
+        Incidencias.SetRange("Es Peticion", true);
+        if not Incidencias.FindFirst() then begin
+            Incidencias.SetRange("Es Peticion");
+            Incidencias.FindFirst();
+        end;
+        if Incidencias."No." <> '' then
+            RecursoTxt := Incidencias.Recurso;
+        JsonOrden.Add('recurso', RecursoTxt);
+    end;
+
+    /// <summary>
+    /// Detalle para ordenes.malla.es. Entrada: {"idGtask":"...","no":"...","vista":"mias"|"supervisar"}.
+    /// </summary>
+    [ServiceEnabled]
+    procedure DetalleOrdenTrabajo(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonOut: JsonObject;
+        JsonOrden: JsonObject;
+        JsonLineasOut: JsonArray;
+        JsonLineaFull: JsonObject;
+        JsonToken: JsonToken;
+        JsonLineasToken: JsonToken;
+        JsonLineasIn: JsonArray;
+        JsonLineIn: JsonObject;
+        JsonLineOut: JsonObject;
+        Usuario: Record UsuariosGtask;
+        TimeSheetHeader: Record "Time Sheet Header";
+        UserTask: Record "User Task";
+        IdGtask: Text;
+        Vista: Text;
+        NoParte: Code[20];
+        EsAsignado: Boolean;
+        EsSupervisorOrden: Boolean;
+        PuedeVer: Boolean;
+        i: Integer;
+        ResultText: Text;
+        NombreLinea: Text;
+        CantidadLinea: Decimal;
+    begin
+        if (JsonText = '') or not JsonIn.ReadFrom(JsonText) then
+            Error('JSON inválido o vacío');
+
+        IdGtask := '';
+        if JsonIn.Get('idGtask', JsonToken) then
+            IdGtask := JsonToken.AsValue().AsText();
+        if JsonIn.Get('no', JsonToken) then
+            NoParte := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoParte));
+        Vista := 'mias';
+        if JsonIn.Get('vista', JsonToken) then
+            Vista := LowerCase(DelChr(JsonToken.AsValue().AsText(), '<>', ' '));
+
+        if (IdGtask = '') or (NoParte = '') then
+            Error('Faltan idGtask o no de la orden.');
+        if not BuscarUsuarioGtaskOperario(IdGtask, Usuario) then
+            Error('No se ha encontrado el usuario GTask %1.', IdGtask);
+        if not TimeSheetHeader.Get(NoParte) then
+            Error('No existe el parte de trabajo %1.', NoParte);
+        if not UserTask.Get(TimeSheetHeader.Tarea) then
+            Error('La orden no tiene tarea vinculada.');
+
+        EsAsignado := UserTask."Assigned To" = Usuario."Id Usuario";
+        EsSupervisorOrden := Usuario.Supervisor and (UserTask.Supervisor = Usuario."Id Usuario");
+        PuedeVer := false;
+        if Vista = 'supervisar' then
+            PuedeVer := EsSupervisorOrden
+        else
+            PuedeVer := EsAsignado;
+        if not PuedeVer then
+            Error('No tiene permiso para ver esta orden.');
+
+        Clear(JsonLineaFull);
+        AgregarOrdenOperarioJson(TimeSheetHeader, UserTask, EsAsignado, EsSupervisorOrden, JsonLineaFull);
+
+        Clear(JsonOrden);
+        JsonOrden.Add('no', TimeSheetHeader."No.");
+        JsonOrden.Add('idQr', 'OT-' + TimeSheetHeader."No.");
+        JsonOrden.Add('descripcion', TimeSheetHeader.Description);
+        JsonOrden.Add('direccion', TimeSheetHeader."Dirección");
+        JsonOrden.Add('estado', Format(TimeSheetHeader.Estado));
+        JsonOrden.Add('tipo', Format(TimeSheetHeader.Tipo));
+        JsonOrden.Add('cliente', TimeSheetHeader.Cliente);
+        JsonOrden.Add('nombreCliente', TimeSheetHeader."Nombre Cliente");
+        JsonOrden.Add('firmaFirmada', FirmaTecnicoTiene(TimeSheetHeader));
+        if TimeSheetHeader."Fecha Firma Tecnico" <> 0DT then
+            JsonOrden.Add('fechaFirmaTecnico', Format(TimeSheetHeader."Fecha Firma Tecnico", 0, 9));
+
+        if JsonLineaFull.Get('recurso', JsonToken) then
+            JsonOrden.Add('recurso', JsonToken.AsValue().AsText());
+        if JsonLineaFull.Get('descripcionPeticion', JsonToken) then
+            JsonOrden.Add('descripcionPeticion', JsonToken.AsValue().AsText());
+        if JsonLineaFull.Get('importe', JsonToken) then
+            JsonOrden.Add('importe', JsonToken.AsValue().AsDecimal());
+
+        Clear(JsonLineasOut);
+        if JsonLineaFull.Get('lineas', JsonLineasToken) then begin
+            JsonLineasIn := JsonLineasToken.AsArray();
+            for i := 0 to JsonLineasIn.Count() - 1 do begin
+                JsonLineasIn.Get(i, JsonToken);
+                JsonLineIn := JsonToken.AsObject();
+                Clear(JsonLineOut);
+                NombreLinea := '';
+                CantidadLinea := 0;
+                if JsonLineIn.Get('codigo', JsonToken) then
+                    JsonLineOut.Add('codigo', JsonToken.AsValue().AsText());
+                if JsonLineIn.Get('nombre', JsonToken) then begin
+                    NombreLinea := JsonToken.AsValue().AsText();
+                    JsonLineOut.Add('descripcion', NombreLinea);
+                    JsonLineOut.Add('nombre', NombreLinea);
+                end;
+                if JsonLineIn.Get('cantidad', JsonToken) then begin
+                    CantidadLinea := JsonToken.AsValue().AsDecimal();
+                    JsonLineOut.Add('cantidad', CantidadLinea);
+                end;
+                if JsonLineIn.Get('precio', JsonToken) then
+                    JsonLineOut.Add('precio', JsonToken.AsValue().AsDecimal());
+                if JsonLineIn.Get('importe', JsonToken) then
+                    JsonLineOut.Add('importe', JsonToken.AsValue().AsDecimal());
+                JsonLineasOut.Add(JsonLineOut);
+            end;
+        end;
+
+        Clear(JsonOut);
+        JsonOut.Add('success', true);
+        JsonOut.Add('puedeValorar', EsSupervisorOrden and (TimeSheetHeader.Estado = TimeSheetHeader.Estado::Abierto));
+        JsonOut.Add('puedeFirmar', EsAsignado and (TimeSheetHeader.Estado = TimeSheetHeader.Estado::Abierto) and not FirmaTecnicoTiene(TimeSheetHeader));
+        JsonOut.Add('esSupervisor', EsSupervisorOrden);
+        JsonOut.Add('orden', JsonOrden.AsToken());
+        JsonOut.Add('lineas', JsonLineasOut.AsToken());
+        JsonOut.WriteTo(ResultText);
+        exit(ResultText);
+    end;
+
+    /// <summary>
+    /// Guarda la firma PNG (base64) del técnico asignado. JSON: {"idGtask":"...","no_parte":"...","firma":"..."}.
+    /// </summary>
+    [ServiceEnabled]
+    procedure FirmarOrdenTrabajo(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonOut: JsonObject;
+        JsonToken: JsonToken;
+        Usuario: Record UsuariosGtask;
+        TimeSheetHeader: Record "Time Sheet Header";
+        UserTask: Record "User Task";
+        IdGtask: Text;
+        NoParte: Code[20];
+        FirmaBase64: Text;
+        ResultText: Text;
+    begin
+        if (JsonText = '') or not JsonIn.ReadFrom(JsonText) then
+            Error('JSON inválido o vacío');
+
+        IdGtask := '';
+        if JsonIn.Get('idGtask', JsonToken) then
+            IdGtask := JsonToken.AsValue().AsText();
+        if JsonIn.Get('no_parte', JsonToken) then
+            NoParte := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoParte));
+        if (NoParte = '') and JsonIn.Get('no', JsonToken) then
+            NoParte := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoParte));
+        if JsonIn.Get('firma', JsonToken) then
+            FirmaBase64 := JsonToken.AsValue().AsText();
+
+        if (IdGtask = '') or (NoParte = '') then
+            Error('Faltan idGtask o número de parte.');
+        if FirmaBase64 = '' then
+            Error('No se ha recibido la firma.');
+
+        if not BuscarUsuarioGtaskOperario(IdGtask, Usuario) then
+            Error('No se ha encontrado el usuario GTask %1.', IdGtask);
+        if not TimeSheetHeader.Get(NoParte) then
+            Error('No existe el parte de trabajo %1.', NoParte);
+        if TimeSheetHeader.Estado <> TimeSheetHeader.Estado::Abierto then
+            Error('Solo se puede firmar una orden abierta.');
+        if not UserTask.Get(TimeSheetHeader.Tarea) then
+            Error('La orden no tiene tarea vinculada.');
+        if UserTask."Assigned To" <> Usuario."Id Usuario" then
+            Error('Solo el técnico asignado puede firmar la orden.');
+        if FirmaTecnicoTiene(TimeSheetHeader) then
+            Error('La orden ya está firmada.');
+
+        GuardarFirmaTecnicoBase64(TimeSheetHeader, FirmaBase64);
+
+        Clear(JsonOut);
+        JsonOut.Add('success', true);
+        JsonOut.Add('ok', true);
+        JsonOut.Add('no_parte', TimeSheetHeader."No.");
+        JsonOut.Add('firmaFirmada', true);
+        JsonOut.WriteTo(ResultText);
+        exit(ResultText);
+    end;
+
+    local procedure FirmaTecnicoTiene(TimeSheetHeader: Record "Time Sheet Header"): Boolean
+    begin
+        TimeSheetHeader.CalcFields("Firma Técnico");
+        exit(TimeSheetHeader."Firma Técnico".HasValue);
+    end;
+
+    local procedure GuardarFirmaTecnicoBase64(var TimeSheetHeader: Record "Time Sheet Header"; Base64Txt: Text)
+    var
+        Base64Convert: Codeunit "Base64 Convert";
+        OutStream: OutStream;
+        Payload: Text;
+    begin
+        Payload := ExtraerPayloadBase64Imagen(Base64Txt);
+        if Payload = '' then
+            Error('La firma no es válida.');
+
+        TimeSheetHeader.LockTable();
+        if not TimeSheetHeader.Get(TimeSheetHeader."No.") then
+            Error('No existe el parte de trabajo.');
+
+        Clear(TimeSheetHeader."Firma Técnico");
+        TimeSheetHeader."Firma Técnico".CreateOutStream(OutStream);
+        Base64Convert.FromBase64(Payload, OutStream);
+        TimeSheetHeader."Fecha Firma Tecnico" := CurrentDateTime;
+        TimeSheetHeader.Modify(true);
+    end;
+
+    local procedure ExtraerPayloadBase64Imagen(Base64Txt: Text): Text
+    var
+        Separador: Integer;
+        Prefijo: Text;
+    begin
+        Base64Txt := DelChr(Base64Txt, '=', ' ');
+        if Base64Txt = '' then
+            exit('');
+
+        Prefijo := 'base64,';
+        Separador := StrPos(LowerCase(Base64Txt), Prefijo);
+        if Separador > 0 then
+            exit(CopyStr(Base64Txt, Separador + StrLen(Prefijo)));
+
+        exit(Base64Txt);
+    end;
+
+    /// <summary>
+    /// Órdenes abiertas del operario: parte en Abierto cuya tarea está asignada a él.
+    /// Si UsuariosGtask.Supervisor está marcado, también las abiertas en las que él es el supervisor de la tarea.
+    /// Los importes solo van en las que ve como supervisor. UsuarioGtask: Id Gtask, email o Usuario EMT.
+    /// </summary>
+    [ServiceEnabled]
+    procedure GetOrdenesOperario(UsuarioGtask: Text): Text
+    var
+        Usuario: Record UsuariosGtask;
+        TimeSheetHeader: Record "Time Sheet Header";
+        UserTask: Record "User Task";
+        JsonRoot: JsonObject;
+        JsonArray: JsonArray;
+        JsonLinea: JsonObject;
+        Txt: Text;
+        EsAsignado: Boolean;
+        EsSupervisorOrden: Boolean;
+        Contador: Integer;
+    begin
+        if not BuscarUsuarioGtaskOperario(UsuarioGtask, Usuario) then
+            Error('No se ha encontrado el usuario GTask %1.', UsuarioGtask);
+
+        Clear(JsonArray);
+        Contador := 0;
+        TimeSheetHeader.SetRange(Estado, TimeSheetHeader.Estado::Abierto);
+        TimeSheetHeader.SetFilter(Tarea, '<>%1', 0);
+        if TimeSheetHeader.FindSet() then
+            repeat
+                if UserTask.Get(TimeSheetHeader.Tarea) then begin
+                    EsAsignado := UserTask."Assigned To" = Usuario."Id Usuario";
+                    EsSupervisorOrden := Usuario.Supervisor and (UserTask.Supervisor = Usuario."Id Usuario");
+                    if EsAsignado or EsSupervisorOrden then begin
+                        Clear(JsonLinea);
+                        AgregarOrdenOperarioJson(TimeSheetHeader, UserTask, EsAsignado, EsSupervisorOrden, JsonLinea);
+                        JsonArray.Add(JsonLinea);
+                        Contador += 1;
+                    end;
+                end;
+            until TimeSheetHeader.Next() = 0;
+
+        Clear(JsonRoot);
+        JsonRoot.Add('value', JsonArray.AsToken());
+        JsonRoot.Add('usuarioGtask', Usuario."Id Gtask");
+        JsonRoot.Add('supervisor', Usuario.Supervisor);
+        JsonRoot.Add('count', Contador);
+        JsonRoot.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure BuscarUsuarioGtaskOperario(UsuarioGtask: Text; var Usuario: Record UsuariosGtask): Boolean
+    begin
+        UsuarioGtask := DelChr(UsuarioGtask, '=', ' ');
+        if UsuarioGtask = '' then
+            exit(false);
+
+        Usuario.Reset();
+        Usuario.SetRange("Id Gtask", CopyStr(UsuarioGtask, 1, MaxStrLen(Usuario."Id Gtask")));
+        if Usuario.FindFirst() then
+            exit(true);
+
+        Usuario.Reset();
+        Usuario.SetRange(Email, CopyStr(UsuarioGtask, 1, MaxStrLen(Usuario.Email)));
+        if Usuario.FindFirst() then
+            exit(true);
+
+        Usuario.Reset();
+        Usuario.SetRange("Usuario EMT", CopyStr(UsuarioGtask, 1, MaxStrLen(Usuario."Usuario EMT")));
+        exit(Usuario.FindFirst());
+    end;
+
+    local procedure AgregarOrdenOperarioJson(TimeSheetHeader: Record "Time Sheet Header"; UserTask: Record "User Task"; EsAsignado: Boolean; EsSupervisorOrden: Boolean; var JsonLinea: JsonObject)
+    var
+        Incidencias: Record Incidencias;
+        JsonLineas: JsonArray;
+        ImporteTotal: Decimal;
+    begin
+        UserTask.CalcFields("Assigned To User Name", "Supervisor User Name");
+        JsonLinea.Add('no', TimeSheetHeader."No.");
+        JsonLinea.Add('idQr', 'OT-' + TimeSheetHeader."No.");
+        JsonLinea.Add('descripcion', TimeSheetHeader.Description);
+        JsonLinea.Add('cliente', TimeSheetHeader.Cliente);
+        JsonLinea.Add('nombreCliente', TimeSheetHeader."Nombre Cliente");
+        JsonLinea.Add('direccion', TimeSheetHeader."Dirección");
+        JsonLinea.Add('fechaInicio', Format(TimeSheetHeader."Fecha Inicio", 0, 9));
+        JsonLinea.Add('fechaFin', Format(TimeSheetHeader."Fecha Fin", 0, 9));
+        JsonLinea.Add('estado', Format(TimeSheetHeader.Estado));
+        JsonLinea.Add('tipo', Format(TimeSheetHeader.Tipo));
+        JsonLinea.Add('tarea', UserTask.ID);
+        JsonLinea.Add('titulo', UserTask.Title);
+        JsonLinea.Add('idTareaGtask', UserTask.Id_Tarea);
+        JsonLinea.Add('asignadoA', UserTask."Assigned To User Name");
+        JsonLinea.Add('supervisorNombre', UserTask."Supervisor User Name");
+        JsonLinea.Add('asignado', EsAsignado);
+        JsonLinea.Add('esSupervisor', EsSupervisorOrden);
+        JsonLinea.Add('puedeValorar', EsSupervisorOrden);
+        JsonLinea.Add('firmaFirmada', FirmaTecnicoTiene(TimeSheetHeader));
+        if TimeSheetHeader."Fecha Firma Tecnico" <> 0DT then
+            JsonLinea.Add('fechaFirmaTecnico', Format(TimeSheetHeader."Fecha Firma Tecnico", 0, 9));
+
+        Incidencias.SetRange("Parte Trabajo", TimeSheetHeader."No.");
+        Incidencias.SetRange("Es Peticion", true);
+        if not Incidencias.FindFirst() then begin
+            Incidencias.SetRange("Es Peticion");
+            if not Incidencias.FindFirst() then
+                Clear(Incidencias);
+        end;
+        if Incidencias."No." <> '' then begin
+            JsonLinea.Add('peticion', Incidencias."No.");
+            JsonLinea.Add('descripcionPeticion', Incidencias."Descripción");
+            JsonLinea.Add('recurso', Incidencias.Recurso);
+            JsonLinea.Add('tipoElemento', Format(Incidencias."Tipo Elemento"));
+            JsonLinea.Add('workDescription', Incidencias.GetWorkDescription());
+        end else begin
+            JsonLinea.Add('peticion', '');
+            JsonLinea.Add('descripcionPeticion', '');
+            JsonLinea.Add('recurso', '');
+            JsonLinea.Add('tipoElemento', '');
+            JsonLinea.Add('workDescription', '');
+        end;
+
+        AgregarLineasOrdenOperarioJson(TimeSheetHeader."No.", EsSupervisorOrden, JsonLineas, ImporteTotal);
+        JsonLinea.Add('lineas', JsonLineas.AsToken());
+        if EsSupervisorOrden then
+            JsonLinea.Add('importe', ImporteTotal);
+    end;
+
+    local procedure AgregarLineasOrdenOperarioJson(ParteNo: Code[20]; IncluirImportes: Boolean; var JsonLineas: JsonArray; var ImporteTotal: Decimal)
+    var
+        TimeSheetLine: Record "Time Sheet Line";
+        JsonLine: JsonObject;
+        TipoLinea: Text;
+    begin
+        Clear(JsonLineas);
+        ImporteTotal := 0;
+        TimeSheetLine.SetRange("Time Sheet No.", ParteNo);
+        if TimeSheetLine.FindSet() then
+            repeat
+                Clear(JsonLine);
+                case TimeSheetLine.Tipo of
+                    TimeSheetLine.Tipo::Producto:
+                        TipoLinea := 'producto';
+                    TimeSheetLine.Tipo::Recurso:
+                        TipoLinea := 'recurso';
+                    TimeSheetLine.Tipo::Trabajo:
+                        TipoLinea := 'trabajo';
+                    TimeSheetLine.Tipo::Nacional:
+                        TipoLinea := 'nacional';
+                    else
+                        TipoLinea := '';
+                end;
+                JsonLine.Add('linea', TimeSheetLine."Line No.");
+                JsonLine.Add('tipo', TipoLinea);
+                JsonLine.Add('codigo', TimeSheetLine.No);
+                JsonLine.Add('nombre', TimeSheetLine.Descripcion);
+                JsonLine.Add('cantidad', TimeSheetLine.Cantidad);
+                JsonLine.Add('unidad', TimeSheetLine.Unidad);
+                if IncluirImportes then begin
+                    JsonLine.Add('precio', TimeSheetLine.Precio);
+                    JsonLine.Add('dto', TimeSheetLine.Dto);
+                    JsonLine.Add('importe', TimeSheetLine.Importe);
+                    ImporteTotal += TimeSheetLine.Importe;
+                end;
+                JsonLineas.Add(JsonLine);
+            until TimeSheetLine.Next() = 0;
+    end;
+
+    /// <summary>
     /// Devuelve las tareas para el calendario compartido desde hoy hasta los meses indicados.
-    /// Filtra por el grupo del usuario GTask autenticado.
+    /// Incluye tareas del grupo (por campo Grupo) y tareas supervisadas por miembros del grupo
+    /// aunque el responsable esté fuera. Sin duplicar por ID.
     /// Si Meses es 0, usa 3 meses por defecto.
     /// </summary>
     [ServiceEnabled]
     procedure GetTareasCalendario(Meses: Integer; UsuarioGtask: Text): Text
     var
         Tareas: Record "User Task";
+        TareasTemp: Record "User Task" temporary;
+        Usuario: Record UsuariosGtask;
         JsonRoot: JsonObject;
         JsonArray: JsonArray;
         JsonLinea: JsonObject;
@@ -5306,15 +5998,41 @@ codeunit 7001148 GTask
         HastaFecha := CalcDate(StrSubstNo('<+%1M>', Meses), Today);
         HastaDT := CreateDateTime(HastaFecha, 235959T);
 
-        Clear(JsonArray);
-        Tareas.SetRange("start DateTime", DesdeDT, HastaDT);
+        Clear(TareasTemp);
+        Tareas.Reset();
+        Tareas.SetRange("Start DateTime", DesdeDT, HastaDT);
         Tareas.SetRange(Grupo, GrupoUsuario);
         if Tareas.FindSet() then
             repeat
-                Clear(JsonLinea);
-                AgregarTareaCalendarioJson(Tareas, JsonLinea);
-                JsonArray.Add(JsonLinea);
+                TareasTemp := Tareas;
+                if TareasTemp.Insert() then;
             until Tareas.Next() = 0;
+
+        Usuario.Reset();
+        Usuario.SetRange(Grupo, GrupoUsuario);
+        if Usuario.FindSet() then
+            repeat
+                if not IsNullGuid(Usuario."Id Usuario") then begin
+                    Tareas.Reset();
+                    Tareas.SetRange("Start DateTime", DesdeDT, HastaDT);
+                    Tareas.SetRange(Supervisor, Usuario."Id Usuario");
+                    if Tareas.FindSet() then
+                        repeat
+                            if not TareasTemp.Get(Tareas.ID) then begin
+                                TareasTemp := Tareas;
+                                if TareasTemp.Insert() then;
+                            end;
+                        until Tareas.Next() = 0;
+                end;
+            until Usuario.Next() = 0;
+
+        Clear(JsonArray);
+        if TareasTemp.FindSet() then
+            repeat
+                Clear(JsonLinea);
+                AgregarTareaCalendarioJson(TareasTemp, JsonLinea);
+                JsonArray.Add(JsonLinea);
+            until TareasTemp.Next() = 0;
 
         Clear(JsonRoot);
         JsonRoot.Add('value', JsonArray.AsToken());
@@ -5416,8 +6134,9 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
-    /// Mueve una tarea de calendario a una nueva fecha. Conserva la hora original de inicio.
-    /// JSON: {"id":123,"fecha":"2026-06-15"}
+    /// Mueve una tarea de calendario a una nueva fecha. Conserva la duración (inicio↔vencimiento).
+    /// JSON: {"id":123,"fecha":"2026-06-15","scheduleByDue":false}
+    /// scheduleByDue=true mueve el vencimiento; false mueve el inicio.
     /// </summary>
     [ServiceEnabled]
     procedure PostMoverTareaCalendario(JsonText: Text): Text
@@ -5430,7 +6149,12 @@ codeunit 7001148 GTask
         IdTarea: Integer;
         FechaTexto: Text;
         NuevaFecha: Date;
+        FechaInicio: Date;
+        FechaDue: Date;
         HoraInicio: Time;
+        HoraDue: Time;
+        Dias: Integer;
+        ScheduleByDue: Boolean;
         Txt: Text;
     begin
         if (JsonText = '') or not JsonObj.ReadFrom(JsonText) then
@@ -5447,11 +6171,40 @@ codeunit 7001148 GTask
         if not Evaluate(NuevaFecha, FechaTexto) then
             Error('Fecha inválida: %1', FechaTexto);
 
+        ScheduleByDue := false;
+        if JsonObj.Get('scheduleByDue', JsonToken) then
+            ScheduleByDue := JsonToken.AsValue().AsBoolean();
+
         if not Tarea.Get(IdTarea) then
             Error('No se ha encontrado la tarea %1', IdTarea);
 
+        FechaInicio := DT2Date(Tarea."Start DateTime");
+        FechaDue := DT2Date(Tarea."Due DateTime");
         HoraInicio := DT2Time(Tarea."Start DateTime");
-        Tarea."Start DateTime" := CreateDateTime(NuevaFecha, HoraInicio);
+        HoraDue := DT2Time(Tarea."Due DateTime");
+        if HoraInicio = 0T then
+            HoraInicio := 080000T;
+        if HoraDue = 0T then
+            HoraDue := HoraInicio;
+
+        if FechaInicio = 0D then
+            FechaInicio := NuevaFecha;
+        if FechaDue = 0D then
+            FechaDue := FechaInicio;
+        Dias := FechaDue - FechaInicio;
+        if Dias < 0 then
+            Dias := 0;
+
+        if ScheduleByDue then begin
+            FechaDue := NuevaFecha;
+            FechaInicio := NuevaFecha - Dias;
+        end else begin
+            FechaInicio := NuevaFecha;
+            FechaDue := NuevaFecha + Dias;
+        end;
+
+        Tarea."Start DateTime" := CreateDateTime(FechaInicio, HoraInicio);
+        Tarea."Due DateTime" := CreateDateTime(FechaDue, HoraDue);
         Tarea.Modify(true);
 
         Clear(JsonLinea);
@@ -5467,32 +6220,52 @@ codeunit 7001148 GTask
     local procedure AgregarTareaCalendarioJson(var Tarea: Record "User Task"; var JsonLinea: JsonObject)
     var
         UsuarioGtask: Record UsuariosGtask;
+        AssignedGtaskId: Text;
+        SupervisorGtaskId: Text;
+        EmpleadoTxt: Text;
+        EmpleadoSupervisorTxt: Text;
     begin
         Tarea.CalcFields("Assigned To User Name", "Supervisor User Name");
+
+        AssignedGtaskId := '';
+        EmpleadoTxt := '';
+        UsuarioGtask.Reset();
+        UsuarioGtask.SetRange("Id Usuario", Tarea."Assigned To");
+        if UsuarioGtask.FindFirst() then begin
+            AssignedGtaskId := UsuarioGtask."Id Gtask";
+            EmpleadoTxt := Format(UsuarioGtask.Empleado);
+        end;
+        if AssignedGtaskId = '' then
+            AssignedGtaskId := Format(Tarea."Assigned To");
+
+        SupervisorGtaskId := '';
+        EmpleadoSupervisorTxt := '';
+        if not IsNullGuid(Tarea.Supervisor) then begin
+            UsuarioGtask.Reset();
+            UsuarioGtask.SetRange("Id Usuario", Tarea.Supervisor);
+            if UsuarioGtask.FindFirst() then begin
+                SupervisorGtaskId := UsuarioGtask."Id Gtask";
+                EmpleadoSupervisorTxt := Format(UsuarioGtask.Empleado);
+            end;
+            if SupervisorGtaskId = '' then
+                SupervisorGtaskId := Format(Tarea.Supervisor);
+        end;
 
         JsonLinea.Add('id', Tarea.ID);
         JsonLinea.Add('no', Tarea."No.");
         JsonLinea.Add('title', Tarea.Title);
         JsonLinea.Add('description', Tarea.GetDescription());
-        JsonLinea.Add('assignedTo', Format(Tarea."Assigned To"));
+        JsonLinea.Add('assignedTo', AssignedGtaskId);
         JsonLinea.Add('assignedToName', Tarea."Assigned To User Name");
-        UsuarioGtask.SetRange("Id Usuario", Tarea."Assigned To");
-        if UsuarioGtask.FindFirst() then
-            JsonLinea.Add('empleado', UsuarioGtask."Empleado")
-        else
-            JsonLinea.Add('empleado', '');
-        JsonLinea.Add('supervisor', Format(Tarea.Supervisor));
+        JsonLinea.Add('empleado', EmpleadoTxt);
+        JsonLinea.Add('supervisor', SupervisorGtaskId);
         JsonLinea.Add('supervisorName', Tarea."Supervisor User Name");
-        UsuarioGtask.SetRange("Id Usuario", Tarea.Supervisor);
-        if UsuarioGtask.FindFirst() then
-            JsonLinea.Add('empleadosupervisor', UsuarioGtask."Empleado")
-        else
-            JsonLinea.Add('empleadosupervisor', '');
+        JsonLinea.Add('empleadosupervisor', EmpleadoSupervisorTxt);
         JsonLinea.Add('grupo', Tarea.Grupo);
         JsonLinea.Add('categoria', Tarea."Categoría");
         JsonLinea.Add('userTaskGroupAssignedTo', Tarea."User Task Group Assigned To");
         JsonLinea.Add('start', Format(Tarea."Start DateTime", 0, 9));
-        JsonLinea.Add('due', Format(Tarea."due DateTime", 0, 9));
+        JsonLinea.Add('due', Format(Tarea."Due DateTime", 0, 9));
         JsonLinea.Add('estado', Format(Tarea.Estado));
         JsonLinea.Add('percentComplete', Tarea."Percent Complete");
         JsonLinea.Add('priority', Format(Tarea.Priority));
@@ -6400,25 +7173,49 @@ codeunit 7001148 GTask
         exit(ResultText);
     end;
 
+    /// <summary>
+    /// Ok de la orden: el parte pasa a Cerrado. Si ya está Facturado, no se modifica.
+    /// JSON: {"no_parte":"..."} o {"parteTrabajo":"..."}.
+    /// </summary>
     [ServiceEnabled]
     procedure CerrarParteTrabajo(JsonText: Text): Text
     var
         JsonObj: JsonObject;
         JsonToken: JsonToken;
-        JsonArray: JsonArray;
-        JsonLine: JsonObject;
+        JsonResult: JsonObject;
         TimeSheetHeader: Record "Time Sheet Header";
-        NoParte: Text;
+        NoParte: Code[20];
+        ResultText: Text;
     begin
         if (JsonText = '') or not JsonObj.ReadFrom(JsonText) then
             Error('JSON inválido o vacío');
 
+        if JsonObj.Get('no_parte', JsonToken) then
+            NoParte := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoParte));
+        if (NoParte = '') and JsonObj.Get('parteTrabajo', JsonToken) then
+            NoParte := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoParte));
+        if NoParte = '' then
+            Error('No se ha indicado el parte de trabajo.');
+        if not TimeSheetHeader.Get(NoParte) then
+            Error('No existe el parte de trabajo %1.', NoParte);
 
-        if JsonObj.Get('no_parte', JsonToken) then NoParte := JsonToken.AsValue().AsText();
-        if TimeSheetHeader.Get(NoParte) then begin
-            TimeSheetHeader.Estado := TimeSheetHeader.Estado::Cerrado;
-            TimeSheetHeader.Modify();
+        Clear(JsonResult);
+        JsonResult.Add('no_parte', TimeSheetHeader."No.");
+        if TimeSheetHeader.Estado = TimeSheetHeader.Estado::Facturado then begin
+            JsonResult.Add('ok', false);
+            JsonResult.Add('estado', Format(TimeSheetHeader.Estado));
+            JsonResult.Add('mensaje', 'La orden está facturada y no se modifica.');
+        end else begin
+            if TimeSheetHeader.Estado <> TimeSheetHeader.Estado::Cerrado then begin
+                TimeSheetHeader.Estado := TimeSheetHeader.Estado::Cerrado;
+                TimeSheetHeader.Modify();
+            end;
+            JsonResult.Add('ok', true);
+            JsonResult.Add('success', true);
+            JsonResult.Add('estado', Format(TimeSheetHeader.Estado));
         end;
+        JsonResult.WriteTo(ResultText);
+        exit(ResultText);
     end;
 
     /// <summary>
@@ -7769,7 +8566,9 @@ codeunit 7001148 GTask
             rDet."Tipo Elemento" := rDet."Tipo Elemento"::Recurso;
         rDet.Fecha := DT2Date(Fecha);
         rDet.FechaHora := Fecha;
-        rDet.Descripción := CopyStr(Description, 1, MaxStrLen(rDet.Descripción));
+        if not (not NuevaIncidencia and DebePreservarDescripcionIncidencia(Description, rDet."No.")) then
+            if Description <> '' then
+                rDet.Descripción := CopyStr(Description, 1, MaxStrLen(rDet."Descripción"));
         // Si la incidenciia no es nueva, y el usuario no existe, el usuario será equipoti
         if not NuevaIncidencia and IsNullGuid(UsuarioId) then
             If Usuario.Get('67a4a441f8a4bb001960c4d6') then
@@ -7949,8 +8748,13 @@ codeunit 7001148 GTask
         rDet.Modify();
         commit;
         rDet.Get(rDet."No.");
-        rDet.SetWorkDescription(Description + ' ' + Observation);
-        if rDet."Descripción" = '' then rDet."Descripción" := CopyStr(Observation, 1, MaxStrLen(rDet."Descripción"));
+        if not DebePreservarDescripcionIncidencia(Description, rDet."No.") then begin
+            rDet.SetWorkDescription(Description + ' ' + Observation);
+            if rDet."Descripción" = '' then
+                rDet."Descripción" := CopyStr(Observation, 1, MaxStrLen(rDet."Descripción"));
+        end else
+            if Observation <> '' then
+                rDet.SetWorkDescription(rDet.GetWorkDescription() + ' ' + Observation);
         commit;
         rDet.Get(rDet."No.");
         rDet.CalcFields("Work Description"); // Evitar que el Modify siguiente sobrescriba el BLOB
@@ -8607,9 +9411,14 @@ codeunit 7001148 GTask
         Imagenes.SetRange("Nº Orden", Incidencias."Nº Orden");
         Imagenes.SetRange("Es Incidencia", true);
         JsonFormater.WriteStartObject('');
-        Descripcion := Incidencias.GetWorkDescription();
-        if Descripcion = '' then
-            Descripcion := Incidencias."Descripción";
+        Descripcion := Incidencias."Descripción";
+        if EsTextoPlaceholderCierreIncidencia(Descripcion, Incidencias."No.") then
+            Descripcion := '';
+        if Descripcion = '' then begin
+            Descripcion := Incidencias.GetWorkDescription();
+            if EsTextoPlaceholderCierreIncidencia(Descripcion, Incidencias."No.") then
+                Descripcion := Incidencias."Descripción";
+        end;
         JsonFormater.WriteStringProperty('description', Descripcion);
         JsonFormater.WriteStringProperty('state', Incidencias.Estado);
         JsonFormater.WriteStringProperty('incidenceType', Format(Incidencias."Tipo Incidencia"));
@@ -11063,6 +11872,34 @@ codeunit 7001148 GTask
         Incidencia."Fecha Actuacion" := CurrentDateTime();
     end;
 
+    /// <summary>
+    /// Texto genérico de cierre (p. ej. app móvil) que no debe sustituir la descripción original en BC.
+    /// </summary>
+    local procedure EsTextoPlaceholderCierreIncidencia(Texto: Text; NoIncidencia: Code[20]): Boolean
+    var
+        Txt: Text;
+        Prefijo: Text;
+    begin
+        Txt := DelChr(LowerCase(Texto), '<>', ' ');
+        if Txt = '' then
+            exit(true);
+        Prefijo := 'cierreincidencia';
+        if CopyStr(Txt, 1, StrLen(Prefijo)) = Prefijo then
+            exit(true);
+        Prefijo := 'cierredeincidencia';
+        if CopyStr(Txt, 1, StrLen(Prefijo)) = Prefijo then
+            exit(true);
+        if (NoIncidencia <> '') and (StrPos(Txt, LowerCase(NoIncidencia)) > 0) then
+            if (CopyStr(Txt, 1, 14) = 'cierreincidenc') or (CopyStr(Txt, 1, 6) = 'cierre') then
+                exit(true);
+        exit(false);
+    end;
+
+    local procedure DebePreservarDescripcionIncidencia(Description: Text; NoIncidencia: Code[20]): Boolean
+    begin
+        exit(EsTextoPlaceholderCierreIncidencia(Description, NoIncidencia));
+    end;
+
     local procedure AplicarClaseHistorico(var Incidencia: Record Incidencias; Clase: Text)
     begin
         case LowerCase(Clase) of
@@ -11180,6 +12017,42 @@ codeunit 7001148 GTask
         end;
         Emplaz."Bajo Mantenimiento" := true;
         Emplaz.Modify(true);
+        EnlazarParteOrdenOperario(Incidencia);
+    end;
+
+    /// <summary>
+    /// Deja el parte listo para ordenes.malla.es: tarea GTask, IdQr OT-..., cabecera con Tarea y Estado Abierto.
+    /// </summary>
+    local procedure EnlazarParteOrdenOperario(var Incidencia: Record Incidencias)
+    var
+        UserTask: Record "User Task";
+        TimeSheetHeader: Record "Time Sheet Header";
+        Modificado: Boolean;
+    begin
+        if Incidencia."No." = '' then
+            exit;
+        Incidencia.Get(Incidencia."No.");
+        if Incidencia."Parte Trabajo" = '' then
+            exit;
+
+        LigarTareaConOrden(Incidencia);
+        Incidencia.Get(Incidencia."No.");
+        if not BuscarTareaDeIncidencia(Incidencia, UserTask) then
+            exit;
+        if not TimeSheetHeader.Get(Incidencia."Parte Trabajo") then
+            exit;
+
+        Modificado := false;
+        if TimeSheetHeader.Tarea <> UserTask.ID then begin
+            TimeSheetHeader.Tarea := UserTask.ID;
+            Modificado := true;
+        end;
+        if TimeSheetHeader.Estado <> TimeSheetHeader.Estado::Abierto then begin
+            TimeSheetHeader.Estado := TimeSheetHeader.Estado::Abierto;
+            Modificado := true;
+        end;
+        if Modificado then
+            TimeSheetHeader.Modify(true);
     end;
 
     local procedure AsignarResponsablesTareaMantenimiento(
@@ -11233,6 +12106,10 @@ codeunit 7001148 GTask
         UserTask.Servicio := Servicio;
         UserTask.ZonaLimpieza := ZonaMantenimiento;
         UserTask.TipoTarea := TipoTarea;
+        if (Resource."No." <> '') and (Resource."Zona Mantenimiento" = ZonaMantenimiento) then
+            AsignarObjetivoRecurso(UserTask, Resource, ZonaMantenimiento)
+        else
+            AsignarObjetivoEmplazamiento(UserTask, Emplaz, ZonaMantenimiento);
         exit(true);
     end;
 
@@ -11389,6 +12266,48 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
+    /// En servicios web OData suele publicarse solo este procedure; accionOData en JSON enruta al resto.
+    /// </summary>
+    local procedure EnrutarProcedureMantenimientoOData(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        Accion: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            exit('');
+        if JsonIn.Get('accionOData', JsonToken) then
+            Accion := LowerCase(DelChr(JsonToken.AsValue().AsText(), '<>', ' '));
+        case Accion of
+            'postcrearordenmantenimiento':
+                exit(PostCrearOrdenMantenimiento(JsonText));
+            'postactualizarmantenimiento':
+                exit(PostActualizarMantenimiento(JsonText));
+            'detallemantenimientoemplaz':
+                exit(DetalleMantenimientoEmplaz(JsonText));
+            'detallemantenimientorecurso':
+                exit(DetalleMantenimientoRecurso(JsonText));
+            'historialmantenimiento':
+                exit(HistorialMantenimiento(JsonText));
+            'listadomantenimientorecurso':
+                exit(ListadoMantenimientoRecurso(JsonText));
+        end;
+        if JsonIn.Get('puntual', JsonToken) then
+            exit(PostCrearOrdenMantenimiento(JsonText));
+        if JsonIn.Get('limite', JsonToken) then
+            if JsonIn.Get('codigo', JsonToken) then
+                exit(HistorialMantenimiento(JsonText));
+        if JsonIn.Get('noEmplazamiento', JsonToken) then
+            exit(DetalleMantenimientoEmplaz(JsonText));
+        if JsonIn.Get('noRecurso', JsonToken) then
+            exit(DetalleMantenimientoRecurso(JsonText));
+        if JsonIn.Get('fechaProximoMantenimiento', JsonToken) then
+            if JsonIn.Get('codigo', JsonToken) then
+                exit(PostActualizarMantenimiento(JsonText));
+        exit('');
+    end;
+
+    /// <summary>
     /// Listado de actuaciones de mantenimiento previstas (emplazamientos) para GMalla.
     /// JSON entrada: { "desde":"YYYY-MM-DD", "hasta":"YYYY-MM-DD", "tipoEmplazamiento":"Opis|Vallas|Otros" (opcional) }
     /// Salida: { "value": [ { "tipo_emplazamiento", "no_emplazamiento", ... } ] }
@@ -11414,6 +12333,10 @@ codeunit 7001148 GTask
         PeriodicidadTxt: Text;
         TiposRecursoTxt: Text;
     begin
+        Txt := EnrutarProcedureMantenimientoOData(JsonText);
+        if Txt <> '' then
+            exit(Txt);
+
         Desde := 0D;
         Hasta := 99991231D;
         if JsonIn.ReadFrom(JsonText) then begin
@@ -11788,6 +12711,7 @@ codeunit 7001148 GTask
 
         Incidencias.Reset();
         Incidencias.SetRange("SubTipo Incidencia", Incidencias."SubTipo Incidencia"::Mantenimiento);
+        Incidencias.SetRange("Tipo Intervención", Incidencias."Tipo Intervención"::Preventivo);
         Contador := 0;
 
         if TipoTxt = 'recurso' then begin
@@ -11816,6 +12740,7 @@ codeunit 7001148 GTask
                     repeat
                         Incidencias.Reset();
                         Incidencias.SetRange("SubTipo Incidencia", Incidencias."SubTipo Incidencia"::Mantenimiento);
+                        Incidencias.SetRange("Tipo Intervención", Incidencias."Tipo Intervención"::Preventivo);
                         Incidencias.SetRange("Tipo Elemento", Incidencias."Tipo Elemento"::Recurso);
                         Incidencias.SetRange(Recurso, Resource."No.");
                         if Incidencias.FindSet() then
@@ -11927,9 +12852,9 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
-    /// Crea orden/tarea puntual de mantenimiento.
+    /// Crea mantenimiento programado (puntual=false) o tarea puntual preventiva (puntual=true + descripcion).
     /// JSON: { "tipo":"emplaz|recurso", "tipoEmplazamiento":"...", "codigo":"...",
-    ///         "descripcion":"...", "puntual":true }
+    ///         "descripcion":"..." (puntual), "puntual":true|false }
     /// </summary>
     [ServiceEnabled]
     procedure PostCrearOrdenMantenimiento(JsonText: Text): Text
@@ -11957,6 +12882,7 @@ codeunit 7001148 GTask
             Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Codigo));
         if JsonIn.Get('descripcion', JsonToken) then
             Descripcion := JsonToken.AsValue().AsText();
+        Puntual := false;
         if JsonIn.Get('puntual', JsonToken) then
             Puntual := JsonToken.AsValue().AsBoolean();
         if Codigo = '' then
@@ -11978,10 +12904,18 @@ codeunit 7001148 GTask
         Clear(JsonRoot);
         JsonRoot.Add('success', NoIncidencia <> '');
         JsonRoot.Add('no_incidencia', NoIncidencia);
+        if NoIncidencia <> '' then begin
+            JsonRoot.Add('parte_trabajo', NoIncidencia);
+            JsonRoot.Add('id_qr', 'OT-' + NoIncidencia);
+            JsonRoot.Add('url_ordenes', StrSubstNo('https://ordenes.malla.es/OT-%1', NoIncidencia));
+        end;
         if NoIncidencia = '' then
             JsonRoot.Add('mensaje', 'No se pudo crear la orden (¿ya existe una abierta o falta periodicidad/recursos?)')
         else
-            JsonRoot.Add('mensaje', StrSubstNo('Orden de mantenimiento creada: %1', NoIncidencia));
+            if Puntual and (Descripcion <> '') then
+                JsonRoot.Add('mensaje', StrSubstNo('Tarea puntual preventiva creada: %1', NoIncidencia))
+            else
+                JsonRoot.Add('mensaje', StrSubstNo('Orden de mantenimiento preventivo creada: %1', NoIncidencia));
         JsonRoot.WriteTo(Txt);
         exit(Txt);
     end;
@@ -12146,10 +13080,7 @@ codeunit 7001148 GTask
         end;
         Incidencia."Tipo Incidencia" := TipoInc;
         Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Mantenimiento;
-        if Puntual then
-            Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo
-        else
-            Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Preventivo;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Preventivo;
         Incidencia."User Task Group" := 'MTO';
         if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then
             Incidencia."User Task Group" := 'EMT';
@@ -12232,8 +13163,8 @@ codeunit 7001148 GTask
             TipoParte := TipoParte::Trabajo;
         end;
         Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Mantenimiento;
-        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Correctivo;
-        Incidencia."FechaHora" := CurrentDateTime();
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Preventivo;
+        RellenarIncidenciaAbierta(Incidencia);
         Incidencia.Descripción := CopyStr(DescripcionCustom, 1, MaxStrLen(Incidencia.Descripción));
         Incidencia.Insert(true);
         CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);

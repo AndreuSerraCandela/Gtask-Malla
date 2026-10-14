@@ -6,7 +6,7 @@ page 50078 "Lista Mantenimientos"
     ApplicationArea = All;
     UsageCategory = Documents;
     CardPageId = "Ordenes Trabajo";
-    SourceTableView = where("SubTipo Incidencia" = const(Mantenimiento));
+    SourceTableView = where("SubTipo Incidencia" = const(Mantenimiento), "Tipo Intervención" = const(Preventivo));
 
     layout
     {

@@ -108,6 +108,7 @@ codeunit 7001149 Procesos_GTask
         ListaCorreos: Text;
         Asunto: Text;
         Titulo: Text[250];
+        Referencia: Text;
     begin
         if not User.Get(UserSecurityId()) then
             exit;
@@ -116,8 +117,13 @@ codeunit 7001149 Procesos_GTask
         if FechaReferencia = 0D then
             FechaReferencia := WorkDate();
 
-        Titulo := CopyStr(Motivo + ': ' + Format(Solicitud."Nº Autorización"), 1, MaxStrLen(Titulo));
-        Asunto := CopyStr(Motivo + ' ' + Format(Solicitud."Nº Autorización"), 1, MaxStrLen(Asunto));
+        Referencia := Solicitud."Nº Autorización";
+        if Referencia = '' then
+            Referencia := Solicitud."Nº Expediente";
+        if Referencia = '' then
+            Referencia := Solicitud."Nº Recurso";
+        Titulo := CopyStr(Motivo + ': ' + Referencia, 1, MaxStrLen(Titulo));
+        Asunto := CopyStr(Motivo + ' ' + Referencia, 1, MaxStrLen(Asunto));
 
         UserTask.SetRange(Id_record, Solicitud.RecordId);
         if UserTask.FindFirst() then begin
@@ -125,7 +131,7 @@ codeunit 7001149 Procesos_GTask
             UserTask.Modify(true);
             Email(UserTask, EmailResponsable, EmailSupervisor);
             EnviaCorreo(
-                UserTask."No.", UserTask.GetDescription(), true, '', false,
+                UserTask."No.", TextoCorreoSolicitud(Solicitud, UserTask, Titulo), true, '', false,
                 Asunto, EmailResponsable, EmailSupervisor, ListaCorreos, '',
                 User."Full Name", false, UserTask.Id_Tarea, false, true);
             exit;
@@ -185,9 +191,50 @@ codeunit 7001149 Procesos_GTask
         Email(UserTask, EmailResponsable, EmailSupervisor);
 
         EnviaCorreo(
-            UserTask."No.", UserTask.GetDescription(), true, '', false,
+            UserTask."No.", TextoCorreoSolicitud(Solicitud, UserTask, Titulo), true, '', false,
             Asunto, EmailResponsable, EmailSupervisor, ListaCorreos, '',
             User."Full Name", false, UserTask.Id_Tarea, false, true);
+    end;
+
+    local procedure TextoCorreoSolicitud(var Solicitud: Record Solicitudes; var UserTask: Record "User Task"; Titulo: Text): Text
+    var
+        Emplazamientos: Record Emplazamientos;
+        Resource: Record Resource;
+        GtaskLocal: Codeunit GTask;
+        Texto: Text;
+        Descripcion: Text;
+        Link: Text;
+    begin
+        Texto := Titulo;
+        if Solicitud."Nº Expediente" <> '' then
+            Texto += '<br>Nº expediente: ' + Solicitud."Nº Expediente";
+        if Solicitud."Nº Autorización" <> '' then
+            Texto += '<br>Nº autorización: ' + Solicitud."Nº Autorización";
+        Descripcion := Solicitud.GetWorkDescription();
+        if Descripcion = '' then
+            Descripcion := Solicitud.Observaciones;
+        if Descripcion = '' then Descripcion := UserTask.GetDescription();
+        if Descripcion = '' then Descripcion := UserTask.Title;
+        if Descripcion <> '' then
+            Texto += '<br>Descripción: ' + Descripcion;
+        if Resource.Get(Solicitud."Nº Recurso") then
+            Texto += '<br>Recurso: ' + Resource."No." + ' ' + Resource.Name
+        else
+            if Solicitud."Nº Recurso" <> '' then
+                Texto += '<br>Recurso: ' + Solicitud."Nº Recurso";
+        if Emplazamientos.Get(Solicitud.Emplazamiento) then
+            Texto += '<br>Emplazamiento: ' + Emplazamientos."Nº Emplazamiento" + ' ' + Emplazamientos."Descripción"
+        else
+            if Solicitud.Emplazamiento <> '' then
+                Texto += '<br>Emplazamiento: ' + Solicitud.Emplazamiento;
+        if Solicitud."Ubicación" <> '' then
+            Texto += '<br>Ubicación: ' + Solicitud."Ubicación";
+        if UserTask.ID <> 0 then begin
+            Link := GetUrl(ClientType::Web, CompanyName, ObjectType::Page, Page::"User Task Card", UserTask);
+            Link := GtaskLocal.UrlCorrecta(Link);
+            Texto += '<br><a href="' + Link + '">Abrir la tarea ' + Format(UserTask.ID) + '</a>';
+        end;
+        exit(Texto);
     end;
 
     procedure ActualizarGrupoTarea(var Rec: Record "User Task"; Persistir: Boolean): Boolean
@@ -708,20 +755,29 @@ codeunit 7001149 Procesos_GTask
         END;
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure UserTaskOnBeforeModifyEvent(var Rec: Record "User Task"; var xRec: Record "User Task"; RunTrigger: Boolean)
+    var
+        ColaGtaskEstado: Codeunit ColaGtaskEstado;
+    begin
+        if not RunTrigger then
+            exit;
+        if Rec.Id_Tarea = '' then
+            exit;
+        if ColaGtaskEstado.EstaSuprimido() then
+            exit;
+        // El cambio local queda por delante de la última bajada de Gtask.
+        Rec."Fecha Cambio" := CurrentDateTime;
+        if Rec."Fecha Cambio" <= Rec."Fecha Comunicado Cambio" then
+            Rec."Fecha Cambio" := Rec."Fecha Comunicado Cambio" + UnMilisegundo();
+    end;
+
     [EventSubscriber(ObjectType::Table, Database::"User Task", 'OnAfterModifyEvent', '', false, false)]
     procedure UserTaskOnAfterModifyEvent(var Rec: Record "User Task"; var xRec: Record "User Task"; RunTrigger: Boolean)
     var
-        Ficheros: Record Ficheros;
         OrdenFijacion: Record "Orden fijación";
+        ColaGtaskEstado: Codeunit ColaGtaskEstado;
     begin
-        Ficheros.SetRange(Procesado, true);
-        Ficheros.SetRange("Nombre fichero", Rec.Id_Tarea);
-        Ficheros.SetRange(Proceso, 'UPDATEGTASK');
-        If Ficheros.FindFirst() then begin
-            Ficheros.Delete(false);
-            Commit();
-            exit;
-        end;
         if Rec.Id_Tarea <> '' Then begin
             //where(OrdenFijacion = field("Nº Orden"), Reserva = field("Nº Reserva"))
             if OrdenFijacion.Get(Rec.OrdenFijacion, Rec.Reserva) then begin
@@ -730,12 +786,30 @@ codeunit 7001149 Procesos_GTask
                 OrdenFijacion.Modify();
             end;
         end;
-        If (Rec."Id_Tarea" <> '') and (RunTrigger) then begin
-            rec."Fecha Comunicado Cambio" := CurrentDateTime;
-            Rec."Fecha Cambio" := CurrentDateTime;
-            Rec.Modify();
-            UpdateTaskGtaskBak(Rec.Id_Tarea, Rec.ID);
-        end;
+        if not RunTrigger then
+            exit;
+        if Rec.Id_Tarea = '' then
+            exit;
+        if ColaGtaskEstado.EstaSuprimido() then
+            exit;
+        EncolarActualizacionGtask(Rec);
+    end;
+
+    local procedure UnMilisegundo(): Duration
+    begin
+        exit(1);
+    end;
+
+    local procedure EncolarActualizacionGtask(Rec: Record "User Task")
+    var
+        Ficheros: Record Ficheros;
+    begin
+        Ficheros.SetRange(Proceso, 'UPDATEGTASK');
+        Ficheros.SetRange(Procesado, false);
+        Ficheros.SetRange("Incoming Entry No.", Rec.ID);
+        if not Ficheros.IsEmpty() then
+            exit;
+        UpdateTaskGtaskBak(Rec.Id_Tarea, Rec.ID);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Document Attachment", 'OnAfterModifyEvent', '', false, false)]
@@ -842,7 +916,7 @@ codeunit 7001149 Procesos_GTask
 
 
 
-    procedure UpdateTaskGtask(idTarea: Text; IdKey: Integer)
+    procedure UpdateTaskGtask(idTarea: Text; IdKey: Integer): Boolean
     var
         RestApi: Codeunit "Control Ocr";
         CompanyInfo: Record "Company Information";
@@ -924,6 +998,8 @@ codeunit 7001149 Procesos_GTask
             Clear(RestApi);
 
             Json := RestApi.RestApiToken(CompanyInfo."Url Task" + 'task/' + Tareas.Id_Tarea, Gtask.Token(), RequestType::put, Json);
+            if Json = '' then
+                exit(false);
             if Tareas.Estado in [Tareas.Estado::Finalizado, Tareas.Estado::"En Proceso"] then begin
                 rIncidencia.SetRange("Id Tarea Gtask", Tareas.Id_Tarea);
                 if rIncidencia.FindFirst() then begin
@@ -939,7 +1015,9 @@ codeunit 7001149 Procesos_GTask
                     end;
                 end;
             end;
+            exit(true);
         End;
+        exit(false);
     end;
 
     procedure BusCaUsuario(Id: Text; var UserGtaskMalla: Record UsuariosGtask)
@@ -1389,7 +1467,7 @@ codeunit 7001149 Procesos_GTask
                 Gtask.InsertLink(Categoria.RecordId, Database::"User Task Group", Category, CompanyName);
                 RecordiD := Categoria.RecordId;
             end else if Categoria.Get(CopyStr(Category, 1, MaxStrLen(Categoria.Code))) then
-                RecordiD := Categoria.RecordId
+                    RecordiD := Categoria.RecordId
             else begin
                 Categoria.Reset();
                 Categoria.SetRange(Description, CopyStr(Category, 1, MaxStrLen(Categoria.Description)));
@@ -2984,6 +3062,7 @@ codeunit 7001149 Procesos_GTask
     begin
         ficheros.Reset();
         if ficheros.FindLast() then Secuencia := ficheros.Secuencia + 1 else Secuencia := 1;
+        ficheros.Init();
         ficheros.Secuencia := Secuencia;
         ficheros."Nombre fichero" := Id_Tarea;
         ficheros."Incoming Entry No." := ID;

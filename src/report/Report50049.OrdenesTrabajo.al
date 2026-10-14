@@ -283,7 +283,7 @@ report 50081 "Ordenes Trabajo"
     begin
         if OrdenNo = '' then
             exit('');
-        if not CompanyInfoPage.GenerateQRCodeImage('https://gtasks-app.deploy.malla.es/IdQr/OT-' + OrdenNo, TempBlob) then
+        if not CompanyInfoPage.GenerateQRCodeImage('https://ordenes.malla.es/OT-' + OrdenNo, TempBlob) then
             exit('');
         TempBlob.CreateInStream(InStr);
         exit(Base64Convert.ToBase64(InStr));

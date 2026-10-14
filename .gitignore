@@ -2,3 +2,4 @@
 .vscode/db.local.env
 **/db.local.env
 .env.local
+mybelic.local.env
