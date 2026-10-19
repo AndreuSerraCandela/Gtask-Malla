@@ -2439,7 +2439,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Parte Trabajo - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="Page 944501055 - Control 821855542 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
-          <source>Orden EMT</source>
+          <source>Orden de trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Orden - Property Caption</note>
         </trans-unit>
@@ -2447,6 +2447,41 @@
           <source>Estado orden</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Estado orden - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 556044458 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Orden EMT</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control OrdenEMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 1742414604 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cliente</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Cliente EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 1535207801 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Ending Date</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Ending Date EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 2711577130 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Estado orden</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Estado orden EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 63240875 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>No. Orden</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control No. Orden EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 2976542251 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nombre Cliente</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Nombre Cliente EMT - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 944501055 - Control 896074396 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Starting Date</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Ordenes Trabajo - Control Starting Date EMT - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 944501055 - Action 3219804520 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Crea y registra la factura de venta desde las líneas del parte y marca la orden como facturada.</source>

@@ -49,8 +49,8 @@ page 50120 "Ordenes Trabajo"
             }
             group(Orden)
             {
-                Caption = 'Orden EMT';
-                Visible = OrdenExiste;
+                Caption = 'Orden de trabajo';
+                Visible = OrdenNormalVisible;
 
                 field("No. Orden"; TimeSheetHeader."No.")
                 {
@@ -67,7 +67,7 @@ page 50120 "Ordenes Trabajo"
                     ApplicationArea = All;
                     Editable = false;
                 }
-                field("Starting Date"; "StartingDate")
+                field("Starting Date"; StartingDate)
                 {
                     ApplicationArea = All;
                     trigger OnValidate()
@@ -75,7 +75,7 @@ page 50120 "Ordenes Trabajo"
                         TimeSheetHeader.Validate("Starting Date", StartingDate);
                     end;
                 }
-                field("Ending Date"; "EndingDate")
+                field("Ending Date"; EndingDate)
                 {
                     ApplicationArea = All;
                     trigger OnValidate()
@@ -93,6 +93,58 @@ page 50120 "Ordenes Trabajo"
                         TimeSheetHeader.Validate(Estado, Estado);
                     end;
 
+                }
+            }
+            group(OrdenEMT)
+            {
+                Caption = 'Orden EMT';
+                Visible = EsEMT;
+
+                field("No. Orden EMT"; TimeSheetHeader."No.")
+                {
+                    Caption = 'No. Orden';
+                    ApplicationArea = All;
+                    Editable = false;
+                }
+                field("Cliente EMT"; TimeSheetHeader.Cliente)
+                {
+                    Caption = 'Cliente';
+                    ApplicationArea = All;
+                    Editable = false;
+                }
+                field("Nombre Cliente EMT"; TimeSheetHeader."Nombre Cliente")
+                {
+                    Caption = 'Nombre Cliente';
+                    ApplicationArea = All;
+                    Editable = false;
+                }
+                field("Starting Date EMT"; StartingDate)
+                {
+                    Caption = 'Starting Date';
+                    ApplicationArea = All;
+                    trigger OnValidate()
+                    begin
+                        TimeSheetHeader.Validate("Starting Date", StartingDate);
+                    end;
+                }
+                field("Ending Date EMT"; EndingDate)
+                {
+                    Caption = 'Ending Date';
+                    ApplicationArea = All;
+                    trigger OnValidate()
+                    begin
+                        TimeSheetHeader.Validate("Ending Date", EndingDate);
+                    end;
+                }
+                field("Estado orden EMT"; Estado)
+                {
+                    Caption = 'Estado orden';
+                    ApplicationArea = All;
+                    Editable = false;
+                    trigger OnValidate()
+                    begin
+                        TimeSheetHeader.Validate(Estado, Estado);
+                    end;
                 }
             }
             part(Lines; "Líneas Parte de Trabajo")
@@ -121,6 +173,7 @@ page 50120 "Ordenes Trabajo"
                 Caption = 'Imprimir';
                 Image = Print;
                 ToolTip = 'Imprime la orden de trabajo (parte EMT y líneas).';
+                Visible = EsEMT;
 
                 trigger OnAction()
                 var
@@ -137,6 +190,7 @@ page 50120 "Ordenes Trabajo"
                 Caption = 'Facturar';
                 Image = Invoice;
                 ToolTip = 'Crea y registra la factura de venta desde las líneas del parte y marca la orden como facturada.';
+                Visible = EsEMT;
 
                 trigger OnAction()
                 begin
@@ -185,6 +239,8 @@ page 50120 "Ordenes Trabajo"
     var
         TimeSheetHeader: Record "Time Sheet Header";
         OrdenExiste: Boolean;
+        OrdenNormalVisible: Boolean;
+        EsEMT: Boolean;
         StartingDate: Date;
         EndingDate: Date;
         Estado: Option " ",Abierto,Cerrado,Facturado;
@@ -202,6 +258,8 @@ page 50120 "Ordenes Trabajo"
         StartingDate := TimeSheetHeader."Starting Date";
         EndingDate := TimeSheetHeader."Ending Date";
         Estado := TimeSheetHeader.Estado;
+        EsEMT := OrdenExiste and (TimeSheetHeader.Tipo = TimeSheetHeader.Tipo::EMT);
+        OrdenNormalVisible := OrdenExiste and (not EsEMT);
     end;
 
     local procedure FacturarOrdenEMT()

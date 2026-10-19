@@ -263,7 +263,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
                                 DoccAttach."No." := Format(Rec."Nº Orden");
-                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                                 DoccAttach."Line No." := Det."Nº Reserva";
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
                             Until DetTemp.Next() = 0;
@@ -317,7 +317,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 TempBlob.CreateInStream(InStr);
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
-                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                                 DoccAttach."No." := Format(Rec."Nº Orden");
                                 DoccAttach."Line No." := Det."Nº Reserva";
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
@@ -371,7 +371,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
                                 DoccAttach."No." := Format(Rec."Nº Orden");
-                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                                 DoccAttach."Line No." := Det."Nº Reserva";
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
                             Until DetTemp.Next() = 0;
@@ -1156,7 +1156,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
                                 DoccAttach."No." := Format(Rec."Nº Orden");
-                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                                 DoccAttach."Line No." := Det."Nº Reserva";
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
                             Until DetTemp.Next() = 0;
@@ -1210,7 +1210,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 TempBlob.CreateInStream(InStr);
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
-                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                                 DoccAttach."No." := Format(Rec."Nº Orden");
                                 DoccAttach."Line No." := Det."Nº Reserva";
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
@@ -1264,7 +1264,7 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
                                 DoccAttach.Init();
                                 DoccAttach."Table ID" := Database::"User Task";
                                 DoccAttach."No." := Format(Rec."Nº Orden");
-                                DoccAttach."Document Type" := 0;
+                                DoccAttach."Document Type" := DoccAttach."Document Type"::Quote;
                                 DoccAttach."Line No." := Det."Nº Reserva";
                                 DoccAttach.SaveAttachmentFromStream(InStr, RecRef, Format(Rec."Nº Orden") + '-' + Format(DetTemp."Nº Reserva") + '.pdf');
                             Until DetTemp.Next() = 0;

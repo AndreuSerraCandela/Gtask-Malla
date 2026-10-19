@@ -7082,10 +7082,198 @@ codeunit 7001148 GTask
         exit(ResponseText);
     end;
 
+    local procedure LeerTextoJsonParte(JsonObj: JsonObject; Campo: Text): Text
+    var
+        JsonToken: JsonToken;
+    begin
+        if not JsonObj.Get(Campo, JsonToken) then
+            exit('');
+        if not JsonToken.IsValue() then
+            exit('');
+        if JsonToken.AsValue().IsNull() then
+            exit('');
+        exit(DelChr(JsonToken.AsValue().AsText(), '<>', ' '));
+    end;
+
+    local procedure BuscarUserTaskPorClave(Clave: Text; var UserTask: Record "User Task"): Boolean
+    var
+        IdEntero: Integer;
+    begin
+        Clave := DelChr(Clave, '<>', ' ');
+        if Clave = '' then
+            exit(false);
+        UserTask.Reset();
+        if Evaluate(IdEntero, Clave) then
+            if UserTask.Get(IdEntero) then
+                exit(true);
+        UserTask.Reset();
+        UserTask.SetRange(Id_Tarea, CopyStr(Clave, 1, MaxStrLen(UserTask.Id_Tarea)));
+        exit(UserTask.FindFirst());
+    end;
+
+    local procedure EsOrigenCatalogoParte(Origen: Text): Boolean
+    begin
+        Origen := LowerCase(DelChr(Origen, '<>', ' '));
+        exit(
+            (Origen = 'mobiliario') or (Origen = 'recurso') or (Origen = 'emplazamiento') or
+            (Origen = 'emplazamientos') or (Origen = 'mantenimiento'));
+    end;
+
+    local procedure BuscarMantenimientoAbiertoParte(CodigoEmplaz: Code[20]; NoRecurso: Code[20]; var Incidencia: Record Incidencias): Boolean
+    var
+        Emplaz: Record Emplazamientos;
+        NoInc: Code[20];
+    begin
+        NoInc := '';
+        if NoRecurso <> '' then
+            NoInc := BuscarNoIncidenciaMantenimientoRecursoAbierta(NoRecurso);
+        if (NoInc = '') and (CodigoEmplaz <> '') then
+            if BuscarEmplazamientoPorTipoONo('', CodigoEmplaz, Emplaz) then
+                NoInc := BuscarNoIncidenciaMantenimientoAbierta(Emplaz);
+        if NoInc = '' then
+            exit(false);
+        exit(Incidencia.Get(NoInc));
+    end;
+
+    local procedure CrearMantenimientoSiNoExisteParte(CodigoEmplaz: Code[20]; NoRecurso: Code[20]; Descripcion: Text; var Incidencia: Record Incidencias): Boolean
+    var
+        Emplaz: Record Emplazamientos;
+        Resource: Record Resource;
+        NoInc: Code[20];
+    begin
+        NoInc := '';
+        if NoRecurso <> '' then begin
+            if not Resource.Get(NoRecurso) then
+                exit(false);
+            NoInc := CrearIncidenciaMantenimientoRecurso(Resource, Descripcion, false);
+        end else begin
+            if CodigoEmplaz = '' then
+                exit(false);
+            if not BuscarEmplazamientoPorTipoONo('', CodigoEmplaz, Emplaz) then
+                exit(false);
+            NoInc := CrearIncidenciaMantenimientoEmplazamiento(Emplaz);
+        end;
+        if NoInc = '' then
+            exit(false);
+        exit(Incidencia.Get(NoInc));
+    end;
+
     /// <summary>
-    /// Recupera un parte de trabajo existente desde BC por numero_tarea y opcionalmente fecha.
-    /// Entrada: {"numero_tarea": "123" (ID User Task), "fecha": "YYYY-MM-DD" (opcional)}
-    /// Salida: JSON del parte (numero_tarea, parada_emplazamiento, fecha, descripcion, cliente, lineas) o "{}" si no existe.
+    /// Si la incidencia ya tiene tarea, la devuelve. Si CrearTarea y falta, publica la tarea GTask.
+    /// NoParte queda con el parte ya ligado a la incidencia, si existe.
+    /// </summary>
+    local procedure ParteDeIncidencia(var Incidencia: Record Incidencias; var UserTask: Record "User Task"; var NoParte: Code[20]; CrearTarea: Boolean): Boolean
+    var
+        IdTarea: Text;
+    begin
+        Incidencia.Get(Incidencia."No.");
+        NoParte := Incidencia."Parte Trabajo";
+        if BuscarTareaDeIncidencia(Incidencia, UserTask) then
+            exit(true);
+        if not CrearTarea then
+            exit(NoParte <> '');
+
+        if Incidencia."Parte Trabajo" = '' then
+            AsegurarParteMantenimiento(Incidencia);
+        Incidencia.Get(Incidencia."No.");
+        NoParte := Incidencia."Parte Trabajo";
+        if BuscarTareaDeIncidencia(Incidencia, UserTask) then
+            exit(true);
+
+        if Incidencia."Parte Trabajo" <> '' then
+            LigarTareaConOrden(Incidencia)
+        else begin
+            IdTarea := AsegurarTareaGtaskIncidencia(Incidencia);
+            if (IdTarea = '') or (CopyStr(IdTarea, 1, 5) = 'Error') or (StrLen(IdTarea) > 30) then
+                exit(false);
+        end;
+        Incidencia.Get(Incidencia."No.");
+        NoParte := Incidencia."Parte Trabajo";
+        exit(BuscarTareaDeIncidencia(Incidencia, UserTask) or (NoParte <> ''));
+    end;
+
+    /// <summary>
+    /// Localiza la User Task del parte. Si CrearSiNoExiste y el origen es catálogo SQL o calendario
+    /// sin tarea, reutiliza el mantenimiento abierto o lo crea (incidencia + tarea + parte).
+    /// </summary>
+    local procedure ResolverTareaParteJson(JsonObj: JsonObject; CrearSiNoExiste: Boolean; var UserTask: Record "User Task"; var NoParte: Code[20]): Boolean
+    var
+        IdTareaTxt: Text;
+        NumeroTarea: Text;
+        NoIncidencia: Text;
+        Origen: Text;
+        CodigoEmplaz: Code[20];
+        NoRecurso: Code[20];
+        Descripcion: Text;
+        Incidencia: Record Incidencias;
+    begin
+        Clear(UserTask);
+        NoParte := '';
+        IdTareaTxt := LeerTextoJsonParte(JsonObj, 'id_tarea');
+        if IdTareaTxt = '' then
+            IdTareaTxt := LeerTextoJsonParte(JsonObj, 'idTarea');
+        NumeroTarea := LeerTextoJsonParte(JsonObj, 'numero_tarea');
+        NoIncidencia := LeerTextoJsonParte(JsonObj, 'no_incidencia');
+        if NoIncidencia = '' then
+            NoIncidencia := LeerTextoJsonParte(JsonObj, 'noIncidencia');
+        Origen := LowerCase(LeerTextoJsonParte(JsonObj, 'origen'));
+        CodigoEmplaz := CopyStr(LeerTextoJsonParte(JsonObj, 'codigo_emplazamiento'), 1, MaxStrLen(CodigoEmplaz));
+        if CodigoEmplaz = '' then
+            CodigoEmplaz := CopyStr(LeerTextoJsonParte(JsonObj, 'codigoEmplazamiento'), 1, MaxStrLen(CodigoEmplaz));
+        NoRecurso := CopyStr(LeerTextoJsonParte(JsonObj, 'no_recurso'), 1, MaxStrLen(NoRecurso));
+        if NoRecurso = '' then
+            NoRecurso := CopyStr(LeerTextoJsonParte(JsonObj, 'noRecurso'), 1, MaxStrLen(NoRecurso));
+        Descripcion := LeerTextoJsonParte(JsonObj, 'descripcion');
+
+        if (IdTareaTxt <> '') and BuscarUserTaskPorClave(IdTareaTxt, UserTask) then begin
+            Incidencia.Reset();
+            Incidencia.SetRange("ID Tarea Gtask", CopyStr(IdTareaTxt, 1, MaxStrLen(Incidencia."ID Tarea Gtask")));
+            if not Incidencia.FindFirst() then begin
+                Incidencia.Reset();
+                Incidencia.SetRange(Id_Tarea, UserTask.ID);
+                if not Incidencia.FindFirst() then
+                    Clear(Incidencia);
+            end;
+            if Incidencia."No." <> '' then
+                NoParte := Incidencia."Parte Trabajo";
+            exit(true);
+        end;
+
+        if (NumeroTarea <> '') and BuscarUserTaskPorClave(NumeroTarea, UserTask) then begin
+            Incidencia.Reset();
+            Incidencia.SetRange(Id_Tarea, UserTask.ID);
+            if Incidencia.FindFirst() then
+                NoParte := Incidencia."Parte Trabajo"
+            else
+                if (UserTask.Id_Tarea <> '') then begin
+                    Incidencia.Reset();
+                    Incidencia.SetRange("ID Tarea Gtask", CopyStr(UserTask.Id_Tarea, 1, MaxStrLen(Incidencia."ID Tarea Gtask")));
+                    if Incidencia.FindFirst() then
+                        NoParte := Incidencia."Parte Trabajo";
+                end;
+            exit(true);
+        end;
+
+        if (NoIncidencia <> '') and Incidencia.Get(CopyStr(NoIncidencia, 1, MaxStrLen(Incidencia."No."))) then
+            exit(ParteDeIncidencia(Incidencia, UserTask, NoParte, CrearSiNoExiste));
+
+        if EsOrigenCatalogoParte(Origen) then
+            if BuscarMantenimientoAbiertoParte(CodigoEmplaz, NoRecurso, Incidencia) then
+                exit(ParteDeIncidencia(Incidencia, UserTask, NoParte, CrearSiNoExiste));
+
+        if not CrearSiNoExiste then
+            exit(false);
+        if not EsOrigenCatalogoParte(Origen) then
+            exit(false);
+        if not CrearMantenimientoSiNoExisteParte(CodigoEmplaz, NoRecurso, Descripcion, Incidencia) then
+            Error('No se ha podido crear la tarea de mantenimiento para %1.', CodigoEmplaz + NoRecurso);
+        exit(ParteDeIncidencia(Incidencia, UserTask, NoParte, true));
+    end;
+
+    /// <summary>
+    /// Recupera un parte de trabajo existente desde BC por tarea GTask, incidencia o código de catálogo.
+    /// Entrada: numero_tarea, id_tarea, no_incidencia, origen, codigo_emplazamiento, no_recurso y fecha opcional.
+    /// Salida: JSON del parte o "{}" si no existe. No crea tarea ni parte.
     /// </summary>
     [ServiceEnabled]
     procedure GetParteTrabajo(JsonText: Text): Text
@@ -7100,10 +7288,9 @@ codeunit 7001148 GTask
         UserTask: Record "User Task";
         Item: Record Item;
         Resource: Record Resource;
-        NumeroTarea: Text;
         FechaTexto: Text;
         Fecha: Date;
-        LineNo: Integer;
+        NoParteExistente: Code[20];
         ResultText: Text;
     begin
         Clear(JsonOut);
@@ -7112,32 +7299,49 @@ codeunit 7001148 GTask
             exit(ResultText);
         end;
 
-        NumeroTarea := '';
         Fecha := 0D;
-        if JsonIn.Get('numero_tarea', JsonToken) then NumeroTarea := JsonToken.AsValue().AsText();
         if JsonIn.Get('fecha', JsonToken) then begin
             FechaTexto := JsonToken.AsValue().AsText();
-            Evaluate(Fecha, FechaTexto);
+            if not Evaluate(Fecha, FechaTexto) then
+                Fecha := 0D;
         end;
 
-        if (NumeroTarea = '') or not Evaluate(LineNo, NumeroTarea) or not UserTask.Get(LineNo) then begin
+        if not ResolverTareaParteJson(JsonIn, false, UserTask, NoParteExistente) then begin
             JsonOut.WriteTo(ResultText);
             exit(ResultText);
         end;
 
         TimeSheetHeader.Reset();
-        TimeSheetHeader.SetRange(Tipo, TimeSheetHeader.Tipo::Trabajo);
-        TimeSheetHeader.SetRange(Estado, TimeSheetHeader.Estado::Abierto);
-        TimeSheetHeader.SetRange(Tarea, UserTask.ID);
-        if Fecha <> 0D then
-            TimeSheetHeader.SetRange("Fecha Inicio", Fecha);
+        if (NoParteExistente <> '') and TimeSheetHeader.Get(NoParteExistente) then begin
+            // Parte ya ligado a la incidencia. No se filtra por fecha.
+        end else begin
+            if UserTask.ID = 0 then begin
+                JsonOut.WriteTo(ResultText);
+                exit(ResultText);
+            end;
+            TimeSheetHeader.Reset();
+            TimeSheetHeader.SetRange(Tipo, TimeSheetHeader.Tipo::Trabajo);
+            TimeSheetHeader.SetRange(Estado, TimeSheetHeader.Estado::Abierto);
+            TimeSheetHeader.SetRange(Tarea, UserTask.ID);
+            if Fecha <> 0D then
+                TimeSheetHeader.SetRange("Fecha Inicio", Fecha);
+            if not TimeSheetHeader.FindFirst() then begin
+                JsonOut.WriteTo(ResultText);
+                exit(ResultText);
+            end;
+        end;
 
-        if not TimeSheetHeader.FindFirst() then begin
+        if TimeSheetHeader."No." = '' then begin
             JsonOut.WriteTo(ResultText);
             exit(ResultText);
         end;
 
-        JsonOut.Add('numero_tarea', NumeroTarea);
+        if UserTask.ID <> 0 then
+            JsonOut.Add('numero_tarea', Format(UserTask.ID))
+        else
+            JsonOut.Add('numero_tarea', '');
+        if UserTask.Id_Tarea <> '' then
+            JsonOut.Add('id_tarea', UserTask.Id_Tarea);
         JsonOut.Add('parada_emplazamiento', TimeSheetHeader.Description);
         JsonOut.Add('fecha', Format(TimeSheetHeader."Fecha Inicio", 0, 9));
         JsonOut.Add('descripcion', TimeSheetHeader.Description);
@@ -7220,7 +7424,9 @@ codeunit 7001148 GTask
 
     /// <summary>
     /// Recibe un parte de trabajo desde Rutas (JSON) y crea/actualiza Time Sheet Header + Time Sheet Line.
-    /// JSON esperado: {"numero_tarea":"...","parada_emplazamiento":"...","fecha":"YYYY-MM-DD","operario":"...","descripcion":"...","cliente":"...","lineas":[{"tipo":"producto"|"recurso","codigo":"...","nombre":"...","cantidad":1,"precio":0}]}
+    /// JSON esperado: numero_tarea y/o id_tarea, no_incidencia, origen, codigo_emplazamiento, no_recurso,
+    /// parada_emplazamiento, fecha, operario, descripcion, cliente y lineas.
+    /// Si el origen es catálogo SQL o calendario y no hay tarea, crea el mantenimiento (tarea incluida) antes del parte.
     /// </summary>
     [ServiceEnabled]
     procedure PostParteTrabajo(JsonText: Text): Text
@@ -7235,7 +7441,6 @@ codeunit 7001148 GTask
         UserTask: Record "User Task";
         Item: Record Item;
         Resource: Record Resource;
-        NumeroTarea: Text;
         ParadaEmplazamiento: Text;
         FechaTexto: Text;
         Fecha: Date;
@@ -7252,18 +7457,19 @@ codeunit 7001148 GTask
         Precio: Decimal;
         JsonResult: JsonObject;
         ResultText: Text;
+        NoParteExistente: Code[20];
+        ParteYaExistia: Boolean;
+        TareaResuelta: Boolean;
     begin
         if (JsonText = '') or not JsonObj.ReadFrom(JsonText) then
             Error('JSON inválido o vacío');
 
-        NumeroTarea := '';
         ParadaEmplazamiento := '';
         Fecha := 0D;
         Operario := '';
         Descripcion := '';
         Cliente := '';
 
-        if JsonObj.Get('numero_tarea', JsonToken) then NumeroTarea := JsonToken.AsValue().AsText();
         if JsonObj.Get('parada_emplazamiento', JsonToken) then ParadaEmplazamiento := CopyStr(JsonToken.AsValue().AsText(), 1, 250);
         if JsonObj.Get('parada_bus', JsonToken) then ParadaEmplazamiento := CopyStr(JsonToken.AsValue().AsText(), 1, 250);
         if JsonObj.Get('fecha', JsonToken) then begin
@@ -7281,47 +7487,50 @@ codeunit 7001148 GTask
         if JsonObj.Get('descripcion', JsonToken) then Descripcion := CopyStr(JsonToken.AsValue().AsText(), 1, 250);
         if JsonObj.Get('cliente', JsonToken) then Cliente := CopyStr(JsonToken.AsValue().AsText(), 1, 20);
         if Cliente = '' Then Cliente := '426'; // emt, hay que ponerlo en un configurador'
-        // Buscar o crear cabecera por Tarea (User Task) y fecha
+        // Buscar tarea existente o crearla si el origen es catálogo SQL / calendario sin tarea.
+        ParteYaExistia := false;
+        TareaResuelta := ResolverTareaParteJson(JsonObj, true, UserTask, NoParteExistente);
+
         TimeSheetHeader.Reset();
-        TimeSheetHeader.SetRange(Tipo, TimeSheetHeader.Tipo::Trabajo);
-        TimeSheetHeader.SetRange("Fecha Inicio", Fecha);
-        if NumeroTarea <> '' then begin
-            if Evaluate(LineNo, NumeroTarea) then begin
-                UserTask.Get(LineNo);
+        if (NoParteExistente <> '') and TimeSheetHeader.Get(NoParteExistente) then
+            ParteYaExistia := true
+        else begin
+            TimeSheetHeader.Reset();
+            TimeSheetHeader.SetRange(Tipo, TimeSheetHeader.Tipo::Trabajo);
+            TimeSheetHeader.SetRange("Fecha Inicio", Fecha);
+            if TareaResuelta and (UserTask.ID <> 0) then
                 TimeSheetHeader.SetRange(Tarea, UserTask.ID);
-            end else begin
-                UserTask.SetRange(Id_Tarea, NumeroTarea);
-                if UserTask.FindFirst() then
-                    TimeSheetHeader.SetRange(Tarea, UserTask.ID);
+
+            if not TimeSheetHeader.FindFirst() then begin
+                LastHeader.Reset();
+                TimeSheetHeader.Init();
+                TimeSheetHeader.Tipo := TimeSheetHeader.Tipo::Trabajo;
+                TimeSheetHeader."Owner User ID" := UserId;
+                TimeSheetHeader."No." := '';
+                LastHeader.SetFilter("No.", '%1', 'PT' + Format(Date2DMY(Fecha, 3)) + '*');
+                if LastHeader.FindLast() then
+                    TimeSheetHeader."No." := IncStr(LastHeader."No.")
+                else
+                    TimeSheetHeader."No." := 'PT' + Format(Date2DMY(Fecha, 3)) + '-00001';
+                TimeSheetHeader."Fecha Inicio" := Fecha;
+                TimeSheetHeader."Fecha Fin" := Fecha;
+                TimeSheetHeader."Starting Date" := Fecha;
+                TimeSheetHeader."Ending Date" := Fecha;
+                if TareaResuelta and (UserTask.ID <> 0) then
+                    TimeSheetHeader.Tarea := UserTask.ID;
+                TimeSheetHeader.Cliente := Cliente;
+                TimeSheetHeader.Description := CopyStr(ParadaEmplazamiento, 1, MaxStrLen(TimeSheetHeader.Description));
+                // La tabla estándar Time Sheet Header/Line exige "Resource No." válido (OnInsert llama GetTimeSheetResource)
+                if TimeSheetHeader."Resource No." = '' then
+                    TimeSheetHeader.Insert()
+                else
+                    TimeSheetHeader.Insert(true);
             end;
         end;
 
-        if not TimeSheetHeader.FindFirst() then begin
-            LastHeader.Reset();
-            TimeSheetHeader.Init();
-            TimeSheetHeader.Tipo := TimeSheetHeader.Tipo::Trabajo;
-            TimeSheetHeader."Owner User ID" := UserId;
-            TimeSheetHeader."No." := '';
-            LastHeader.SetFilter("No.", '%1', 'PT' + Format(Date2DMY(Fecha, 3)) + '*');
-            if LastHeader.FindLast() then
-                TimeSheetHeader."No." := IncStr(LastHeader."No.")
-            else
-                TimeSheetHeader."No." := 'PT' + Format(Date2DMY(Fecha, 3)) + '-00001';
-            TimeSheetHeader."Fecha Inicio" := Fecha;
-            TimeSheetHeader."Fecha Fin" := Fecha;
-            TimeSheetHeader."Starting Date" := Fecha;
-            TimeSheetHeader."Ending Date" := Fecha;
-            if (NumeroTarea <> '') and (Evaluate(LineNo, NumeroTarea)) then begin
-                if UserTask.Get(LineNo) then
-                    TimeSheetHeader.Tarea := UserTask.ID;
-            end;
-            TimeSheetHeader.Cliente := Cliente;
-            TimeSheetHeader.Description := CopyStr(ParadaEmplazamiento, 1, MaxStrLen(TimeSheetHeader.Description));
-            // La tabla estándar Time Sheet Header/Line exige "Resource No." válido (OnInsert llama GetTimeSheetResource)
-            if TimeSheetHeader."Resource No." = '' then
-                TimeSheetHeader.Insert()
-            else
-                TimeSheetHeader.Insert(true);
+        if TareaResuelta and (UserTask.ID <> 0) and (TimeSheetHeader.Tarea <> UserTask.ID) then begin
+            TimeSheetHeader.Tarea := UserTask.ID;
+            TimeSheetHeader.Modify(true);
         end;
 
         // Si la cabecera (nueva o existente) tiene Resource No. vacío, el OnInsert de las líneas estándar falla; rellenar con el primer recurso
@@ -7333,9 +7542,10 @@ codeunit 7001148 GTask
         //     end;
         // end;
 
-        // Líneas: borrar las actuales si se envían nuevas (opcional: podríamos fusionar)
+        // Líneas: sustituir las actuales solo si el JSON trae alguna. Un array vacío no borra la plantilla.
         if JsonObj.Get('lineas', JsonToken) and JsonToken.IsArray() then begin
             JsonArray := JsonToken.AsArray();
+            if JsonArray.Count() > 0 then begin
             TimeSheetLine.SetRange("Time Sheet No.", TimeSheetHeader."No.");
             TimeSheetLine.DeleteAll();
 
@@ -7379,17 +7589,19 @@ codeunit 7001148 GTask
                 TimeSheetLine.Cantidad := Cantidad;
                 TimeSheetLine.Insert(true);
             end;
+            end;
         end;
 
-        // Enlazar con CreateParte: enviar parte a la API externa (workorder) si la cabecera tiene tarea asociada
-        if TimeSheetHeader.Tarea <> 0 then
-            if UserTask.Get(TimeSheetHeader.Tarea) then begin
-                JsonResult.Add('value', TimeSheetHeader."No.");
+        // El mantenimiento recién creado ya publica la tarea. CreateParte solo si el parte es nuevo.
+        Clear(JsonResult);
+        JsonResult.Add('value', TimeSheetHeader."No.");
+        if (TimeSheetHeader.Tarea <> 0) and UserTask.Get(TimeSheetHeader.Tarea) then begin
+            if UserTask.Id_Tarea <> '' then
+                JsonResult.Add('id_tarea', UserTask.Id_Tarea);
+            JsonResult.Add('numero_tarea', Format(UserTask.ID));
+            if not ParteYaExistia then
                 JsonResult.Add('workorder_id', CopyStr(CreateParte(UserTask), 1, 250));
-            end else
-                JsonResult.Add('value', TimeSheetHeader."No.")
-        else
-            JsonResult.Add('value', TimeSheetHeader."No.");
+        end;
 
         JsonResult.WriteTo(ResultText);
         exit(ResultText);
