@@ -780,44 +780,44 @@ codeunit 7001148 GTask
                             if (Tareas."Fecha Comunicado Cambio" <> 0DT) and (Tareas."Fecha Cambio" <> 0DT) and (Tareas."Fecha Comunicado Cambio" >= Tareas."Fecha Cambio") then
                                 SaltarTareaAlineada := true
                             else begin
-                            If Tareas."Fecha Cambio" = 0DT Then Tareas."Fecha Cambio" := CurrentDateTime;
-                            If Tareas."Fecha Comunicado Cambio" = 0DT Then Tareas."Fecha Comunicado Cambio" := CurrentDateTime;
-                            If Tareas."Fecha Comunicado Cambio" >= Tareas."Fecha Cambio" then begin
-                                JsonTarea.Get('state', JsonCampo);
-                                case JsonCampo.AsValue().AsText() of
-                                    'PENDING':
-                                        begin
-                                            Tareas.Estado := Tareas.Estado::Pendiente;
-                                        end;
-                                    'INPROCESS':
-                                        Tareas.Estado := Tareas.Estado::"En Proceso";
-                                    'FINISHED':
-                                        Tareas.Estado := Tareas.Estado::Finalizado
-                                end;
-                                JsonTarea.Get('description', JsonCampo);
-                                Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
-                                JsonTarea.Get('observation', JsonCampo);
-                                if not JsonCampo.AsValue().IsNull then begin
-                                    Tareas.SetDescription(JsonCampo.AsValue().AsText());
-                                    Tareas.Get(Id);
-                                end;
-                                AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
-                                //Actualizar supervisor
-                                if JsonTarea.Get('supervisor', JsonCampo) then begin
-                                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                                    if UserGtaskMalla.FindFirst() then
-                                        Tareas.Supervisor := UserGtaskMalla."Id Usuario";
-                                end;
-                                //Actulizar responsable
-                                if JsonTarea.Get('user', JsonCampo) then begin
-                                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                                    if UserGtaskMalla.FindFirst() then
-                                        Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
-                                end;
+                                If Tareas."Fecha Cambio" = 0DT Then Tareas."Fecha Cambio" := CurrentDateTime;
+                                If Tareas."Fecha Comunicado Cambio" = 0DT Then Tareas."Fecha Comunicado Cambio" := CurrentDateTime;
+                                If Tareas."Fecha Comunicado Cambio" >= Tareas."Fecha Cambio" then begin
+                                    JsonTarea.Get('state', JsonCampo);
+                                    case JsonCampo.AsValue().AsText() of
+                                        'PENDING':
+                                            begin
+                                                Tareas.Estado := Tareas.Estado::Pendiente;
+                                            end;
+                                        'INPROCESS':
+                                            Tareas.Estado := Tareas.Estado::"En Proceso";
+                                        'FINISHED':
+                                            Tareas.Estado := Tareas.Estado::Finalizado
+                                    end;
+                                    JsonTarea.Get('description', JsonCampo);
+                                    Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
+                                    JsonTarea.Get('observation', JsonCampo);
+                                    if not JsonCampo.AsValue().IsNull then begin
+                                        Tareas.SetDescription(JsonCampo.AsValue().AsText());
+                                        Tareas.Get(Id);
+                                    end;
+                                    AplicarFechasDesdeGtaskJson(Tareas, JsonTarea);
+                                    //Actualizar supervisor
+                                    if JsonTarea.Get('supervisor', JsonCampo) then begin
+                                        UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
+                                        if UserGtaskMalla.FindFirst() then
+                                            Tareas.Supervisor := UserGtaskMalla."Id Usuario";
+                                    end;
+                                    //Actulizar responsable
+                                    if JsonTarea.Get('user', JsonCampo) then begin
+                                        UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
+                                        if UserGtaskMalla.FindFirst() then
+                                            Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
+                                    end;
 
-                                Tareas.Modify();
+                                    Tareas.Modify();
 
-                            end;
+                                end;
                             end;
                         end; //else
                              //If Id <> 0 Then DeleteTarea(IdTarea);
@@ -4371,6 +4371,8 @@ codeunit 7001148 GTask
                 UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::Semana;
             2:
                 UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::Mes;
+            3:
+                UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::Año;
             else
                 UserTask."Periodo objetivo" := UserTask."Periodo objetivo"::" ";
         end;
@@ -7546,49 +7548,49 @@ codeunit 7001148 GTask
         if JsonObj.Get('lineas', JsonToken) and JsonToken.IsArray() then begin
             JsonArray := JsonToken.AsArray();
             if JsonArray.Count() > 0 then begin
-            TimeSheetLine.SetRange("Time Sheet No.", TimeSheetHeader."No.");
-            TimeSheetLine.DeleteAll();
-
-            for i := 0 to JsonArray.Count - 1 do begin
-                JsonArray.Get(i, JsonToken);
-                if not JsonToken.IsObject() then continue;
-                JsonLine := JsonToken.AsObject();
-                TipoLinea := 'producto';
-                Codigo := '';
-                Cantidad := 0;
-                Precio := 0;
-                if JsonLine.Get('tipo', JsonToken) then TipoLinea := LowerCase(JsonToken.AsValue().AsText());
-                if JsonLine.Get('codigo', JsonToken) then Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, 20);
-
-                if JsonLine.Get('cantidad', JsonToken) then Evaluate(Cantidad, JsonToken.AsValue().AsText());
-                if JsonLine.Get('precio', JsonToken) then Evaluate(Precio, JsonToken.AsValue().AsText());
-
                 TimeSheetLine.SetRange("Time Sheet No.", TimeSheetHeader."No.");
-                if TimeSheetLine.FindLast() then
-                    LineNo := TimeSheetLine."Line No." + 10000
-                else
-                    LineNo := 10000;
+                TimeSheetLine.DeleteAll();
 
-                TimeSheetLine.Init();
-                TimeSheetLine."Time Sheet No." := TimeSheetHeader."No.";
-                TimeSheetLine."Line No." := LineNo;
-                TimeSheetLine."Job No." := TimeSheetHeader."No.";
-                TimeSheetLine."Job Line No." := -1;
-                if TipoLinea = 'recurso' then
-                    TimeSheetLine.Tipo := TimeSheetLine.Tipo::Recurso
-                else
-                    TimeSheetLine.Tipo := TimeSheetLine.Tipo::Producto;
-                TimeSheetLine.No := Codigo;
-                if Codigo <> '' then
-                    if Item.Get(Codigo) then
-                        TimeSheetLine.Descripcion := Item.Description
+                for i := 0 to JsonArray.Count - 1 do begin
+                    JsonArray.Get(i, JsonToken);
+                    if not JsonToken.IsObject() then continue;
+                    JsonLine := JsonToken.AsObject();
+                    TipoLinea := 'producto';
+                    Codigo := '';
+                    Cantidad := 0;
+                    Precio := 0;
+                    if JsonLine.Get('tipo', JsonToken) then TipoLinea := LowerCase(JsonToken.AsValue().AsText());
+                    if JsonLine.Get('codigo', JsonToken) then Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, 20);
+
+                    if JsonLine.Get('cantidad', JsonToken) then Evaluate(Cantidad, JsonToken.AsValue().AsText());
+                    if JsonLine.Get('precio', JsonToken) then Evaluate(Precio, JsonToken.AsValue().AsText());
+
+                    TimeSheetLine.SetRange("Time Sheet No.", TimeSheetHeader."No.");
+                    if TimeSheetLine.FindLast() then
+                        LineNo := TimeSheetLine."Line No." + 10000
                     else
-                        if Resource.Get(Codigo) then
-                            TimeSheetLine.Descripcion := Resource.Name;
-                if JsonLine.Get('nombre', JsonToken) then TimeSheetLine.Descripcion := CopyStr(JsonToken.AsValue().AsText(), 1, 80);
-                TimeSheetLine.Cantidad := Cantidad;
-                TimeSheetLine.Insert(true);
-            end;
+                        LineNo := 10000;
+
+                    TimeSheetLine.Init();
+                    TimeSheetLine."Time Sheet No." := TimeSheetHeader."No.";
+                    TimeSheetLine."Line No." := LineNo;
+                    TimeSheetLine."Job No." := TimeSheetHeader."No.";
+                    TimeSheetLine."Job Line No." := -1;
+                    if TipoLinea = 'recurso' then
+                        TimeSheetLine.Tipo := TimeSheetLine.Tipo::Recurso
+                    else
+                        TimeSheetLine.Tipo := TimeSheetLine.Tipo::Producto;
+                    TimeSheetLine.No := Codigo;
+                    if Codigo <> '' then
+                        if Item.Get(Codigo) then
+                            TimeSheetLine.Descripcion := Item.Description
+                        else
+                            if Resource.Get(Codigo) then
+                                TimeSheetLine.Descripcion := Resource.Name;
+                    if JsonLine.Get('nombre', JsonToken) then TimeSheetLine.Descripcion := CopyStr(JsonToken.AsValue().AsText(), 1, 80);
+                    TimeSheetLine.Cantidad := Cantidad;
+                    TimeSheetLine.Insert(true);
+                end;
             end;
         end;
 
@@ -8619,6 +8621,9 @@ codeunit 7001148 GTask
         Usuario: Record UsuariosGtask;
         UsuarioId: Guid;
         UsuarioAsignadoId: Guid;
+        UsuarioSeguimientoId: Guid;
+        UsuarioSeguimientoInformado: Boolean;
+        TextoSeguimiento: Text;
         IdIncidencia: Text;
         NuevaIncidencia: Boolean;
         Fecha: DateTime;
@@ -8664,6 +8669,17 @@ codeunit 7001148 GTask
         If JsonIncidencia.Get('user_assigned', JsonCampo) Then
             If Usuario.Get(JsonCampo.AsValue().AsText()) then
                 UsuarioAsignadoId := Usuario."Id Usuario";
+        if JsonIncidencia.Get('user_follow', JsonCampo) then begin
+            UsuarioSeguimientoInformado := true;
+            TextoSeguimiento := JsonCampo.AsValue().AsText();
+            if TextoSeguimiento = '' then
+                Clear(UsuarioSeguimientoId)
+            else
+                if Usuario.Get(TextoSeguimiento) then
+                    UsuarioSeguimientoId := Usuario."Id Usuario"
+                else
+                    UsuarioSeguimientoInformado := false;
+        end;
         If JsonIncidencia.Get('incidenceType', JsonCampo) Then
             IncidenceType := JsonCampo.AsValue().AsText();
         If JsonIncidencia.Get('subIncidenceType', JsonCampo) Then
@@ -8790,7 +8806,13 @@ codeunit 7001148 GTask
             rDet.Usuario := UsuarioId;
         if IsNullGuid(UsuarioAsignadoId) = false then
             rDet."Usuario Asignado" := UsuarioAsignadoId;
-
+        if UsuarioSeguimientoInformado then
+            if IsNullGuid(UsuarioSeguimientoId) then
+                Clear(rDet."Usuario Seguimiento")
+            else
+                rDet."Usuario Seguimiento" := UsuarioSeguimientoId;
+        if IsNullGuid(rDet."Usuario Seguimiento") then
+            rDet."Usuario Seguimiento" := UsuarioId;
         case IncidenceType of
 
             'EMT', 'Incidencias EMT':
@@ -9398,7 +9420,9 @@ codeunit 7001148 GTask
             rDet.Recurso := CopyStr(Stop, 1, MaxStrLen(rDet.Recurso));
         if IsNullGuid(UsuarioId) = false then
             rDet.Usuario := UsuarioId;
-
+        if IsNullGuid(rDet."Usuario Seguimiento") then
+            if IsNullGuid(UsuarioId) = false then
+                rDet."Usuario Seguimiento" := UsuarioId;
         // case IncidenceType of
 
         //     'EMT':
@@ -9645,6 +9669,8 @@ codeunit 7001148 GTask
         JsonFormater.WriteStringProperty('user_name', Incidencias.ID_UsuarioGtask(Incidencias.Usuario));
         JsonFormater.WriteStringProperty('user_assigned', Incidencias.ID_UsuarioGtask(Incidencias."Usuario Asignado"));
         JsonFormater.WriteStringProperty('user_assigned_name', Incidencias.NombreUsuario(Incidencias."Usuario Asignado"));
+        JsonFormater.WriteStringProperty('user_follow', Incidencias.ID_UsuarioGtask(Incidencias."Usuario Seguimiento"));
+        JsonFormater.WriteStringProperty('user_follow_name', Incidencias.NombreUsuario(Incidencias."Usuario Seguimiento"));
         JsonFormater.WriteStringProperty('comunicado_por_emt', Incidencias."Comunicado por EMT");
         //JsonFormater.WriteStringProperty('id_task', Incidencias."ID Tarea Gtask");
         //Añadir geplocañlización PuntoX yPuntoY del emplazamiento o recurso
@@ -11626,10 +11652,146 @@ codeunit 7001148 GTask
             if not Resource.Get(Incidencia.Recurso) then
                 Resource.Init();
 
-        if TienePeriodicidadMantenimientoFicha(Emplaz, Resource) then
-            EmplCu.ActualizarMantenimientoEmplazamiento(Emplaz."Tipo Emplazamiento", Emplaz."Nº Emplazamiento", Fecha)
+        if TienePeriodicidadMantenimientoFicha(Emplaz, Resource) then begin
+            if Incidencia."Tipo Elemento" = Incidencia."Tipo Elemento"::Recurso then
+                ActualizarTrasMantenimiento(Resource, Fecha) else
+                EmplCu.ActualizarMantenimientoEmplazamiento(Emplaz."Tipo Emplazamiento", Emplaz."Nº Emplazamiento", Fecha)
+        end
         else
             ActualizarProximoMantenimientoDesdeZona(Emplaz, Resource, Fecha);
+    end;
+
+    procedure ActualizarTrasMantenimiento(var Resource: Record Resource; FechaActuacion: Date)
+    begin
+        if FechaActuacion = 0D then
+            FechaActuacion := WorkDate();
+        Resource."Último Mantenimiento" := FechaActuacion;
+        Resource."Bajo Mantenimiento" := false;
+        Resource."Fecha Próximo Mantenimiento" := CalcularProximoMantenimiento(Resource, FechaActuacion);
+        Resource.Modify();
+    end;
+
+    procedure CalcularProximoMantenimiento(Resource: Record Resource; FechaBase: Date): Date
+    var
+        Periodicidad: DateFormula;
+        FechaBusqueda: Date;
+    begin
+        if FechaBase = 0D then
+            FechaBase := WorkDate();
+        if Format(Resource."Periodicidad Mantenimiento") = '' then
+            exit(CalcularPeriodicidadZona(Resource."Zona Mantenimiento", FechaBase));
+        Periodicidad := Resource."Periodicidad Mantenimiento";
+        FechaBusqueda := CalcDate(Periodicidad, FechaBase);
+        if not EsDiaLaborable(FechaBusqueda) then begin
+            while not EsDiaLaborable(FechaBusqueda) do
+                FechaBusqueda := FechaBusqueda + 1;
+        end;
+        exit(FechaBusqueda);
+    end;
+
+    procedure CalcularPeriodicidadZona(Zona: Integer; Fecha: Date): Date
+    var
+        Zonas: Record "Zonas Limpieza";
+        PeriodicidadZona: Record "Periodicidad Zona Limpieza";
+        FechaBusqueda: Date;
+        MaxIteraciones: Integer;
+    begin
+        // Si hay reglas de periodicidad definidas en la tabla, usarlas (solo días laborables L-V y sin festivos)
+        PeriodicidadZona.SetRange("Id Zona Limpieza", Zona);
+        if PeriodicidadZona.FindFirst() then begin
+            FechaBusqueda := Fecha;
+            MaxIteraciones := 366;
+            while MaxIteraciones > 0 do begin
+                FechaBusqueda := FechaBusqueda + 1;
+                if CoincideConPeriodicidadZona(FechaBusqueda, Zona) then
+                    exit(FechaBusqueda);
+                MaxIteraciones -= 1;
+            end;
+            if not EsDiaLaborable(FechaBusqueda) then begin
+                while not EsDiaLaborable(FechaBusqueda) do
+                    FechaBusqueda := FechaBusqueda + 1;
+            end;
+
+            exit(0D); // No se encontró próxima fecha en el año
+        end;
+    end;
+
+    local procedure EsDiaLaborable(Fecha: Date): Boolean
+    var
+        Calendario: Record "Base Calendar Change";
+    begin
+        Calendario.ChangeCompany('Malla Publicidad');
+        Calendario.SetRange("Date", Fecha);
+        If Calendario.FindFirst() then begin
+            If Calendario.Nonworking Then exit(false);
+            If (Calendario.Day = Calendario.Day::Sunday) or (Calendario.Day = Calendario.Day::Saturday) Then exit(false);
+        end;
+        exit(true);
+    end;
+
+    local procedure CoincideConPeriodicidadZona(Fecha: Date; IdZonaLimpieza: Integer): Boolean
+    var
+        PeriodicidadZona: Record "Periodicidad Zona Limpieza";
+        DiaSemana: Integer;
+        DiaDelMes: Integer;
+        Mes: Integer;
+        DíaSemanaEnum: Enum "Día Semana Limpieza";
+    begin
+        PeriodicidadZona.SetRange("Id Zona Limpieza", IdZonaLimpieza);
+        if not PeriodicidadZona.FindSet() then
+            exit(false);
+        DiaSemana := Date2DWY(Fecha, 1);
+        DiaDelMes := Date2DMY(Fecha, 1);
+        Mes := Date2DMY(Fecha, 2); // meses invierno: 11, 12, 1, 2, 3
+        repeat
+            if not AplicaLineaEnFecha(PeriodicidadZona.Temporada, Mes) then
+                continue;
+            case PeriodicidadZona."Tipo Periodicidad" of
+                PeriodicidadZona."Tipo Periodicidad"::"Día semanal":
+                    if (PeriodicidadZona."Día Semana" <> DíaSemanaEnum::Ninguno) and
+                       CoincideDiaSemana(DiaSemana, PeriodicidadZona."Día Semana")
+                    then
+                        exit(true);
+                PeriodicidadZona."Tipo Periodicidad"::"Día del mes":
+                    if (PeriodicidadZona."Día del mes" >= 1) and (PeriodicidadZona."Día del mes" <= 31) and
+                       (DiaDelMes = PeriodicidadZona."Día del mes")
+                    then
+                        exit(true);
+            end;
+        until PeriodicidadZona.Next() = 0;
+        exit(false);
+    end;
+
+    local procedure CoincideDiaSemana(DiaSemanaNum: Integer; DíaSemana: Enum "Día Semana Limpieza"): Boolean
+    begin
+        case DíaSemana of
+            DíaSemana::Lunes:
+                exit(DiaSemanaNum = 1);
+            DíaSemana::Martes:
+                exit(DiaSemanaNum = 2);
+            DíaSemana::Miércoles:
+                exit(DiaSemanaNum = 3);
+            DíaSemana::Jueves:
+                exit(DiaSemanaNum = 4);
+            DíaSemana::Viernes:
+                exit(DiaSemanaNum = 5);
+            else
+                exit(false);
+        end;
+    end;
+
+    local procedure AplicaLineaEnFecha(Temporada: Enum "Temporada Limpieza"; Mes: Integer): Boolean
+    begin
+        case Temporada of
+            Temporada::Todas:
+                exit(true);
+            Temporada::Invierno:
+                exit(Mes in [1, 2, 11, 12]); // nov, dic, ene, feb
+            Temporada::Verano:
+                exit(Mes in [3, 4, 5, 6, 7, 8, 9, 10]); // mar, abr, may, jun, jul, ago, sep, oct
+            else
+                exit(true);
+        end;
     end;
 
     procedure ProcesarMantenimientosVencidos(): Integer
@@ -11637,6 +11799,7 @@ codeunit 7001148 GTask
         Emplaz: Record Emplazamientos;
         Contador: Integer;
         NoIncidencia: Code[20];
+        Recursos: Record Resource;
     begin
         Emplaz.SetFilter("Fecha Próximo Mantenimiento", '<=%1&<>%2', WorkDate(), 0D);
         Emplaz.SetRange("Bajo Mantenimiento", false);
@@ -11651,6 +11814,19 @@ codeunit 7001148 GTask
                         Contador += 1;
                 end;
             until Emplaz.Next() = 0;
+        Recursos.SetFilter("Fecha Próximo Mantenimiento", '<=%1&<>%2', WorkDate(), 0D);
+        Recursos.SetRange("Bajo Mantenimiento", false);
+        if Recursos.FindSet() then
+            repeat
+                if MantenimientoPendienteRecurso(Recursos."No.") then begin
+                    Emplaz."Bajo Mantenimiento" := true;
+                    Emplaz.Modify(false);
+                end else begin
+                    NoIncidencia := CrearIncidenciaMantenimientoRecurso(Recursos, 'Mantenimiento pendiente de recurso ' + Recursos.Name, false);
+                    if NoIncidencia <> '' then
+                        Contador += 1;
+                end;
+            until Recursos.Next() = 0;
         if Contador > 0 then
             Commit();
         exit(Contador);
@@ -13296,7 +13472,9 @@ codeunit 7001148 GTask
         Incidencia."User Task Group" := 'MTO';
         if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then
             Incidencia."User Task Group" := 'EMT';
-        Incidencia."FechaHora" := CurrentDateTime();
+        if Resource."Fecha Próximo Mantenimiento" = 0D then
+            Incidencia."FechaHora" := CurrentDateTime() else
+            Incidencia."FechaHora" := CreateDateTime(Resource."Fecha Próximo Mantenimiento", Time);
         if DescripcionCustom <> '' then
             DescTxt := DescripcionCustom
         else

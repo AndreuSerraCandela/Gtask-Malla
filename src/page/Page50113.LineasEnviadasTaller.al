@@ -254,6 +254,7 @@ page 50113 "Lineas Enviadas Taller"
                     Caption = 'Enviado a Taller';
                     ToolTip = 'Indica si la línea ha sido enviada al taller';
                     Editable = false;
+                    Visible = false;
                     StyleExpr = Color;
                 }
                 field("Validado PB"; Rec."Validado PB")
@@ -290,6 +291,7 @@ page 50113 "Lineas Enviadas Taller"
                     Caption = 'Fecha Recepción Esperada';
                     ToolTip = 'Fecha esperada de recepción';
                     Editable = false;
+                    Visible = false;
                     StyleExpr = Color;
                 }
 
@@ -336,6 +338,25 @@ page 50113 "Lineas Enviadas Taller"
                         if not PurchaseLine.Get(Rec."Document Type", Rec."Document No.", Rec."Line No.") then Exit;
                         PurchaseLine.Validate("Produccion Relacionada", Rec."Produccion Relacionada");
                         PurchaseLine.Modify();
+                    end;
+                }
+                field("Observaciones Taller"; Rec."Observaciones Taller")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Observaciones Taller';
+                    ToolTip = 'Observaciones de la línea de compra';
+                    Editable = true;
+                    StyleExpr = Color;
+                    trigger OnValidate()
+                    var
+                        PurchaseLine: Record "Purchase Line";
+                    begin
+                        if Rec."Observaciones" <> '' then begin
+                            PurchaseLine.ChangeCompany(Rec."Empresa");
+                            if not PurchaseLine.Get(Rec."Document Type", Rec."Document No.", Rec."Line No.") then Exit;
+                            PurchaseLine.Validate("Observaciones Taller", Rec."Observaciones Taller");
+                            PurchaseLine.Modify();
+                        end;
                     end;
                 }
 
@@ -567,7 +588,10 @@ page 50113 "Lineas Enviadas Taller"
                     end;
                     if PurchaseHeader.Get(PurchaseLine."Document Type", PurchaseLine."Document No.") then
                         Rec."Expected Receipt Date" := PurchaseHeader."Order Date";
-                    Rec.Insert();
+                    if PurchaseLine."Fecha Recepción" <> 0DT then begin
+                        if DT2Date(PurchaseLine."Fecha Recepción") >= Today Then Rec.Insert();
+                    end else
+                        Rec.Insert();
                 until PurchaseLine.Next() = 0;
             end;
         until Company.Next() = 0;

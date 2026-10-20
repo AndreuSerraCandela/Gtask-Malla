@@ -122,6 +122,12 @@ table 7001250 "Incidencias"
             TableRelation = UsuariosGtask."Id Usuario";
             DataClassification = CustomerContent;
         }
+        field(30; "Usuario Seguimiento"; Guid)
+        {
+            Caption = 'Usuario seguimiento';
+            TableRelation = UsuariosGtask."Id Usuario";
+            DataClassification = CustomerContent;
+        }
         //Userr Task Group
         field(24; "User Task Group"; Code[20])
         {

@@ -84,5 +84,12 @@ tableextension 50039 "Purchase Line Ext" extends "Purchase Line"
             DataClassification = CustomerContent;
             Description = 'Fecha de recepción esperada de la línea de compra';
         }
+        field(50013; "Observaciones Taller"; Text[250])
+        {
+            Caption = 'Observaciones Taller';
+            DataClassification = CustomerContent;
+            Description = 'Observaciones de la línea de compra';
+        }
+
     }
 }

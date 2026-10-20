@@ -311,7 +311,7 @@ tableextension 92103 Tareasusuarios extends "User Task"
         {
             Caption = 'Periodo objetivo';
             DataClassification = CustomerContent;
-            OptionMembers = " ",Semana,Mes;
+            OptionMembers = " ",Semana,Mes,Año;
         }
     }
     trigger OnAfterDelete()

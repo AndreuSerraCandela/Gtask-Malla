@@ -1634,6 +1634,8 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
         Cbase64: Codeunit "Base64 Convert";
         OutStream: OutStream;
         Tempblob: Codeunit "Temp Blob";
+        Intentos: Integer;
+        PdfListo: Boolean;
     begin
         rInf.Get();
 
@@ -1716,19 +1718,30 @@ pageextension 92155 Fijacion extends "Ficha Orden Fijacion"
             ficheros.SetRange("Table ID", Database::"User Task");
             ficheros.SetRange(Id, IdDocPadre);
             ficheros.SetFilter("Document Type", '>%1', 0);
-            If ficheros.FindFirst() then
+            if not ficheros.FindFirst() then
+                Error('No se ha encontrado el PDF de la orden %1. No se envía el correo.', UserTask.OrdenFijacion);
+            repeat
+                PdfListo := false;
+                Intentos := 0;
                 repeat
+                    Intentos += 1;
+                    Clear(Tempblob);
                     base64 := ficheros.ToBase64StringOcr(ficheros.url);
                     Clear(Cbase64);
-                    If UrlToBase64(Tempblob, base64, AttachmentStream) then begin
+                    if UrlToBase64(Tempblob, base64, AttachmentStream) then begin
                         //si filename ya con tiene la extensión no poner extension
                         if StrPos(ficheros."File Name", '.' + ficheros."File Extension") > 0 then
                             REmail.AddAttachment(AttachmentStream, ficheros."File Name")
                         else
                             REmail.AddAttachment(AttachmentStream, ficheros."File Name" + '.' + ficheros."File Extension");
-                    end;
-
-                until ficheros.Next() = 0;
+                        PdfListo := true;
+                    end else
+                        if Intentos < 3 then
+                            Sleep(2000);
+                until PdfListo or (Intentos >= 3);
+                if not PdfListo then
+                    Error('No se ha podido obtener el PDF de la orden %1. No se envía el correo.', UserTask.OrdenFijacion);
+            until ficheros.Next() = 0;
         end;
         REmail.AddSourceDocument(Database::"User Task", UserTask.SystemId);
         if REmail.Send(true, emilesc::Gtasks) then begin

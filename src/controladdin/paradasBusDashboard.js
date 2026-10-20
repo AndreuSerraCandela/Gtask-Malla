@@ -87,6 +87,26 @@
             'stroke-dasharray="' + value + ' ' + (100 - value) + '" stroke-dashoffset="' + (25 - offset) + '"></circle>';
     }
 
+    function objetivoCards(items) {
+        if (!items || !items.length) {
+            return '<div class="tip-empty">Ninguna parada del filtro tiene objetivo con periodo semana o mes.</div>';
+        }
+        return '<div class="tip-kpis">' + items.map(function (item) {
+            var hechas = Number(item.hechas || 0);
+            var objetivo = Number(item.objetivo || 0);
+            var cumplen = Number(item.cumplen || 0);
+            var paradas = Number(item.paradas || 0);
+            var state = (paradas > 0 && cumplen === paradas) ? 'good' : (cumplen > 0 ? 'warning' : 'danger');
+            return kpi(
+                item.label,
+                hechas + '/' + objetivo,
+                cumplen + ' de ' + paradas + ' paradas cumplen',
+                state,
+                ''
+            );
+        }).join('') + '</div>';
+    }
+
     function bars(items, fillClass) {
         if (!items || !items.length) {
             return '<div class="tip-empty">No hay datos con los filtros actuales.</div>';
@@ -176,6 +196,11 @@
             kpi('Marquesinas', s.marquesinas || 0, 'resto de tipos', 'good', 'show-marquesinas') +
             kpi('Incidencias abiertas', s.incidencias || 0, 'abrir lista', (s.incidencias || 0) > 0 ? 'warning' : 'good', 'show-incidencias') +
             kpi('Ordenes trabajo', s.ordenes || 0, 'peticiones abiertas', (s.ordenes || 0) > 0 ? 'danger' : 'good', 'show-ordenes') +
+            '</section>' +
+            '<section class="tip-card"><div class="tip-card-title">Objetivos del periodo</div>' +
+            '<div class="tip-subtitle" style="margin:0 0 12px">' + escapeHtml(data.objetivoPeriodo || '') +
+            '. Tareas finalizadas con fecha de inicio en la semana o el mes, según el periodo de cada parada.</div>' +
+            objetivoCards(data.objetivos) +
             '</section>' +
             '<section class="tip-main-grid tip-main-grid--3">' +
             taskBlock('Limpieza', data.limpieza, 'limp') +

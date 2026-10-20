@@ -198,6 +198,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Usuario Asignado - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 3042810774 - Field 4015573649 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario seguimiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table Incidencias - Field Usuario Seguimiento - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 3042810774 - Field 22244033 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Work Description</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1208,6 +1213,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Control Usuario - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2755427284 - Control 4015573649 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario que hace el seguimiento de la incidencia.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Control Usuario Seguimiento - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2755427284 - Control 4015573649 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario seguimiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Incidencias Taller - Control Usuario Seguimiento - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 2755427284 - Control 2348546433 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Imagenes Asociadas</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1462,6 +1477,16 @@
           <source>Observaciones</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Observaciones - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 3101461887 - Control 700326267 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Observaciones de la línea de compra</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Observaciones Taller - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3101461887 - Control 700326267 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Observaciones Taller</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Observaciones Taller - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 3101461887 - Control 1660039011 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Indica si la línea de compra es produccion relacionada/orden trabajo</source>
@@ -1718,6 +1743,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Id_Uduario_Gtask_Asignado - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 1401679881 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID del usuario de seguimiento.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Id_Usuario_Gtask_Seguimiento - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 1401679881 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>ID Usuario Gtask Seguimiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Id_Usuario_Gtask_Seguimiento - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 2811520765 - Control 2821462494 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>URL de la primera imagen asociada a esta incidencia</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1747,6 +1782,16 @@
           <source>Usuario Asignado</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Asignado - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 4015573649 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario que hace el seguimiento de la incidencia.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Seguimiento - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 2811520765 - Control 4015573649 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario seguimiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Incidencias Taller - Control Usuario Seguimiento - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2811520765 - Action 280434384 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Cerrar Incidencia Gtask</source>
@@ -4548,6 +4593,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Purchase Line Ext - Field Observaciones - Property Caption</note>
         </trans-unit>
+        <trans-unit id="TableExtension 124687280 - Field 700326267 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1519909599">
+          <source>Observaciones Taller</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">TableExtension Purchase Line Ext - Field Observaciones Taller - Property Caption</note>
+        </trans-unit>
         <trans-unit id="TableExtension 124687280 - Field 1660039011 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 1519909599">
           <source>Produccion Relacionada/Orden Trabajo</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -4779,7 +4829,7 @@
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Periodo objetivo - Property Caption</note>
         </trans-unit>
         <trans-unit id="TableExtension 2225073607 - Field 1044796240 - Property 62802879" size-unit="char" translate="yes" xml:space="preserve" al-object-target="Table 4070411936">
-          <source> ,Semana,Mes</source>
+          <source> ,Semana,Mes,Año</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">TableExtension Tareasusuarios - Field Periodo objetivo - Property OptionCaption</note>
         </trans-unit>

@@ -83,6 +83,33 @@ page 50112 "Incidencias Taller"
                         end;
                     end;
                 }
+                field("Usuario Seguimiento"; NombreUsuarioSeguimiento)
+                {
+                    Caption = 'Usuario seguimiento';
+                    ApplicationArea = All;
+                    ToolTip = 'Usuario que hace el seguimiento de la incidencia.';
+                    trigger OnLookup(var Text: Text): Boolean
+                    var
+                        Usuario: Record UsuariosGtask;
+                    begin
+                        if Page.RunModal(Page::UsuariosGtask, Usuario) = Action::LookupOK then begin
+                            NombreUsuarioSeguimiento := Usuario.Nombre + ' ' + Usuario.Apellido;
+                            Rec."Usuario Seguimiento" := Usuario."Id Usuario";
+                            exit(true);
+                        end;
+                    end;
+
+                    trigger OnValidate()
+                    var
+                        Usuario: Record UsuariosGtask;
+                    begin
+                        Usuario.SetRange(Nombre, NombreUsuarioSeguimiento);
+                        if Usuario.FindFirst() then begin
+                            Rec."Usuario Seguimiento" := Usuario."Id Usuario";
+                            NombreUsuarioSeguimiento := Usuario.Nombre + ' ' + Usuario.Apellido;
+                        end;
+                    end;
+                }
 
             }
             part(ImagenesAsociadas; "Imagenes Orden fijacion")
@@ -411,12 +438,19 @@ page 50112 "Incidencias Taller"
                 NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
             end;
         end;
+        NombreUsuarioSeguimiento := '';
+        if not IsNullGuid(Rec."Usuario Seguimiento") then begin
+            Usuario.SetRange("Id Usuario", Rec."Usuario Seguimiento");
+            if Usuario.FindFirst() then
+                NombreUsuarioSeguimiento := Usuario.Nombre + ' ' + Usuario.Apellido;
+        end;
 
     end;
 
     var
         Description: Text;
         NombreUsuario: Text;
+        NombreUsuarioSeguimiento: Text;
 
 }
 page 50117 "Lista Incidencias Taller"
@@ -504,6 +538,8 @@ page 50117 "Lista Incidencias Taller"
                         If Usuario.FindFirst() then begin
                             NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
                             Rec.Usuario := Usuario."Id Usuario";
+                            if IsNullGuid(Rec."Usuario Seguimiento") then
+                                Rec."Usuario Seguimiento" := Usuario."Id Usuario";
                             Rec.Modify();
                         end;
                     end;
@@ -550,6 +586,43 @@ page 50117 "Lista Incidencias Taller"
                     Caption = 'ID Usuario Gtask Asignado';
                     ApplicationArea = All;
                     ToolTip = 'ID del usuario que asignó la incidencia';
+                    Editable = false;
+                    Enabled = false;
+                }
+                field("Usuario Seguimiento"; NombreUsuarioSeguimiento)
+                {
+                    Caption = 'Usuario seguimiento';
+                    ApplicationArea = All;
+                    ToolTip = 'Usuario que hace el seguimiento de la incidencia.';
+                    trigger OnLookup(var Text: Text): Boolean
+                    var
+                        Usuario: Record UsuariosGtask;
+                    begin
+                        if Page.RunModal(Page::UsuariosGtask, Usuario) = Action::LookupOK then begin
+                            NombreUsuarioSeguimiento := Usuario.Nombre + ' ' + Usuario.Apellido;
+                            Rec."Usuario Seguimiento" := Usuario."Id Usuario";
+                            Rec.Modify();
+                            exit(true);
+                        end;
+                    end;
+
+                    trigger OnValidate()
+                    var
+                        Usuario: Record UsuariosGtask;
+                    begin
+                        Usuario.SetRange(Nombre, NombreUsuarioSeguimiento);
+                        if Usuario.FindFirst() then begin
+                            NombreUsuarioSeguimiento := Usuario.Nombre + ' ' + Usuario.Apellido;
+                            Rec."Usuario Seguimiento" := Usuario."Id Usuario";
+                            Rec.Modify();
+                        end;
+                    end;
+                }
+                field(Id_Usuario_Gtask_Seguimiento; Rec.ID_UsuarioGtask(Rec."Usuario Seguimiento"))
+                {
+                    Caption = 'ID Usuario Gtask Seguimiento';
+                    ApplicationArea = All;
+                    ToolTip = 'ID del usuario de seguimiento.';
                     Editable = false;
                     Enabled = false;
                 }
@@ -665,6 +738,7 @@ page 50117 "Lista Incidencias Taller"
     var
         NombreUsuario: Text;
         NombreUsuarioAsignado: Text;
+        NombreUsuarioSeguimiento: Text;
         UrlPrimeraImagen: Text;
         EstadoTareaTxt: Text;
         IsPeticion: Boolean;
@@ -694,6 +768,12 @@ page 50117 "Lista Incidencias Taller"
             If UsuarioGtask.FindFirst() then begin
                 NombreUsuarioAsignado := UsuarioGtask.Nombre + ' ' + UsuarioGtask.Apellido;
             end;
+        end;
+        NombreUsuarioSeguimiento := '';
+        if not IsNullGuid(Rec."Usuario Seguimiento") then begin
+            UsuarioGtask.SetRange("Id Usuario", Rec."Usuario Seguimiento");
+            if UsuarioGtask.FindFirst() then
+                NombreUsuarioSeguimiento := UsuarioGtask.Nombre + ' ' + UsuarioGtask.Apellido;
         end;
         UrlPrimeraImagen := GetUrlPrimeraImagen();
         EstadoTareaTxt := ObtenerEstadoTarea();

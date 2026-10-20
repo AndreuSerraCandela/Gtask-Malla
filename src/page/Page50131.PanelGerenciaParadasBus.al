@@ -230,6 +230,7 @@ page 50131 "Panel Gerencia Paradas Bus"
 
         OrdenesTrabajoPendientes := ContarOrdenesTrabajoPendientes();
         OrdenesTrabajoAprobadas := ContarOrdenesTrabajoAprobadas();
+        ContarObjetivosVsRealizadas();
 
         FiltroParadasTmp.Reset();
         if FiltroParadasTmp.FindSet() then
@@ -502,9 +503,180 @@ page 50131 "Panel Gerencia Paradas Bus"
 
         BuildTipoArray(TopTipos);
         Root.Add('topTipos', TopTipos);
+        Root.Add('objetivos', BuildObjetivosArray());
+        Root.Add('objetivoPeriodo', ObjetivoPeriodoText);
         Root.Add('period', PeriodText);
 
         Root.WriteTo(DashboardPayload);
+    end;
+
+    local procedure ContarObjetivosVsRealizadas()
+    var
+        Emplaz: Record Emplazamientos;
+        Hechas: Dictionary of [Text, Integer];
+        InicioSemana: Date;
+        FinSemana: Date;
+        InicioMes: Date;
+        FinMes: Date;
+        Tipo: Integer;
+        Veces: Integer;
+        Periodo: Integer;
+        Realizadas: Integer;
+    begin
+        Clear(ObjHechas);
+        Clear(ObjMeta);
+        Clear(ObjParadas);
+        Clear(ObjCumplen);
+        InicioSemana := WorkDate() - (Date2DWY(WorkDate(), 3) - 1);
+        FinSemana := InicioSemana + 6;
+        InicioMes := CalcDate('<-CM>', WorkDate());
+        FinMes := CalcDate('<CM>', WorkDate());
+        ObjetivoPeriodoText := StrSubstNo('Semana %1–%2 · Mes %3–%4', InicioSemana, FinSemana, InicioMes, FinMes);
+        CargarTareasFinalizadas(Hechas, InicioSemana, FinSemana, InicioMes, FinMes);
+
+        FiltroParadasTmp.Reset();
+        if FiltroParadasTmp.FindSet() then
+            repeat
+                if Emplaz.Get(Emplaz."Tipo Emplazamiento"::Opis, FiltroParadasTmp.Name) then
+                    for Tipo := 1 to 5 do begin
+                        LeerObjetivoParada(Emplaz, Tipo, Veces, Periodo);
+                        if (Veces > 0) and (Periodo in [1, 2]) then begin
+                            Realizadas := HechasDe(Hechas, Emplaz."Nº Emplazamiento", Tipo, Periodo);
+                            ObjParadas[Tipo] += 1;
+                            ObjMeta[Tipo] += Veces;
+                            ObjHechas[Tipo] += Realizadas;
+                            if Realizadas >= Veces then
+                                ObjCumplen[Tipo] += 1;
+                        end;
+                    end;
+            until FiltroParadasTmp.Next() = 0;
+    end;
+
+    local procedure CargarTareasFinalizadas(var Hechas: Dictionary of [Text, Integer]; InicioSemana: Date; FinSemana: Date; InicioMes: Date; FinMes: Date)
+    var
+        UserTask: Record "User Task";
+        NEmplaz: Code[20];
+        Fecha: Date;
+        Tipo: Integer;
+        Desde: Date;
+        Hasta: Date;
+    begin
+        if InicioSemana < InicioMes then
+            Desde := InicioSemana
+        else
+            Desde := InicioMes;
+        if FinSemana > FinMes then
+            Hasta := FinSemana
+        else
+            Hasta := FinMes;
+
+        UserTask.SetRange("Object ID", Page::"Ficha Parada Bus");
+        UserTask.SetRange(Estado, UserTask.Estado::Finalizado);
+        UserTask.SetRange("Start DateTime", CreateDateTime(Desde, 0T), CreateDateTime(Hasta, 235959T));
+        if UserTask.FindSet() then
+            repeat
+                NEmplaz := ObtenerEmplazamientoDeTarea(UserTask);
+                if (NEmplaz = '') or (not EstaParadaEnFiltro(NEmplaz)) then
+                    continue;
+                Tipo := TipoObjetivoDeTarea(UserTask);
+                if Tipo = 0 then
+                    continue;
+                Fecha := DT2Date(UserTask."Start DateTime");
+                if (Fecha >= InicioSemana) and (Fecha <= FinSemana) then
+                    SumarHecha(Hechas, NEmplaz, Tipo, 1);
+                if (Fecha >= InicioMes) and (Fecha <= FinMes) then
+                    SumarHecha(Hechas, NEmplaz, Tipo, 2);
+            until UserTask.Next() = 0;
+    end;
+
+    local procedure TipoObjetivoDeTarea(UserTask: Record "User Task"): Integer
+    begin
+        if UserTask."Tipo objetivo" <> UserTask."Tipo objetivo"::" " then
+            exit(UserTask."Tipo objetivo");
+        case UpperCase(UserTask.TipoTarea) of
+            'LIMPIEZA':
+                exit(UserTask."Tipo objetivo"::Limpieza);
+            'REVISION', 'REVISIÓN':
+                exit(UserTask."Tipo objetivo"::"Revisión");
+        end;
+        exit(0);
+    end;
+
+    local procedure LeerObjetivoParada(Emplaz: Record Emplazamientos; Tipo: Integer; var Veces: Integer; var Periodo: Integer)
+    begin
+        Veces := 0;
+        Periodo := 0;
+        case Tipo of
+            1:
+                begin
+                    Veces := Emplaz."Veces Limpieza";
+                    Periodo := Emplaz."Periodo Limpieza";
+                end;
+            2:
+                begin
+                    Veces := Emplaz."Veces Revisión";
+                    Periodo := Emplaz."Periodo Revisión";
+                end;
+            3:
+                begin
+                    Veces := Emplaz."Veces Techos";
+                    Periodo := Emplaz."Periodo Techos";
+                end;
+            4:
+                begin
+                    Veces := Emplaz."Veces Limpieza a Presión";
+                    Periodo := Emplaz."Periodo Limpieza a Presión";
+                end;
+            5:
+                begin
+                    Veces := Emplaz."Veces Mantenimiento";
+                    Periodo := Emplaz."Periodo Mantenimiento";
+                end;
+        end;
+    end;
+
+    local procedure SumarHecha(var Hechas: Dictionary of [Text, Integer]; NEmplaz: Code[20]; Tipo: Integer; Periodo: Integer)
+    var
+        Clave: Text;
+    begin
+        Clave := NEmplaz + '|' + Format(Tipo) + '|' + Format(Periodo);
+        if Hechas.ContainsKey(Clave) then
+            Hechas.Set(Clave, Hechas.Get(Clave) + 1)
+        else
+            Hechas.Add(Clave, 1);
+    end;
+
+    local procedure HechasDe(var Hechas: Dictionary of [Text, Integer]; NEmplaz: Code[20]; Tipo: Integer; Periodo: Integer): Integer
+    var
+        Clave: Text;
+    begin
+        Clave := NEmplaz + '|' + Format(Tipo) + '|' + Format(Periodo);
+        if Hechas.ContainsKey(Clave) then
+            exit(Hechas.Get(Clave));
+        exit(0);
+    end;
+
+    local procedure BuildObjetivosArray() Resultado: JsonArray
+    var
+        Item: JsonObject;
+        Tipo: Integer;
+        Etiquetas: array[5] of Text;
+    begin
+        Etiquetas[1] := 'Limpieza';
+        Etiquetas[2] := 'Revisión';
+        Etiquetas[3] := 'Techos';
+        Etiquetas[4] := 'Limpieza a presión';
+        Etiquetas[5] := 'Mantenimiento';
+        for Tipo := 1 to 5 do
+            if ObjParadas[Tipo] > 0 then begin
+                Clear(Item);
+                Item.Add('label', Etiquetas[Tipo]);
+                Item.Add('hechas', ObjHechas[Tipo]);
+                Item.Add('objetivo', ObjMeta[Tipo]);
+                Item.Add('paradas', ObjParadas[Tipo]);
+                Item.Add('cumplen', ObjCumplen[Tipo]);
+                Resultado.Add(Item);
+            end;
     end;
 
     local procedure BuildTipoArray(var Tipos: JsonArray)
@@ -699,6 +871,11 @@ page 50131 "Panel Gerencia Paradas Bus"
         MantVencido: Integer;
         OrdenesTrabajoAprobadas: Integer;
         OrdenesTrabajoPendientes: Integer;
+        ObjHechas: array[5] of Integer;
+        ObjMeta: array[5] of Integer;
+        ObjParadas: array[5] of Integer;
+        ObjCumplen: array[5] of Integer;
+        ObjetivoPeriodoText: Text[120];
         TopTipoLabel: array[8] of Text[50];
         TopTipoValue: array[8] of Integer;
         PeriodText: Text[120];
