@@ -145,6 +145,14 @@ page 50113 "Lineas Enviadas Taller"
                         PurchaseHeader.Modify();
                     end;
                 }
+                field("Nº Contrato"; NumeroContrato())
+                {
+                    ApplicationArea = All;
+                    Caption = 'Nº Contrato';
+                    ToolTip = 'Número del contrato del proyecto';
+                    Editable = false;
+                    StyleExpr = Color;
+                }
                 field("Estado Firma Contrato"; EstadoFirmaContrato())
                 {
                     ApplicationArea = All;
@@ -380,6 +388,18 @@ page 50113 "Lineas Enviadas Taller"
                     CargarLineas();
                 end;
             }
+            action("Cargar Líneas Histórico")
+            {
+                ApplicationArea = All;
+                Caption = 'Cargar Líneas Histórico';
+                Image = History;
+                ToolTip = 'Carga las líneas enviadas al taller con fecha de recepción anterior a hoy, validadas por PB o no';
+
+                trigger OnAction()
+                begin
+                    CargarLineas(true);
+                end;
+            }
 
             action("Validar Seleccionadas")
             {
@@ -543,6 +563,11 @@ page 50113 "Lineas Enviadas Taller"
     end;
 
     local procedure CargarLineas()
+    begin
+        CargarLineas(false);
+    end;
+
+    local procedure CargarLineas(Historico: Boolean)
     var
         PurchaseLine: Record "Purchase Line";
         Job: Record Job;
@@ -562,7 +587,8 @@ page 50113 "Lineas Enviadas Taller"
 
             PurchaseLine.Reset();
             PurchaseLine.SetRange("Enviado a Taller", true);
-            PurchaseLine.SetRange("Validado PB", false);
+            if not Historico then
+                PurchaseLine.SetRange("Validado PB", false);
             PurchaseLine.SetFilter("Line No.", '<>0');
             PurchaseLine.SetFilter(Description, '<>%1', '');
 
@@ -588,10 +614,15 @@ page 50113 "Lineas Enviadas Taller"
                     end;
                     if PurchaseHeader.Get(PurchaseLine."Document Type", PurchaseLine."Document No.") then
                         Rec."Expected Receipt Date" := PurchaseHeader."Order Date";
-                    if PurchaseLine."Fecha Recepción" <> 0DT then begin
-                        if DT2Date(PurchaseLine."Fecha Recepción") >= Today Then Rec.Insert();
+                    if Historico then begin
+                        if (PurchaseLine."Fecha Recepción" <> 0DT) and (DT2Date(PurchaseLine."Fecha Recepción") < Today) then
+                            Rec.Insert();
                     end else
-                        Rec.Insert();
+                        if PurchaseLine."Fecha Recepción" <> 0DT then begin
+                            if DT2Date(PurchaseLine."Fecha Recepción") >= Today then
+                                Rec.Insert();
+                        end else
+                            Rec.Insert();
                 until PurchaseLine.Next() = 0;
             end;
         until Company.Next() = 0;
@@ -612,6 +643,21 @@ page 50113 "Lineas Enviadas Taller"
     //     else
     //         exit('');
     // end;
+
+    local procedure NumeroContrato(): Code[20]
+    var
+        Contrato: Record "Sales Header";
+        PurchaseHeader: Record "Purchase Header";
+    begin
+        PurchaseHeader.ChangeCompany(Rec."Empresa");
+        Contrato.ChangeCompany(Rec."Empresa");
+        if not PurchaseHeader.Get(Rec."Document Type", Rec."Document No.") then
+            exit('');
+        Contrato.SetRange("Nº Proyecto", PurchaseHeader."Nº Proyecto");
+        if Contrato.FindFirst() then
+            exit(Contrato."No.");
+        exit('');
+    end;
 
     local procedure EstadoFirmaContrato(): Text
     var

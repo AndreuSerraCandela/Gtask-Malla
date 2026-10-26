@@ -17,6 +17,8 @@ codeunit 7001148 GTask
         FijacionBatchRecursoCache: Dictionary of [Text, Text];
         FijacionBatchProyectoCache: Dictionary of [Text, Text];
         TareasEncoladasEnEstaEjecucion: List of [Integer];
+        IdGtaskCreadorOrden: Text[50];
+        IdUsuarioCreadorOrden: Guid;
 
     trigger OnRun()
     var
@@ -4871,7 +4873,7 @@ codeunit 7001148 GTask
             end else
                 UserTask."Supervisor" := rDet."Usuario";
         end;
-        UserTask."Created By" := UserTask."Supervisor";
+        AsignarCreadorTareaMantenimiento(UserTask);
         UserTask.Validate("Created DateTime", CurrentDateTime);
         Usertask."Start DateTime" := rDet.FechaHora;
         Usertask."Due DateTime" := rDet.FechaHora;
@@ -4888,7 +4890,7 @@ codeunit 7001148 GTask
         else
             UserTask.IdQr := rDet.Id_Gtask;
         UserTask.TestField(IdQr);
-        UserTask."Created By" := UserTask."Supervisor";
+        AsignarCreadorTareaMantenimiento(UserTask);
         //Traspasa las fotos
         Imagenes.SetRange("Nº Orden", rDet."Nº Orden");
         Imagenes.SetRange("Es Incidencia", true);
@@ -7424,6 +7426,48 @@ codeunit 7001148 GTask
         exit(ResultText);
     end;
 
+    local procedure AdjuntarImagenesParteDesdeJson(ParteNo: Code[20]; JsonObj: JsonObject)
+    var
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonLine: JsonObject;
+        i: Integer;
+        Url: Text;
+        Nombre: Text;
+        IdTxt: Text;
+        IdUrl: Integer;
+    begin
+        if ParteNo = '' then
+            exit;
+        if not JsonObj.Get('imagenes', JsonToken) then
+            exit;
+        if not JsonToken.IsArray() then
+            exit;
+        JsonArray := JsonToken.AsArray();
+        for i := 0 to JsonArray.Count() - 1 do begin
+            JsonArray.Get(i, JsonToken);
+            if JsonToken.IsObject() then begin
+                JsonLine := JsonToken.AsObject();
+                Url := '';
+                Nombre := '';
+                IdUrl := 0;
+                if JsonLine.Get('url', JsonToken) and JsonToken.IsValue() and not JsonToken.AsValue().IsNull() then
+                    Url := DelChr(JsonToken.AsValue().AsText(), '<>', ' ');
+                if JsonLine.Get('nombre', JsonToken) and JsonToken.IsValue() and not JsonToken.AsValue().IsNull() then
+                    Nombre := DelChr(JsonToken.AsValue().AsText(), '<>', ' ');
+                if Nombre = '' then
+                    Nombre := 'foto.jpg';
+                if JsonLine.Get('id', JsonToken) and JsonToken.IsValue() and not JsonToken.AsValue().IsNull() then begin
+                    IdTxt := JsonToken.AsValue().AsText();
+                    if not Evaluate(IdUrl, IdTxt) then
+                        IdUrl := 0;
+                end;
+                if Url <> '' then
+                    AdjuntarUrlParteTrabajo(ParteNo, Url, IdUrl, Nombre);
+            end;
+        end;
+    end;
+
     /// <summary>
     /// Recibe un parte de trabajo desde Rutas (JSON) y crea/actualiza Time Sheet Header + Time Sheet Line.
     /// JSON esperado: numero_tarea y/o id_tarea, no_incidencia, origen, codigo_emplazamiento, no_recurso,
@@ -7593,6 +7637,8 @@ codeunit 7001148 GTask
                 end;
             end;
         end;
+
+        AdjuntarImagenesParteDesdeJson(TimeSheetHeader."No.", JsonObj);
 
         // El mantenimiento recién creado ya publica la tarea. CreateParte solo si el parte es nuevo.
         Clear(JsonResult);
@@ -11546,6 +11592,49 @@ codeunit 7001148 GTask
         exit(true);
     end;
 
+    local procedure EstablecerCreadorOrdenGtask(IdGtask: Text)
+    var
+        UsuariosGtask: Record UsuariosGtask;
+        IdTxt: Text[50];
+    begin
+        Clear(IdUsuarioCreadorOrden);
+        IdGtaskCreadorOrden := '';
+        IdTxt := CopyStr(DelChr(IdGtask, '<>', ' '), 1, MaxStrLen(IdGtaskCreadorOrden));
+        if IdTxt = '' then
+            exit;
+        UsuariosGtask.ChangeCompany('Malla Publicidad');
+        UsuariosGtask.SetRange("Id Gtask", IdTxt);
+        if not UsuariosGtask.FindFirst() then
+            Error('No se ha encontrado el usuario de GTask %1 en UsuariosGtask. No se usa el usuario de OData como creador.', IdTxt);
+        if IsNullGuid(UsuariosGtask."Id Usuario") then
+            Error('El usuario de GTask %1 no tiene un usuario de Business Central enlazado.', IdTxt);
+        IdGtaskCreadorOrden := IdTxt;
+        IdUsuarioCreadorOrden := UsuariosGtask."Id Usuario";
+    end;
+
+    local procedure BuscarUsuarioCreadorParte(var UsuariosGtask: Record UsuariosGtask)
+    begin
+        UsuariosGtask.ChangeCompany('Malla Publicidad');
+        UsuariosGtask.Reset();
+        if IdGtaskCreadorOrden <> '' then begin
+            UsuariosGtask.SetRange("Id Gtask", IdGtaskCreadorOrden);
+            if not UsuariosGtask.FindFirst() then
+                Error('No se ha encontrado el usuario de GTask %1 en la tabla UsuariosGtask', IdGtaskCreadorOrden);
+            exit;
+        end;
+        UsuariosGtask.SetRange("Id Usuario", UserSecurityId());
+        if not UsuariosGtask.FindFirst() then
+            Error('No se ha encontrado el usuario %1 en la tabla UsuariosGtask', UserId());
+    end;
+
+    local procedure AsignarCreadorTareaMantenimiento(var UserTask: Record "User Task")
+    begin
+        if not IsNullGuid(IdUsuarioCreadorOrden) then
+            UserTask."Created By" := IdUsuarioCreadorOrden
+        else
+            UserTask."Created By" := UserTask."Supervisor";
+    end;
+
     local procedure CrearParteMantenimiento(var Incidencia: Record Incidencias; Emplaz: Record Emplazamientos; TipoParte: Option " ",Trabajo,Nacional,EMT)
     var
         Parte: Record "Time Sheet Header";
@@ -11568,9 +11657,7 @@ codeunit 7001148 GTask
         Parte.Init();
         Parte."No." := Incidencia."No.";
         Parte.Validate(Tipo, TipoParte);
-        UsuariosGtask.SetRange("Id Usuario", UserSecurityId());
-        if not UsuariosGtask.FindFirst() then
-            Error('No se ha encontrado el usuario %1 en la tabla UsuariosGtask', UserId());
+        BuscarUsuarioCreadorParte(UsuariosGtask);
         UsuariosGtask.TestField("Empleado");
         Employee.Get(UsuariosGtask."Empleado");
         Employee.TestField("Resource No.");
@@ -12208,8 +12295,12 @@ codeunit 7001148 GTask
             TipoParte := TipoParte::Trabajo;
         CrearParteMantenimiento(Incidencia, Emplaz, TipoParte);
         Incidencia.TestField("Parte Trabajo");
-        if not BuscarTareaDeIncidencia(Incidencia, UserTask) then
-            exit;
+        if not BuscarTareaDeIncidencia(Incidencia, UserTask) then begin
+            LigarTareaConOrden(Incidencia);
+            Incidencia.Get(Incidencia."No.");
+            if not BuscarTareaDeIncidencia(Incidencia, UserTask) then
+                Error('La orden %1 se ha creado, pero no se ha podido crear su tarea GTask.', Incidencia."Parte Trabajo");
+        end;
         IdQrOrden := IdQrOrdenTrabajo(Incidencia);
         if UserTask.IdQr <> IdQrOrden then begin
             UserTask.IdQr := IdQrOrden;
@@ -12667,6 +12758,18 @@ codeunit 7001148 GTask
         if JsonIn.Get('accionOData', JsonToken) then
             Accion := LowerCase(DelChr(JsonToken.AsValue().AsText(), '<>', ' '));
         case Accion of
+            'postcreardosier':
+                exit(PostCrearDosier(JsonText));
+            'listadodosieres':
+                exit(ListadoDosieres(JsonText));
+            'detalledosier':
+                exit(DetalleDosier(JsonText));
+            'postadjuntodosier':
+                exit(PostAdjuntoDosier(JsonText));
+            'permisosdosier':
+                exit(PermisosDosier(JsonText));
+            'postcrearordendosier':
+                exit(PostCrearOrdenDosier(JsonText));
             'postcrearordenmantenimiento':
                 exit(PostCrearOrdenMantenimiento(JsonText));
             'postactualizarmantenimiento':
@@ -13239,10 +13342,438 @@ codeunit 7001148 GTask
         exit(Txt);
     end;
 
+    local procedure BuscarUsuarioDosier(IdGtask: Text; var Usuario: Record UsuariosGtask): Boolean
+    begin
+        // Los dosieres se crean en la empresa del recurso, pero los usuarios GTask solo existen en Malla Publicidad.
+        Usuario.ChangeCompany('Malla Publicidad');
+        Usuario.Reset();
+        Usuario.SetRange("Id Gtask", CopyStr(DelChr(IdGtask, '<>', ' '), 1, MaxStrLen(Usuario."Id Gtask")));
+        exit(Usuario.FindFirst());
+    end;
+
+    [ServiceEnabled]
+    procedure PermisosDosier(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonOut: JsonObject;
+        Usuario: Record UsuariosGtask;
+        IdGtask: Text;
+        Encontrado: Boolean;
+        Txt: Text;
+    begin
+        if JsonIn.ReadFrom(JsonText) then
+            if JsonIn.Get('usuarioGtask', JsonToken) then
+                IdGtask := JsonToken.AsValue().AsText();
+        Encontrado := BuscarUsuarioDosier(IdGtask, Usuario);
+        JsonOut.Add('success', true);
+        JsonOut.Add('encontrado', Encontrado);
+        JsonOut.Add('puede_crear', Encontrado and Usuario."Puede crear dosieres");
+        JsonOut.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure TipoIncidenciaDosierEmplazamiento(Emplaz: Record Emplazamientos): Enum "Tipo Incidencia"
+    var
+        TipoIncidencia: Enum "Tipo Incidencia";
+    begin
+        case Emplaz."Tipo Emplazamiento" of
+            Emplaz."Tipo Emplazamiento"::Opis:
+                exit(TipoIncidencia::"Incidencias EMT");
+            Emplaz."Tipo Emplazamiento"::Vallas:
+                exit(TipoIncidencia::"Incidencias Soportes");
+            else
+                exit(TipoIncidencia::"Incidencias Mobiliario Urbano");
+        end;
+    end;
+
+    [ServiceEnabled]
+    procedure PostCrearDosier(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonOut: JsonObject;
+        Incidencia: Record Incidencias;
+        Usuario: Record UsuariosGtask;
+        Resource: Record Resource;
+        Emplaz: Record Emplazamientos;
+        TipoTxt: Text;
+        Codigo: Code[20];
+        Descripcion: Text;
+        IdGtask: Text;
+        EmpresaRecurso: Text;
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido.');
+        if JsonIn.Get('tipo', JsonToken) then
+            TipoTxt := LowerCase(JsonToken.AsValue().AsText());
+        if JsonIn.Get('codigo', JsonToken) then
+            Codigo := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(Codigo));
+        if JsonIn.Get('descripcion', JsonToken) then
+            Descripcion := JsonToken.AsValue().AsText();
+        if JsonIn.Get('usuarioGtask', JsonToken) then
+            IdGtask := JsonToken.AsValue().AsText();
+        if JsonIn.Get('empresa', JsonToken) then
+            EmpresaRecurso := JsonToken.AsValue().AsText();
+
+        if Codigo = '' then
+            Error('Falta el recurso o emplazamiento del dosier.');
+        if DelChr(Descripcion, '<>', ' ') = '' then
+            Error('Falta la descripción del dosier.');
+        if not BuscarUsuarioDosier(IdGtask, Usuario) then
+            Error('No se ha encontrado el usuario de GTask %1 en UsuariosGtask.', IdGtask);
+        if IsNullGuid(Usuario."Id Usuario") then
+            Error('El usuario de GTask %1 no tiene usuario de Business Central enlazado.', IdGtask);
+        if not Usuario."Puede crear dosieres" then
+            Error('El usuario de GTask %1 no tiene permiso para crear dosieres.', IdGtask);
+
+        Incidencia.Init();
+        Incidencia."Es Peticion" := false;
+        Incidencia."Tipo Intervención" := Incidencia."Tipo Intervención"::Dosier;
+        Incidencia."SubTipo Incidencia" := Incidencia."SubTipo Incidencia"::Otras;
+        Incidencia.Estado := Incidencia.Estado::Abierta;
+        Incidencia.Fecha := Today;
+        Incidencia.FechaHora := CurrentDateTime();
+        Incidencia."Fecha Actuacion" := CurrentDateTime();
+        Incidencia.Usuario := Usuario."Id Usuario";
+        Incidencia."Usuario Seguimiento" := Usuario."Id Usuario";
+        Incidencia.Descripción := CopyStr(Descripcion, 1, MaxStrLen(Incidencia.Descripción));
+
+        if TipoTxt = 'recurso' then begin
+            if not BuscarRecursoDosier(Codigo, EmpresaRecurso, Resource) then
+                Error('No existe el recurso %1.', Codigo);
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Recurso;
+            Incidencia.Recurso := Resource."No.";
+            Incidencia."Tipo Incidencia" := Incidencia."Tipo Incidencia"::"Incidencias Soportes";
+            Incidencia."User Task Group" := 'MTO';
+            if Resource.CurrentCompany <> CompanyName then
+                Incidencia.Empresa := CopyStr(Resource.CurrentCompany, 1, MaxStrLen(Incidencia.Empresa));
+        end else begin
+            if not BuscarEmplazamientoDosier(Codigo, EmpresaRecurso, Emplaz) then
+                Error('No existe el emplazamiento %1.', Codigo);
+            Incidencia."Tipo Elemento" := Incidencia."Tipo Elemento"::Parada;
+            Incidencia.Recurso := Emplaz."Nº Emplazamiento";
+            Incidencia."Tipo Incidencia" := TipoIncidenciaDosierEmplazamiento(Emplaz);
+            if Emplaz."Tipo Emplazamiento" = Emplaz."Tipo Emplazamiento"::Opis then
+                Incidencia."User Task Group" := 'EMT'
+            else
+                Incidencia."User Task Group" := 'MTO';
+            if Emplaz.CurrentCompany <> CompanyName then
+                Incidencia.Empresa := CopyStr(Emplaz.CurrentCompany, 1, MaxStrLen(Incidencia.Empresa));
+        end;
+
+        Incidencia.Insert(true);
+        Incidencia.SetWorkDescription(Descripcion);
+        Incidencia.Get(Incidencia."No.");
+        CreateIncidencia(Incidencia);
+
+        Clear(JsonOut);
+        JsonOut.Add('success', true);
+        JsonOut.Add('no', Incidencia."No.");
+        JsonOut.Add('no_dosier', Incidencia."No.");
+        if Incidencia.Empresa <> '' then
+            JsonOut.Add('empresa', Incidencia.Empresa)
+        else
+            JsonOut.Add('empresa', CompanyName());
+        JsonOut.Add('id_gtask', Incidencia.Id_Gtask);
+        JsonOut.Add('mensaje', StrSubstNo('Dosier creado: %1', Incidencia."No."));
+        JsonOut.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure ContarMediosDosier(Incidencia: Record Incidencias): Integer
+    var
+        Imagenes: Record "Imagenes Orden fijación";
+        Doc: Record "Document Attachment";
+    begin
+        Imagenes.SetRange("Nº Orden", Incidencia."Nº Orden");
+        Imagenes.SetRange("Es Incidencia", true);
+        Doc.SetRange("Table ID", Database::Incidencias);
+        Doc.SetRange("No.", Incidencia."No.");
+        exit(Imagenes.Count() + Doc.Count());
+    end;
+
+    local procedure AgregarDosierJson(Incidencia: Record Incidencias; var JsonLinea: JsonObject)
+    var
+        Usuario: Record UsuariosGtask;
+        NombreUsuario: Text;
+    begin
+        Clear(JsonLinea);
+        if not IsNullGuid(Incidencia.Usuario) then begin
+            Usuario.ChangeCompany('Malla Publicidad');
+            Usuario.SetRange("Id Usuario", Incidencia.Usuario);
+            if Usuario.FindFirst() then
+                NombreUsuario := Usuario.Nombre + ' ' + Usuario.Apellido;
+        end;
+        JsonLinea.Add('no', Incidencia."No.");
+        if Incidencia.Empresa <> '' then
+            JsonLinea.Add('empresa', Incidencia.Empresa)
+        else
+            JsonLinea.Add('empresa', CompanyName());
+        JsonLinea.Add('descripcion', Incidencia."Descripción");
+        JsonLinea.Add('recurso', Incidencia.Recurso);
+        JsonLinea.Add('tipo_elemento', Format(Incidencia."Tipo Elemento"));
+        JsonLinea.Add('estado', Format(Incidencia.Estado));
+        JsonLinea.Add('fecha', Format(Incidencia.Fecha, 0, 9));
+        JsonLinea.Add('fecha_hora', Format(Incidencia.FechaHora, 0, 9));
+        JsonLinea.Add('usuario', NombreUsuario);
+        JsonLinea.Add('usuario_gtask', Incidencia.ID_UsuarioGtask(Incidencia.Usuario));
+        JsonLinea.Add('id_gtask', Incidencia.Id_Gtask);
+        JsonLinea.Add('medios', ContarMediosDosier(Incidencia));
+        JsonLinea.Add('parte_trabajo', Incidencia."Parte Trabajo");
+        if Incidencia."Parte Trabajo" <> '' then begin
+            JsonLinea.Add('id_qr', IdQrOrdenTrabajo(Incidencia));
+            JsonLinea.Add('url_ordenes', StrSubstNo('https://ordenes.malla.es/OT-%1', Incidencia."Parte Trabajo"));
+        end;
+    end;
+
+    [ServiceEnabled]
+    procedure ListadoDosieres(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonOut: JsonObject;
+        JsonLista: JsonArray;
+        JsonLinea: JsonObject;
+        Incidencia: Record Incidencias;
+        Usuario: Record UsuariosGtask;
+        IdGtask: Text;
+        SoloMios: Boolean;
+        Txt: Text;
+    begin
+        if JsonIn.ReadFrom(JsonText) then begin
+            if JsonIn.Get('usuarioGtask', JsonToken) then
+                IdGtask := JsonToken.AsValue().AsText();
+            if JsonIn.Get('soloMios', JsonToken) then
+                SoloMios := JsonToken.AsValue().AsBoolean();
+        end;
+        Incidencia.SetRange("Tipo Intervención", Incidencia."Tipo Intervención"::Dosier);
+        if SoloMios then begin
+            if not BuscarUsuarioDosier(IdGtask, Usuario) then
+                Error('No se ha encontrado el usuario de GTask %1.', IdGtask);
+            Incidencia.SetRange(Usuario, Usuario."Id Usuario");
+        end else
+            BuscarUsuarioDosier(IdGtask, Usuario);
+        Incidencia.SetCurrentKey("No.");
+        if Incidencia.FindSet() then
+            repeat
+                AgregarDosierJson(Incidencia, JsonLinea);
+                JsonLista.Add(JsonLinea.AsToken());
+            until Incidencia.Next() = 0;
+        JsonOut.Add('success', true);
+        JsonOut.Add('dosieres', JsonLista.AsToken());
+        JsonOut.Add('count', JsonLista.Count());
+        JsonOut.Add('puede_crear', Usuario."Puede crear dosieres");
+        JsonOut.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure AgregarMediosDosierJson(Incidencia: Record Incidencias; var JsonLista: JsonArray)
+    var
+        Imagenes: Record "Imagenes Orden fijación";
+        Doc: Record "Document Attachment";
+        JsonMedio: JsonObject;
+    begin
+        Imagenes.SetRange("Nº Orden", Incidencia."Nº Orden");
+        Imagenes.SetRange("Es Incidencia", true);
+        if Imagenes.FindSet() then
+            repeat
+                Clear(JsonMedio);
+                JsonMedio.Add('tipo', 'image');
+                JsonMedio.Add('nombre', Imagenes.Nombre);
+                JsonMedio.Add('url', Imagenes.Url);
+                JsonMedio.Add('id', Imagenes.Id);
+                JsonLista.Add(JsonMedio.AsToken());
+            until Imagenes.Next() = 0;
+
+        Doc.SetRange("Table ID", Database::Incidencias);
+        Doc.SetRange("No.", Incidencia."No.");
+        if Doc.FindSet() then
+            repeat
+                Clear(JsonMedio);
+                JsonMedio.Add('tipo', 'document');
+                JsonMedio.Add('nombre', Doc."File Name");
+                JsonMedio.Add('extension', Doc."File Extension");
+                JsonMedio.Add('system_id', Format(Doc.SystemId));
+                JsonLista.Add(JsonMedio.AsToken());
+            until Doc.Next() = 0;
+    end;
+
+    [ServiceEnabled]
+    procedure DetalleDosier(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonOut: JsonObject;
+        JsonMedios: JsonArray;
+        Incidencia: Record Incidencias;
+        NoDosier: Code[20];
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido.');
+        if JsonIn.Get('no', JsonToken) then
+            NoDosier := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoDosier));
+        if not Incidencia.Get(NoDosier) then
+            Error('No existe el dosier %1.', NoDosier);
+        if Incidencia."Tipo Intervención" <> Incidencia."Tipo Intervención"::Dosier then
+            Error('%1 no es un dosier.', NoDosier);
+        AgregarDosierJson(Incidencia, JsonOut);
+        AgregarMediosDosierJson(Incidencia, JsonMedios);
+        JsonOut.Add('success', true);
+        JsonOut.Add('adjuntos', JsonMedios.AsToken());
+        JsonOut.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    local procedure GuardarImagenDosier(var Incidencia: Record Incidencias; Contenido: Text; Nombre: Text)
+    var
+        Imagenes: Record "Imagenes Orden fijación";
+        Control: Codeunit ControlProcesos;
+        IdImagen: Integer;
+        NumeroImagen: Integer;
+        Url: Text;
+    begin
+        Url := Control.FormBase64ToUrl(Contenido, Nombre, IdImagen);
+        if (Url = '') or (IdImagen = 0) then
+            Error('No se pudo guardar la imagen del dosier.');
+        Imagenes.SetRange("Nº Orden", Incidencia."Nº Orden");
+        Imagenes.SetRange("Es Incidencia", true);
+        if Imagenes.FindLast() then
+            NumeroImagen := Imagenes."Nº Imagen" + 1
+        else
+            NumeroImagen := 1;
+        Imagenes.Init();
+        Imagenes."Nº Orden" := Incidencia."Nº Orden";
+        Imagenes."Nº Imagen" := NumeroImagen;
+        Imagenes."Es Incidencia" := true;
+        Imagenes.Nombre := CopyStr(Nombre, 1, MaxStrLen(Imagenes.Nombre));
+        Imagenes.Url := Url;
+        Imagenes.Id := IdImagen;
+        Imagenes.Insert(true);
+    end;
+
+    local procedure GuardarAdjuntoDosier(var Incidencia: Record Incidencias; Contenido: Text; Nombre: Text)
+    var
+        Base64Convert: Codeunit "Base64 Convert";
+        TempBlob: Codeunit "Temp Blob";
+        OutS: OutStream;
+        InS: InStream;
+        RecRef: RecordRef;
+        Doc: Record "Document Attachment";
+    begin
+        Clear(TempBlob);
+        TempBlob.CreateOutStream(OutS);
+        Base64Convert.FromBase64(Contenido, OutS);
+        TempBlob.CreateInStream(InS);
+        if InS.Length = 0 then
+            Error('El adjunto está vacío.');
+        RecRef.GetTable(Incidencia);
+        Doc.SaveAttachmentFromStream(InS, RecRef, Nombre);
+    end;
+
+    [ServiceEnabled]
+    procedure PostAdjuntoDosier(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonOut: JsonObject;
+        Incidencia: Record Incidencias;
+        Usuario: Record UsuariosGtask;
+        NoDosier: Code[20];
+        IdGtask: Text;
+        Nombre: Text;
+        MimeType: Text;
+        TipoMedio: Text;
+        Contenido: Text;
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido.');
+        if JsonIn.Get('no', JsonToken) then
+            NoDosier := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoDosier));
+        if JsonIn.Get('usuarioGtask', JsonToken) then
+            IdGtask := JsonToken.AsValue().AsText();
+        if JsonIn.Get('nombre', JsonToken) then
+            Nombre := JsonToken.AsValue().AsText();
+        if JsonIn.Get('mimeType', JsonToken) then
+            MimeType := LowerCase(JsonToken.AsValue().AsText());
+        if JsonIn.Get('tipoMedio', JsonToken) then
+            TipoMedio := LowerCase(JsonToken.AsValue().AsText());
+        if JsonIn.Get('contenido', JsonToken) then
+            Contenido := JsonToken.AsValue().AsText();
+        if not BuscarUsuarioDosier(IdGtask, Usuario) then
+            Error('No se ha encontrado el usuario de GTask %1.', IdGtask);
+        if not Incidencia.Get(NoDosier) then
+            Error('No existe el dosier %1.', NoDosier);
+        if Incidencia."Tipo Intervención" <> Incidencia."Tipo Intervención"::Dosier then
+            Error('%1 no es un dosier.', NoDosier);
+        if Nombre = '' then
+            Nombre := 'Adjunto_' + Format(CurrentDateTime, 0, 9);
+        Contenido := ExtraerPayloadBase64Imagen(Contenido);
+        if Contenido = '' then
+            Error('El adjunto está vacío.');
+
+        if (TipoMedio = 'image') or (StrPos(MimeType, 'image/') = 1) then
+            GuardarImagenDosier(Incidencia, Contenido, Nombre)
+        else
+            GuardarAdjuntoDosier(Incidencia, Contenido, Nombre);
+
+        JsonOut.Add('success', true);
+        JsonOut.Add('no', Incidencia."No.");
+        JsonOut.Add('nombre', Nombre);
+        JsonOut.Add('mensaje', StrSubstNo('%1 se ha añadido al dosier %2.', Nombre, Incidencia."No."));
+        JsonOut.WriteTo(Txt);
+        exit(Txt);
+    end;
+
+    [ServiceEnabled]
+    procedure PostCrearOrdenDosier(JsonText: Text): Text
+    var
+        JsonIn: JsonObject;
+        JsonToken: JsonToken;
+        JsonOut: JsonObject;
+        Incidencia: Record Incidencias;
+        Usuario: Record UsuariosGtask;
+        NoDosier: Code[20];
+        IdGtask: Text;
+        Txt: Text;
+    begin
+        if not JsonIn.ReadFrom(JsonText) then
+            Error('JSON no válido.');
+        if JsonIn.Get('no', JsonToken) then
+            NoDosier := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(NoDosier));
+        if JsonIn.Get('usuarioGtask', JsonToken) then
+            IdGtask := JsonToken.AsValue().AsText();
+        if not BuscarUsuarioDosier(IdGtask, Usuario) then
+            Error('No se ha encontrado el usuario de GTask %1.', IdGtask);
+        if not Usuario."Puede crear dosieres" then
+            Error('El usuario de GTask %1 no tiene permiso para crear órdenes desde dosieres.', IdGtask);
+        if not Incidencia.Get(NoDosier) then
+            Error('No existe el dosier %1.', NoDosier);
+        if Incidencia."Tipo Intervención" <> Incidencia."Tipo Intervención"::Dosier then
+            Error('%1 no es un dosier.', NoDosier);
+
+        EstablecerCreadorOrdenGtask(IdGtask);
+        CrearOrdenTrabajoIncidencia(Incidencia);
+        Incidencia.Get(NoDosier);
+        Incidencia.TestField("Parte Trabajo");
+
+        JsonOut.Add('success', true);
+        JsonOut.Add('no', Incidencia."No.");
+        JsonOut.Add('parte_trabajo', Incidencia."Parte Trabajo");
+        JsonOut.Add('id_qr', IdQrOrdenTrabajo(Incidencia));
+        JsonOut.Add('url_ordenes', StrSubstNo('https://ordenes.malla.es/OT-%1', Incidencia."Parte Trabajo"));
+        JsonOut.Add('mensaje', StrSubstNo('Orden de trabajo creada: %1', Incidencia."Parte Trabajo"));
+        JsonOut.WriteTo(Txt);
+        exit(Txt);
+    end;
+
     /// <summary>
     /// Crea mantenimiento programado (puntual=false) o tarea puntual preventiva (puntual=true + descripcion).
     /// JSON: { "tipo":"emplaz|recurso", "tipoEmplazamiento":"...", "codigo":"...",
-    ///         "descripcion":"..." (puntual), "puntual":true|false }
+    ///         "descripcion":"..." (puntual), "puntual":true|false, "usuarioGtask":"Id GTask" }
     /// </summary>
     [ServiceEnabled]
     procedure PostCrearOrdenMantenimiento(JsonText: Text): Text
@@ -13273,6 +13804,10 @@ codeunit 7001148 GTask
         Puntual := false;
         if JsonIn.Get('puntual', JsonToken) then
             Puntual := JsonToken.AsValue().AsBoolean();
+        if JsonIn.Get('usuarioGtask', JsonToken) then
+            EstablecerCreadorOrdenGtask(JsonToken.AsValue().AsText())
+        else
+            EstablecerCreadorOrdenGtask('');
         if Codigo = '' then
             Error('Falta codigo');
 
@@ -13413,6 +13948,53 @@ codeunit 7001148 GTask
         if StrPos(TipoLower, 'otro') > 0 then
             exit('otros');
         exit('');
+    end;
+
+    local procedure BuscarRecursoDosier(Codigo: Code[20]; Empresa: Text; var Resource: Record Resource): Boolean
+    var
+        Empresas: Record Company;
+    begin
+        // El dosier se crea en la empresa de la llamada OData. El recurso puede vivir en otra.
+        Resource.Reset();
+        if Resource.Get(Codigo) then
+            exit(true);
+        if (Empresa <> '') and (Empresa <> CompanyName) then begin
+            Empresas.SetRange(Name, Empresa);
+            if Empresas.FindFirst() then begin
+                Resource.ChangeCompany(Empresas.Name);
+                Resource.Reset();
+                if Resource.Get(Codigo) then
+                    exit(true);
+            end;
+        end;
+        Empresas.Reset();
+        if Empresas.FindSet() then
+            repeat
+                if Empresas.Name <> CompanyName then begin
+                    Resource.ChangeCompany(Empresas.Name);
+                    Resource.Reset();
+                    if Resource.Get(Codigo) then
+                        exit(true);
+                end;
+            until Empresas.Next() = 0;
+        exit(false);
+    end;
+
+    local procedure BuscarEmplazamientoDosier(Codigo: Code[20]; Empresa: Text; var Emplaz: Record Emplazamientos): Boolean
+    var
+        Empresas: Record Company;
+    begin
+        if BuscarEmplazamientoPorTipoONo('', Codigo, Emplaz) then
+            exit(true);
+        if (Empresa <> '') and (Empresa <> CompanyName) then begin
+            Empresas.SetRange(Name, Empresa);
+            if Empresas.FindFirst() then begin
+                Emplaz.ChangeCompany(Empresas.Name);
+                if BuscarEmplazamientoPorTipoONo('', Codigo, Emplaz) then
+                    exit(true);
+            end;
+        end;
+        exit(false);
     end;
 
     local procedure BuscarEmplazamientoPorTipoONo(TipoEmplazTxt: Text; NEmplaz: Code[20]; var Emplaz: Record Emplazamientos): Boolean

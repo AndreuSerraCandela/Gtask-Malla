@@ -562,6 +562,7 @@ codeunit 7001149 Procesos_GTask
         TimeSheetLine: Record "Time Sheet Line";
         TimeSheetHeader: Record "Time Sheet Header";
         MsgWA: Record "Mensaje WhatsApp";
+        Incidencia: Record Incidencias;
 
     begin
 
@@ -591,6 +592,11 @@ codeunit 7001149 Procesos_GTask
             If MsgWA.FindFirst() then
                 RecRef.GetTable(MsgWA);
         end;
+        If DocumentAttachment."Table ID" = Database::Incidencias then begin
+            RecRef.Open(Database::Incidencias);
+            if Incidencia.Get(DocumentAttachment."No.") then
+                RecRef.GetTable(Incidencia);
+        end;
 
 
     end;
@@ -602,6 +608,7 @@ codeunit 7001149 Procesos_GTask
         TimeSheetLine: Record "Time Sheet Line";
         TimeSheetHeader: Record "Time Sheet Header";
         MsgWA: Record "Mensaje WhatsApp";
+        Incidencia: Record Incidencias;
 
     begin
 
@@ -624,6 +631,11 @@ codeunit 7001149 Procesos_GTask
             TimeSheetHeader.SetRange("No.", DocumentAttachment."No.");
             If TimeSheetHeader.FindFirst() then
                 RecRef.GetTable(TimeSheetHeader);
+        end;
+        If DocumentAttachment."Table ID" = Database::Incidencias then begin
+            RecRef.Open(Database::Incidencias);
+            if Incidencia.Get(DocumentAttachment."No.") then
+                RecRef.GetTable(Incidencia);
         end;
 
 

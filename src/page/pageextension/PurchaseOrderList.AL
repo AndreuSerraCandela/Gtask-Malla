@@ -74,7 +74,11 @@ pageextension 92153 PurchaseOrderListExt extends "Purchase Order List"
                                             end;
                                         end;
                                     end;
-                                    PurchaseLine.Insert();
+                                    if PurchaseLine."Fecha Recepción" <> 0DT then begin
+                                        if DT2Date(PurchaseLine."Fecha Recepción") >= Today then
+                                            PurchaseLine.Insert();
+                                    end else
+                                        PurchaseLine.Insert();
                                 until PurchaseLineSource.Next() = 0;
                             end;
                         end;

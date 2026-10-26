@@ -358,6 +358,11 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Nombre - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Table 91669665 - Field 4067327178 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Puede crear dosieres</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Table UsuariosGtask - Field Puede crear dosieres - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Table 91669665 - Field 870350816 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Responsable</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1098,6 +1103,46 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Detalle Parte Tarea - Control Nº Tarea - Property ToolTip</note>
         </trans-unit>
+        <trans-unit id="Page 2787265789 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Dosier</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Control 3640233012 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Id incidencia GTask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Control Id_Gtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Control 2637528113 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recurso / emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Control Recurso - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Control 2082670849 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Fotos y dibujos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Control Imagenes - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Control 2585535928 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Descripción ampliada</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Control DescripcionAmpliada - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Control 1839644261 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Audio y documentos</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Control Documentos - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Action 1240259202 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abrir en Ordenes</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Action AbrirOrdenes - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2787265789 - Action 621253752 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Crear parte / orden</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Dosier Malla - Action CrearOrdenTrabajo - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 1561396197 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Ficha Zona Limpieza</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1468,6 +1513,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Nombre Proveedor - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3101461887 - Control 2716135150 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Número del contrato del proyecto</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Nº Contrato - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3101461887 - Control 2716135150 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Nº Contrato</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Control Nº Contrato - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3101461887 - Control 3687165909 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Observaciones de la línea de compra</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1568,6 +1623,16 @@
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Action Cargar Líneas - Property Caption</note>
         </trans-unit>
+        <trans-unit id="Page 3101461887 - Action 524074970 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Carga las líneas enviadas al taller con fecha de recepción anterior a hoy, validadas por PB o no</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Action Cargar Líneas Histórico - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 3101461887 - Action 524074970 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Cargar Líneas Histórico</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lineas Enviadas Taller - Action Cargar Líneas Histórico - Property Caption</note>
+        </trans-unit>
         <trans-unit id="Page 3101461887 - Action 1766402609 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Crea una entrada de mercancía para las líneas seleccionadas</source>
           <note from="Developer" annotates="general" priority="2"></note>
@@ -1667,6 +1732,31 @@
           <source>Editar actuación</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page Lista Actuaciones - Action EditarActuacion - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2924124693 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Dosieres</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Dosieres - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2924124693 - Control 3640233012 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Id GTask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Dosieres - Control Id_Gtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2924124693 - Control 2637528113 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Recurso / emplazamiento</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Dosieres - Control Recurso - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2924124693 - Control 2053597816 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Usuario GTask</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Dosieres - Control UsuarioGtask - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Page 2924124693 - Action 3192775944 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Abrir dosier</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page Lista Dosieres - Action AbrirDosier - Property Caption</note>
         </trans-unit>
         <trans-unit id="Page 2811520765 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Lista Incidencias Taller</source>
@@ -2867,6 +2957,11 @@
           <source>Nº de empleado asociado al usuario GTask.</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Control Empleado - Property ToolTip</note>
+        </trans-unit>
+        <trans-unit id="Page 91669665 - Control 4067327178 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Permite al usuario crear nuevos dosieres desde la aplicación Dosiers.</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Page UsuariosGtask - Control Puede crear dosieres - Property ToolTip</note>
         </trans-unit>
         <trans-unit id="Page 91669665 - Control 1841693126 - Property 1295455071" size-unit="char" translate="yes" xml:space="preserve">
           <source>Nombre de usuario de la app EMT para vincular incidencias comunicadas por EMT.</source>
@@ -5087,6 +5182,11 @@
           <source>Correctivo</source>
           <note from="Developer" annotates="general" priority="2"></note>
           <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Intervención - EnumValue Correctivo - Property Caption</note>
+        </trans-unit>
+        <trans-unit id="Enum 641900896 - EnumValue 2308728370 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
+          <source>Dosier</source>
+          <note from="Developer" annotates="general" priority="2"></note>
+          <note from="Xliff Generator" annotates="general" priority="3">Enum Tipo Intervención - EnumValue Dosier - Property Caption</note>
         </trans-unit>
         <trans-unit id="Enum 641900896 - EnumValue 1919817626 - Property 2879900210" size-unit="char" translate="yes" xml:space="preserve">
           <source>Preventivo</source>

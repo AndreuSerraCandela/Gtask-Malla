@@ -111,6 +111,11 @@ table 7001209 "UsuariosGtask"
                 Procesos_GTask.ActualizarGruposTareasExistentes("Id Usuario", Grupo);
             end;
         }
+        field(50011; "Puede crear dosieres"; Boolean)
+        {
+            Caption = 'Puede crear dosieres';
+            DataClassification = CustomerContent;
+        }
     }
 
     keys

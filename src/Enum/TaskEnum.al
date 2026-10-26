@@ -45,4 +45,9 @@ enum 50027 "Tipo Intervención"
     {
         Caption = 'Preventivo';
     }
+    //Dosier
+    value(2; Dosier)
+    {
+        Caption = 'Dosier';
+    }
 }

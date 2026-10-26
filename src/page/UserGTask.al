@@ -44,6 +44,11 @@ page 7001184 "UsuariosGtask"
                 {
                     ApplicationArea = All;
                 }
+                field("Puede crear dosieres"; Rec."Puede crear dosieres")
+                {
+                    ApplicationArea = All;
+                    ToolTip = 'Permite al usuario crear nuevos dosieres desde la aplicación Dosiers.';
+                }
                 field("Responsable"; Rec."Responsable")
                 {
                     ApplicationArea = All;

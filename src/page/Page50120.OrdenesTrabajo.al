@@ -4,7 +4,7 @@ page 50120 "Ordenes Trabajo"
     Caption = 'Orden de trabajo';
     SourceTable = "Incidencias";
     InsertAllowed = false;
-    DeleteAllowed = false;
+    //DeleteAllowed = false;
 
     layout
     {
