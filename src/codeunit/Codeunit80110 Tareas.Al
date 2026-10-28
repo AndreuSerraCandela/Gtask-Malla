@@ -7820,94 +7820,9 @@ codeunit 7001148 GTask
                         end;
                     end; //else
                          //If Id <> 0 Then DeleteTarea(IdTarea);
-                end else begin
-                    //crear tarea
-                    Tareas.Reset();
-                    If Tareas.FindLast() Then Id := Tareas."Id" + 1;
-                    Tareas.Init();
-                    Tareas."Id" := Id;
-                    JsonTarea.Get('user', JsonCampo);
-                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                    If UserGtaskMalla.FindFirst() then
-                        Tareas."Assigned To" := UserGtaskMalla."Id Usuario";
-                    JsonTarea.Get('supervisor', JsonCampo);
-                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                    If UserGtaskMalla.FindFirst() then
-                        Tareas."Supervisor" := UserGtaskMalla."Id Usuario";
-                    If JsonTarea.Get('department', JsonCampo) Then begin
-                        Clear(RecordiD);
-                        RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"Responsibility Center", CompanyName);
-                        If RecordiD.TableNo <> 0 then begin
-                            RecordRef := RecordiD.GetRecord();
-                            Tareas.Departamento := RecordRef.Field(ResponsabilitiCenter.FieldNo(Code)).Value;
-                        end else begin
-                            Tareas.Departamento := InsertarDepartamentoOservicio(JsonCampo.AsValue().AsText(), CompanyName, false);
-                        end;
-                    end;
-                    If JsonTarea.Get('service', JsonCampo) Then begin
-                        If JsonCampo.AsValue().IsNull = false then begin
-                            Clear(RecordiD);
-                            RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"Work Center", CompanyName);
-                            If RecordiD.TableNo <> 0 then begin
-                                RecordRef := RecordiD.GetRecord();
-                                Tareas.Servicio := RecordRef.Field(WorkCenter.FieldNo("No.")).Value;
-                            end else begin
-                                Tareas.Servicio := InsertarDepartamentoOservicio(JsonCampo.AsValue().AsText(), CompanyName, true);
-                            end;
-                        END;
-                    end;
-                    If JsonTarea.Get('category', JsonCampo) Then begin
-                        Clear(RecordiD);
-                        If JsonCampo.AsValue().IsNull = false then begin
-                            RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::"User Task Group", CompanyName);
-                            If RecordiD.TableNo <> 0 then begin
-                                RecordRef := RecordiD.GetRecord();
-                                Tareas."User Task Group Assigned To" := RecordRef.Field(UserTaskGroup.FieldNo(Code)).Value;
-                                Tareas."Categoría" := Tareas."User Task Group Assigned To";
-                            end;
-                        end;
-                    end;
-                    If JsonTarea.Get('project', JsonCampo) then begin
-                        Clear(RecordiD);
-                        If JsonCampo.AsValue().IsNull = false then begin
-                            RecordiD := RecuperaId(JsonCampo.AsValue().AsText(), Database::Job, CompanyName);
-                            If RecordiD.TableNo <> 0 then begin
-                                RecordRef := RecordiD.GetRecord();
-                                Tareas."Job No." := RecordRef.Field(Job.FieldNo("No.")).Value;
-                            end;
-                        end;
-                    end;
-                    JsonTarea.Get('owner', JsonCampo);
-                    UserGtaskMalla.SetRange("Id Gtask", JsonCampo.AsValue().AsText());
-                    If UserGtaskMalla.FindFirst() then
-                        Tareas."Created By" := UserGtaskMalla."Id Usuario";
-                    Clear(RecordiD);
-                    JsonTarea.Get('_id', JsonCampo);
-                    Tareas."Id_Tarea" := JsonCampo.AsValue().AsText();
-                    JsonTarea.Get('state', JsonCampo);
-                    case JsonCampo.AsValue().AsText() of
-                        'PENDING':
-                            begin
-                                Tareas.Estado := Tareas.Estado::Pendiente;
-                            end;
-                        'INPROCESS':
-                            Tareas.Estado := Tareas.Estado::"En Proceso";
-                        'FINISHED':
-                            Tareas.Estado := Tareas.Estado::Finalizado
-                    end;
-                    Tareas.Insert(false);
-                    Id := Tareas.ID;
-                    commit;
-                    Tareas.Get(Id);
-                    JsonTarea.Get('description', JsonCampo);
-                    Tareas.Title := CopyStr(JsonCampo.AsValue().AsText(), 1, 250);
-                    if JsonTarea.Get('observation', JsonCampo) Then
-                        Tareas.SetDescription(JsonCampo.AsValue().AsText());
-                    Tareas.Modify(false);
-                    commit;
-                    //UpdateTask(Tareas.Id_Tarea, Format(Tareas.ID));
-
-                end;
+                end else
+                    // Id_Navision no numerico: no insertar otra copia del mismo _id.
+                    CrearTareaDesdeGtaskSinNavision(JsonTarea);
             end;
             CodEmpresa := '';
 
@@ -10653,6 +10568,103 @@ codeunit 7001148 GTask
                     end;
                 end;
             end;
+        end;
+
+        JsonArray.WriteTo(JsonResult);
+        exit(JsonResult);
+    end;
+
+    [ServiceEnabled]
+    procedure GetTareasRevisionRecurso(JsonText: Text): Text
+    var
+        JsonObject: JsonObject;
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        UserTask: Record "User Task";
+        ResourceFiltro: Record Resource;
+        ZonasLimpieza: Record "Zonas Limpieza";
+        CodigoRecurso: Code[20];
+        FechaDesdeTexto: Text;
+        FechaHastaTexto: Text;
+        FechaDesde: Date;
+        FechaHasta: Date;
+        FechaDesdeDT: DateTime;
+        FechaHastaDT: DateTime;
+        CategoriasRevision: Text;
+        FiltroZonasRevision: Text;
+        JsonResult: Text;
+    begin
+        if not JsonObject.ReadFrom(JsonText) then
+            Error('JSON inválido');
+
+        CodigoRecurso := '';
+        FechaDesde := 0D;
+        FechaHasta := 0D;
+
+        if JsonObject.Get('codigoRecurso', JsonToken) then
+            CodigoRecurso := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(CodigoRecurso));
+
+        if JsonObject.Get('fechaDesde', JsonToken) then begin
+            FechaDesdeTexto := JsonToken.AsValue().AsText();
+            if Evaluate(FechaDesde, FechaDesdeTexto) then
+                FechaDesdeDT := CreateDateTime(FechaDesde, 0T)
+            else
+                FechaDesde := 0D;
+        end;
+
+        if JsonObject.Get('fechaHasta', JsonToken) then begin
+            FechaHastaTexto := JsonToken.AsValue().AsText();
+            if Evaluate(FechaHasta, FechaHastaTexto) then
+                FechaHastaDT := CreateDateTime(FechaHasta, 235959T)
+            else
+                FechaHasta := 0D;
+        end;
+
+        ZonasLimpieza.SetRange("Tipo Tarea", 'REVISION');
+        if ZonasLimpieza.FindSet() then
+            repeat
+                if CategoriasRevision <> '' then
+                    CategoriasRevision += '|';
+                CategoriasRevision += ZonasLimpieza."Tipo Tarea";
+                if FiltroZonasRevision <> '' then
+                    FiltroZonasRevision += '|';
+                FiltroZonasRevision += Format(ZonasLimpieza.Id);
+            until ZonasLimpieza.Next() = 0;
+
+        UserTask.Reset();
+        if CategoriasRevision <> '' then
+            UserTask.SetFilter("User Task Group Assigned To", CategoriasRevision);
+        if FiltroZonasRevision <> '' then
+            UserTask.SetFilter(ZonaLimpieza, FiltroZonasRevision);
+        if CodigoRecurso <> '' then begin
+            if not ResourceFiltro.Get(CodigoRecurso) then begin
+                JsonArray.WriteTo(JsonResult);
+                exit(JsonResult);
+            end;
+            UserTask.SetRange(Id_record, ResourceFiltro.RecordId);
+        end;
+        if FechaDesde <> 0D then
+            UserTask.SetRange("Start DateTime", FechaDesdeDT, FechaHastaDT);
+        if UserTask.FindSet() then
+            repeat
+                if UserTask.Id_record.TableNo = Database::Resource then begin
+                    UserTaskTemp := UserTask;
+                    if UserTaskTemp.Insert() then
+                        Procesos_GTask.AgregarTareaUsuarioAlJson(UserTask, JsonArray);
+                end;
+            until UserTask.Next() = 0;
+
+        if FechaDesde <> 0D then begin
+            UserTask.SetRange("Start DateTime", 0DT, FechaDesdeDT);
+            UserTask.SetRange(Estado, UserTask.Estado::Pendiente);
+            if UserTask.FindSet() then
+                repeat
+                    if UserTask.Id_record.TableNo = Database::Resource then begin
+                        UserTaskTemp := UserTask;
+                        if UserTaskTemp.Insert() then
+                            Procesos_GTask.AgregarTareaUsuarioAlJson(UserTask, JsonArray);
+                    end;
+                until UserTask.Next() = 0;
         end;
 
         JsonArray.WriteTo(JsonResult);

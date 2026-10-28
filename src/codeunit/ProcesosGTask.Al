@@ -1812,10 +1812,14 @@ codeunit 7001149 Procesos_GTask
         // Coordenadas del recurso/emplazamiento (puntoX, puntoY)
         if UserTask.Id_record.TableNo = Database::Resource then begin
             if Resource.Get(UserTask.Id_record) then begin
-                JsonTarea.Add('puntoX', Resource.PuntoX);
-                JsonTarea.Add('puntoY', Resource.PuntoY);
-                JsonTarea.Add('recurso', Resource."No.");
-                JsonTarea.Add('recursoNombre', Resource.Name);
+                if not JsonTarea.Contains('puntoX') then
+                    JsonTarea.Add('puntoX', Resource.PuntoX);
+                if not JsonTarea.Contains('puntoY') then
+                    JsonTarea.Add('puntoY', Resource.PuntoY);
+                if not JsonTarea.Contains('recurso') then
+                    JsonTarea.Add('recurso', Resource."No.");
+                if not JsonTarea.Contains('recursoNombre') then
+                    JsonTarea.Add('recursoNombre', Resource.Name);
             end;
         end;
         if UserTask.Id_record.TableNo = Database::Emplazamientos then begin
