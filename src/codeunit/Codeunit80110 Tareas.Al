@@ -2210,14 +2210,19 @@ codeunit 7001148 GTask
         TareaID: Integer;
         TareaTemp: Record "User Task";
         TareaNo: Code[20];
+        EmpresaRecurso: Text;
     begin
         UserGtaskMalla.ChangeCompany('Malla Publicidad');
-        if Not Recurso.Get(NoRecurso) then Recurso.Init();
+        if not Recurso.Get(NoRecurso) then
+            if not BuscarRecursoConEmpresa(NoRecurso, Recurso, EmpresaRecurso) then
+                Recurso.Init();
+        if EmpresaRecurso = '' then
+            EmpresaRecurso := CompanyName;
         CrearDepartamnetoyServicio(departament, service);
         If Recurso."No." <> '' Then Begin
 
             wRecordRef.Close();
-            wRecordRef.Open(Database::Resource, false, CompanyName);
+            wRecordRef.Open(Database::Resource, false, EmpresaRecurso);
             If wRecordRef.Get(Recurso.RecordId) Then begin
                 resource := GetMaestro('resource', Recurso.Name, 'name', wRecordRef, Database::Resource, '');
                 if resource = 'Error' then begin
@@ -4171,6 +4176,8 @@ codeunit 7001148 GTask
         FechaTarea: Date;
         HoraInicio: Time;
         HoraFin: Time;
+        CodigoBusqueda: Code[20];
+        EmpresaRecurso: Text;
 
     //Operario: Guid;
     begin
@@ -4275,8 +4282,13 @@ codeunit 7001148 GTask
         end;
         Clear(Gtask);
 
-        If Not Resource.FindSet() then
-            Resource.Init();
+        If Not Resource.FindSet() then begin
+            CodigoBusqueda := '';
+            if RecRef.Number = Database::Resource then
+                CodigoBusqueda := CopyStr(Format(RecRef.Field(Resource.FieldNo("No.")).Value), 1, MaxStrLen(CodigoBusqueda));
+            if not BuscarRecursoConEmpresa(CodigoBusqueda, Resource, EmpresaRecurso) then
+                Resource.Init();
+        end;
         RecRef.Close();
         Clear(RecRef);
         If Adjuntar then begin
@@ -10767,14 +10779,18 @@ codeunit 7001148 GTask
         RecRef: RecordRef;
         Descripcion: Text;
         IdZona: Integer;
+        EmpresaRecurso: Text;
     begin
         Motivo := '';
-        if not Resource.Get(CodigoRecurso) then begin
+        if not BuscarRecursoConEmpresa(CodigoRecurso, Resource, EmpresaRecurso) then begin
             Motivo := 'recurso no encontrado';
             exit(-1);
         end;
-        // La zona del recurso, si la tiene. Si no, la 999 solo en la tarea: no se guarda en el recurso.
-        IdZona := Resource."Zona Revisión";
+        // En Malla Publicidad se usa la zona del recurso. En otra compañía, la 999.
+        // En ambos casos la zona queda solo en la tarea: el recurso no se modifica.
+        IdZona := 999;
+        if EmpresaRecurso = CompanyName then
+            IdZona := Resource."Zona Revisión";
         if IdZona = 0 then
             IdZona := 999;
         if not ZonasLimpieza.Get(IdZona) then begin
@@ -14100,6 +14116,32 @@ codeunit 7001148 GTask
         if StrPos(TipoLower, 'otro') > 0 then
             exit('otros');
         exit('');
+    end;
+
+    local procedure BuscarRecursoConEmpresa(Codigo: Code[20]; var Resource: Record Resource; var NombreEmpresa: Text): Boolean
+    var
+        Empresas: Record Company;
+    begin
+        NombreEmpresa := '';
+        if Codigo = '' then
+            exit(false);
+        Resource.Reset();
+        if Resource.Get(Codigo) then begin
+            NombreEmpresa := CompanyName;
+            exit(true);
+        end;
+        if Empresas.FindSet() then
+            repeat
+                if Empresas.Name <> CompanyName then begin
+                    Resource.ChangeCompany(Empresas.Name);
+                    Resource.Reset();
+                    if Resource.Get(Codigo) then begin
+                        NombreEmpresa := Empresas.Name;
+                        exit(true);
+                    end;
+                end;
+            until Empresas.Next() = 0;
+        exit(false);
     end;
 
     local procedure BuscarRecursoDosier(Codigo: Code[20]; Empresa: Text; var Resource: Record Resource): Boolean
