@@ -10671,6 +10671,144 @@ codeunit 7001148 GTask
         exit(JsonResult);
     end;
 
+    /// <summary>
+    /// Crea una tarea de revisión por recurso. Misma tarea que una limpieza, tipo REVISION,
+    /// con la zona de revisión del recurso. Sin zona, o si ya hay una pendiente, no crea.
+    /// JSON: {"fecha":"2026-10-29","recursos":["R001","R002"]}
+    /// </summary>
+    [ServiceEnabled]
+    procedure CrearTareasRevisionRecurso(JsonText: Text): Text
+    var
+        JsonObject: JsonObject;
+        JsonToken: JsonToken;
+        JsonArray: JsonArray;
+        JsonResult: JsonObject;
+        JsonOmitidos: JsonArray;
+        JsonItem: JsonObject;
+        JsonCampo: JsonToken;
+        CodigoRecurso: Code[20];
+        FechaTexto: Text;
+        Fecha: Date;
+        Motivo: Text;
+        Resultado: Integer;
+        TareasCreadas: Integer;
+        TareasExistentes: Integer;
+    begin
+        if not JsonObject.ReadFrom(JsonText) then
+            Error('JSON inválido. Se espera un objeto con fecha y recursos.');
+
+        Fecha := 0D;
+        if JsonObject.Get('fecha', JsonToken) and JsonToken.IsValue() and not JsonToken.AsValue().IsNull() then begin
+            FechaTexto := JsonToken.AsValue().AsText();
+            if (FechaTexto <> '') and not Evaluate(Fecha, FechaTexto) then
+                Error('Fecha inválida.');
+        end;
+        if Fecha = 0D then
+            Fecha := WorkDate();
+
+        if not JsonObject.Get('recursos', JsonToken) then
+            Error('Indique los recursos.');
+        JsonArray := JsonToken.AsArray();
+        if JsonArray.Count() = 0 then
+            Error('Indique los recursos.');
+
+        foreach JsonToken in JsonArray do begin
+            CodigoRecurso := '';
+            Motivo := '';
+            if JsonToken.IsValue() and not JsonToken.AsValue().IsNull() then
+                CodigoRecurso := CopyStr(JsonToken.AsValue().AsText(), 1, MaxStrLen(CodigoRecurso))
+            else
+                if JsonToken.IsObject() then begin
+                    JsonItem := JsonToken.AsObject();
+                    if JsonItem.Get('codigoRecurso', JsonCampo) and JsonCampo.IsValue() and not JsonCampo.AsValue().IsNull() then
+                        CodigoRecurso := CopyStr(JsonCampo.AsValue().AsText(), 1, MaxStrLen(CodigoRecurso));
+                end;
+
+            if CodigoRecurso = '' then begin
+                Clear(JsonItem);
+                JsonItem.Add('recurso', '');
+                JsonItem.Add('motivo', 'código de recurso vacío');
+                JsonOmitidos.Add(JsonItem);
+            end else begin
+                Resultado := CrearTareaRevisionDeRecurso(CodigoRecurso, Fecha, Motivo);
+                case Resultado of
+                    1:
+                        TareasCreadas += 1;
+                    0:
+                        TareasExistentes += 1;
+                    else begin
+                        Clear(JsonItem);
+                        JsonItem.Add('recurso', CodigoRecurso);
+                        JsonItem.Add('motivo', Motivo);
+                        JsonOmitidos.Add(JsonItem);
+                    end;
+                end;
+            end;
+        end;
+
+        Clear(JsonResult);
+        JsonResult.Add('tareasCreadas', TareasCreadas);
+        JsonResult.Add('tareasExistentes', TareasExistentes);
+        JsonResult.Add('omitidos', JsonOmitidos);
+        JsonResult.WriteTo(JsonText);
+        exit(JsonText);
+    end;
+
+    /// <summary>
+    /// 1 creada, 0 ya existía una revisión pendiente o en proceso, -1 no creada (Motivo).
+    /// </summary>
+    local procedure CrearTareaRevisionDeRecurso(CodigoRecurso: Code[20]; Fecha: Date; var Motivo: Text): Integer
+    var
+        Resource: Record Resource;
+        UserTask: Record "User Task";
+        ZonasLimpieza: Record "Zonas Limpieza";
+        ZonaTarea: Record "Zonas Limpieza";
+        RecRef: RecordRef;
+        Descripcion: Text;
+    begin
+        Motivo := '';
+        if not Resource.Get(CodigoRecurso) then begin
+            Motivo := 'recurso no encontrado';
+            exit(-1);
+        end;
+        if Resource."Zona Revisión" = 0 then begin
+            Motivo := 'sin zona de revisión';
+            exit(-1);
+        end;
+        if not ZonasLimpieza.Get(Resource."Zona Revisión") then begin
+            Motivo := 'zona de revisión no encontrada';
+            exit(-1);
+        end;
+        if ZonasLimpieza."Tipo Tarea" <> 'REVISION' then begin
+            Motivo := 'la zona no es de revisión';
+            exit(-1);
+        end;
+        if IsNullGuid(ZonasLimpieza.Responsable) or IsNullGuid(ZonasLimpieza.Supervisor) or (ZonasLimpieza.Departamento = '') then begin
+            Motivo := 'la zona de revisión no tiene responsable o supervisor';
+            exit(-1);
+        end;
+
+        UserTask.Reset();
+        UserTask.SetRange(Id_record, Resource.RecordId);
+        UserTask.SetFilter(Estado, '%1|%2', UserTask.Estado::Pendiente, UserTask.Estado::"En Proceso");
+        if UserTask.FindSet() then
+            repeat
+                if ZonaTarea.Get(UserTask.ZonaLimpieza) then
+                    if ZonaTarea."Tipo Tarea" = 'REVISION' then
+                        exit(0);
+            until UserTask.Next() = 0;
+
+        RecRef.GetTable(Resource);
+        Descripcion := 'Tarea de revisión para el recurso ' + Resource."No." + ' - ' + Resource.Name +
+            ' en la zona de revisión ' + ZonasLimpieza."Descripción";
+        if CrearTareaLimpieza('REVISION', RecRef, 'REVISION ' + Resource."No.", Resource."Zona Revisión",
+            Descripcion, false, '', Fecha, true, 0) then
+            exit(1);
+
+        Motivo := 'no se pudo crear la tarea';
+        exit(-1);
+    end;
+
 
     /// <summary>
     /// Endpoint que devuelve una lista de tareas de limpieza ficticias asociadas a las paradas bus,
