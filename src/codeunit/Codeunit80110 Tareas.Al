@@ -10672,8 +10672,9 @@ codeunit 7001148 GTask
     end;
 
     /// <summary>
-    /// Crea una tarea de revisión por recurso. Misma tarea que una limpieza, tipo REVISION,
-    /// con la zona de revisión del recurso. Sin zona, o si ya hay una pendiente, no crea.
+    /// Crea una tarea de revisión por recurso. Misma tarea que una limpieza, tipo REVISION.
+    /// Usa la zona de revisión del recurso. Si no tiene, la tarea queda en la zona 999
+    /// y el recurso no se modifica. Si ya hay una pendiente, no crea.
     /// JSON: {"fecha":"2026-10-29","recursos":["R001","R002"]}
     /// </summary>
     [ServiceEnabled]
@@ -10765,17 +10766,18 @@ codeunit 7001148 GTask
         ZonaTarea: Record "Zonas Limpieza";
         RecRef: RecordRef;
         Descripcion: Text;
+        IdZona: Integer;
     begin
         Motivo := '';
         if not Resource.Get(CodigoRecurso) then begin
             Motivo := 'recurso no encontrado';
             exit(-1);
         end;
-        if Resource."Zona Revisión" = 0 then begin
-            Motivo := 'sin zona de revisión';
-            exit(-1);
-        end;
-        if not ZonasLimpieza.Get(Resource."Zona Revisión") then begin
+        // La zona del recurso, si la tiene. Si no, la 999 solo en la tarea: no se guarda en el recurso.
+        IdZona := Resource."Zona Revisión";
+        if IdZona = 0 then
+            IdZona := 999;
+        if not ZonasLimpieza.Get(IdZona) then begin
             Motivo := 'zona de revisión no encontrada';
             exit(-1);
         end;
@@ -10801,7 +10803,7 @@ codeunit 7001148 GTask
         RecRef.GetTable(Resource);
         Descripcion := 'Tarea de revisión para el recurso ' + Resource."No." + ' - ' + Resource.Name +
             ' en la zona de revisión ' + ZonasLimpieza."Descripción";
-        if CrearTareaLimpieza('REVISION', RecRef, 'REVISION ' + Resource."No.", Resource."Zona Revisión",
+        if CrearTareaLimpieza('REVISION', RecRef, 'REVISION ' + Resource."No.", IdZona,
             Descripcion, false, '', Fecha, true, 0) then
             exit(1);
 
